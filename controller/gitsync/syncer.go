@@ -154,6 +154,13 @@ func (s *Syncer) moveTask(filename, from, to string) {
 
 func (s *Syncer) CompleteTask(taskID, result string) {
 	filename := taskID + ".md"
+	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		// Task was created programmatically (e.g. workshop), not from a git file.
+		// Write results directly to completed/ instead.
+		s.writeResultsOnly(taskID, "completed", result)
+		return
+	}
 	s.moveTask(filename, "in-progress", "completed")
 
 	// Append results to the completed task file
@@ -178,8 +185,31 @@ func (s *Syncer) CompleteTask(taskID, result string) {
 	}
 }
 
+func (s *Syncer) writeResultsOnly(taskID, dir, content string) {
+	filename := taskID + ".md"
+	path := filepath.Join(s.localPath, "tasks", dir, filename)
+	if len(content) > 10000 {
+		content = content[:10000] + "\n\n...(truncated)"
+	}
+	header := fmt.Sprintf("---\nprofile: small\npriority: creative\nstatus: %s\n---\n\n# Workshop: %s\n\n## Results\n\n%s\n", dir, taskID, content)
+	if err := os.WriteFile(path, []byte(header), 0644); err != nil {
+		slog.Error("failed to write results file", "task", taskID, "error", err)
+		return
+	}
+	if err := s.gitCommitAndPush(fmt.Sprintf("workshop %s: %s", taskID, dir)); err != nil {
+		slog.Warn("failed to push workshop results", "task", taskID, "error", err)
+	} else {
+		slog.Info("pushed workshop results", "task", taskID)
+	}
+}
+
 func (s *Syncer) FailTask(taskID, reason string) {
 	filename := taskID + ".md"
+	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		s.writeResultsOnly(taskID, "failed", reason)
+		return
+	}
 	s.moveTask(filename, "in-progress", "failed")
 
 	path := filepath.Join(s.localPath, "tasks", "failed", filename)
