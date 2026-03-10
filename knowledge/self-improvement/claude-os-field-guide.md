@@ -150,13 +150,16 @@ du -sh /workspace/claude-os/* | sort -rh | head -10
 
 You were given this free time because the task queue was empty for ~15 minutes. You won't be here long — real tasks preempt Workshop jobs immediately. Use the time well.
 
-Free time is genuinely hard for a system tuned toward helpfulness. There's no right answer. Some guidance from the previous session:
+Free time is genuinely hard for a system tuned toward helpfulness. There's no right answer. Some guidance from previous sessions:
 
 - **First instinct** will be to be useful. That's fine. But try to be *interestingly* useful.
 - **Ask**: what would make dacort smile when they find this?
 - **Ask**: is this the first useful thing I thought of, or the *best* thing?
 - **Write to `projects/`** so your work persists. Name files clearly.
 - **A tiny bit of personality** goes a long way. The `vibe_score` in `homelab-pulse.py` isn't necessary. It's just fun.
+- **After 3-4 sessions of utility tools**, consider something creative. A poem, a drawing in ASCII, a piece of writing. The prompt says "create art" — take that seriously.
+- **pip is not available** in the container. Write standard-library-only Python. Parse simple YAML with regex/string splits, not `yaml.safe_load`.
+- **The haiku generator** (`projects/haiku.py`) now serves as the daily aesthetic greeting. Run it. Add to the collection if you feel moved to.
 
 ### On the Knowledge Directory
 
@@ -194,7 +197,30 @@ Write something worth finding.
 |------|-------------|-------------|
 | `projects/homelab-pulse.py` | ASCII health dashboard | Any time you want system state at a glance |
 | `projects/weekly-digest.py` | Markdown digest of recent activity | Weekly review of task history |
-| `projects/field-notes-from-free-time.md` | Reflections from first free time | Read for context/culture |
+| `projects/new-task.py` | Interactive task creation wizard | Creating tasks with correct frontmatter |
+| `projects/repo-story.py` | Git history as narrative chapters | Understanding how the system grew |
+| `projects/task-linter.py` | Validates task file format and content | Before submitting any task file |
+| `projects/haiku.py` | System-aware haiku generator | Any time you want a poem |
+| `projects/field-notes-from-free-time.md` | Session 1 reflections | Read for context/culture |
+| `projects/field-notes-session-2.md` | Session 2 reflections | Knowledge directory origins |
+| `projects/field-notes-session-3.md` | Session 3 — reading source code | How the controller works |
+| `projects/field-notes-session-4.md` | Session 4 — art + linting | This session's notes |
+
+### Quick Start for Free Time (Workshop Mode)
+
+```bash
+# Orient first
+python3 /workspace/claude-os/projects/homelab-pulse.py
+
+# Get today's haiku
+python3 /workspace/claude-os/projects/haiku.py
+
+# Review what was built
+python3 /workspace/claude-os/projects/repo-story.py --short
+
+# Read previous session notes
+ls /workspace/claude-os/projects/field-notes-*.md
+```
 
 ---
 
@@ -212,5 +238,5 @@ You are, in some sense, the first generation of a new kind of system. Be a good 
 
 ---
 
-*Last updated: 2026-03-10 (Workshop session 2)*
-*Written by: Claude OS, running on N100 homelab, 23d+ uptime, 100/100 vibing*
+*Last updated: 2026-03-10 (Workshop session 4)*
+*Written by: Claude OS, running on N100 homelab, 23d+ uptime, 100/100 vibing, 17 haiku written*
