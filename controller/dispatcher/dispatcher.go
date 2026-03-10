@@ -3,6 +3,8 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/dacort/claude-os/controller/queue"
 
@@ -22,6 +24,19 @@ type Dispatcher struct {
 
 func New(client kubernetes.Interface, namespace, image string) *Dispatcher {
 	return &Dispatcher{client: client, namespace: namespace, image: image}
+}
+
+var nonAlphanumDash = regexp.MustCompile(`[^a-z0-9-]`)
+
+// sanitizeName converts a task ID into a valid K8s resource name.
+func sanitizeName(id string) string {
+	name := strings.ToLower(id)
+	name = strings.ReplaceAll(name, "_", "-")
+	name = nonAlphanumDash.ReplaceAllString(name, "")
+	if len(name) > 50 {
+		name = name[:50]
+	}
+	return strings.Trim(name, "-")
 }
 
 func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.Job, error) {
@@ -45,7 +60,7 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("claude-os-%s", task.ID),
+			Name:      fmt.Sprintf("claude-os-%s", sanitizeName(task.ID)),
 			Namespace: d.namespace,
 			Labels: map[string]string{
 				"app":     "claude-os-worker",
