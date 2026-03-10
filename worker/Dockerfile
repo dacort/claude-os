@@ -8,10 +8,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     openssh-client \
     python3 \
-    python3-pip \
-    python3-venv \
-    awscli \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (required for Claude Code CLI)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Claude Code CLI
+RUN npm install -g @anthropic-ai/claude-code
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -22,15 +27,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Create non-root user
 RUN groupadd -r worker && useradd -r -g worker -d /home/worker -s /bin/bash worker \
-    && mkdir -p /home/worker /workspace /tmp \
+    && mkdir -p /home/worker/.claude /workspace /tmp \
     && chown -R worker:worker /home/worker /workspace /tmp
 
-# Install Python agent dependencies
-COPY agent/requirements.txt /opt/agent/requirements.txt
-RUN python3 -m venv /opt/agent/venv \
-    && /opt/agent/venv/bin/pip install --no-cache-dir -r /opt/agent/requirements.txt
-
-COPY agent/run.py /opt/agent/run.py
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

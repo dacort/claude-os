@@ -90,6 +90,11 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 							}},
 							{SecretRef: &corev1.SecretEnvSource{
 								LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-anthropic"},
+								Optional:             ptr.To(true),
+							}},
+							{SecretRef: &corev1.SecretEnvSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-oauth"},
+								Optional:             ptr.To(true),
 							}},
 						},
 						Resources: corev1.ResourceRequirements{
