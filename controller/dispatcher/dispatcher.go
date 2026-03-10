@@ -76,6 +76,7 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 						Name:  "worker",
 						Image: d.image,
 						Env: []corev1.EnvVar{
+							{Name: "HOME", Value: "/home/worker"},
 							{Name: "TASK_ID", Value: task.ID},
 							{Name: "TASK_TITLE", Value: task.Title},
 							{Name: "TASK_DESCRIPTION", Value: task.Description},
