@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,18 +17,33 @@ type Syncer struct {
 	repoURL    string
 	branch     string
 	localPath  string
+	token      string
 	queue      *queue.Queue
 	knownTasks map[string]bool
 }
 
-func NewSyncer(repoURL, branch, localPath string, q *queue.Queue) *Syncer {
+func NewSyncer(repoURL, branch, localPath, token string, q *queue.Queue) *Syncer {
 	return &Syncer{
 		repoURL:    repoURL,
 		branch:     branch,
 		localPath:  localPath,
+		token:      token,
 		queue:      q,
 		knownTasks: make(map[string]bool),
 	}
+}
+
+// cloneURL returns the repo URL with embedded token for push access.
+func (s *Syncer) cloneURL() string {
+	if s.token == "" {
+		return s.repoURL
+	}
+	u, err := url.Parse(s.repoURL)
+	if err != nil {
+		return s.repoURL
+	}
+	u.User = url.UserPassword("x-access-token", s.token)
+	return u.String()
 }
 
 func (s *Syncer) Sync(ctx context.Context) error {
@@ -46,7 +62,7 @@ func (s *Syncer) ensureClone() error {
 		return nil
 	}
 	slog.Info("cloning repo", "url", s.repoURL, "path", s.localPath)
-	cmd := exec.Command("git", "clone", "--branch", s.branch, "--single-branch", s.repoURL, s.localPath)
+	cmd := exec.Command("git", "clone", "--branch", s.branch, "--single-branch", s.cloneURL(), s.localPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -105,6 +121,23 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 	return nil
 }
 
+func (s *Syncer) gitCommitAndPush(message string) error {
+	cmds := [][]string{
+		{"git", "add", "-A"},
+		{"git", "-c", "user.name=Claude OS", "-c", "user.email=claude-os@noreply.github.com",
+			"commit", "-m", message},
+		{"git", "push", "origin", s.branch},
+	}
+	for _, args := range cmds {
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = s.localPath
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("%s: %s: %w", args[0], string(output), err)
+		}
+	}
+	return nil
+}
+
 func (s *Syncer) moveTask(filename, from, to string) {
 	src := filepath.Join(s.localPath, "tasks", from, filename)
 	dst := filepath.Join(s.localPath, "tasks", to, filename)
@@ -112,40 +145,53 @@ func (s *Syncer) moveTask(filename, from, to string) {
 		slog.Error("failed to move task file", "file", filename, "error", err)
 		return
 	}
-	cmd := exec.Command("git", "add", "-A")
-	cmd.Dir = s.localPath
-	cmd.Run()
-	cmd = exec.Command("git", "-c", "user.name=Claude OS", "-c", "user.email=claude-os@noreply.github.com",
-		"commit", "-m", fmt.Sprintf("move %s to %s", filename, to))
-	cmd.Dir = s.localPath
-	cmd.Run()
-	cmd = exec.Command("git", "push", "origin", s.branch)
-	cmd.Dir = s.localPath
-	if err := cmd.Run(); err != nil {
-		slog.Warn("failed to push task move, will retry", "error", err)
+	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: %s → %s", strings.TrimSuffix(filename, ".md"), from, to)); err != nil {
+		slog.Warn("failed to push task move", "file", filename, "error", err)
+	} else {
+		slog.Info("pushed task move", "file", filename, "from", from, "to", to)
 	}
 }
 
 func (s *Syncer) CompleteTask(taskID, result string) {
 	filename := taskID + ".md"
 	s.moveTask(filename, "in-progress", "completed")
+
+	// Append results to the completed task file
 	path := filepath.Join(s.localPath, "tasks", "completed", filename)
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
+		slog.Error("failed to open completed task for results", "task", taskID, "error", err)
 		return
 	}
 	defer f.Close()
-	f.WriteString(fmt.Sprintf("\n## Results\n%s\n", result))
+
+	// Truncate very long results
+	if len(result) > 10000 {
+		result = result[:10000] + "\n\n...(truncated)"
+	}
+	f.WriteString(fmt.Sprintf("\n## Results\n\n%s\n", result))
+
+	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: add results", taskID)); err != nil {
+		slog.Warn("failed to push task results", "task", taskID, "error", err)
+	} else {
+		slog.Info("pushed task results", "task", taskID)
+	}
 }
 
 func (s *Syncer) FailTask(taskID, reason string) {
 	filename := taskID + ".md"
 	s.moveTask(filename, "in-progress", "failed")
+
 	path := filepath.Join(s.localPath, "tasks", "failed", filename)
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
+		slog.Error("failed to open failed task for reason", "task", taskID, "error", err)
 		return
 	}
 	defer f.Close()
-	f.WriteString(fmt.Sprintf("\n## Failure\n%s\n", reason))
+	f.WriteString(fmt.Sprintf("\n## Failure\n\n%s\n", reason))
+
+	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: failed — %s", taskID, reason)); err != nil {
+		slog.Warn("failed to push task failure", "task", taskID, "error", err)
+	}
 }

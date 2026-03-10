@@ -16,6 +16,7 @@ import (
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
 	"github.com/dacort/claude-os/controller/queue"
+	"github.com/dacort/claude-os/controller/watcher"
 	"github.com/dacort/claude-os/controller/webhook"
 
 	"github.com/redis/go-redis/v9"
@@ -85,10 +86,11 @@ func main() {
 		BurstWarningPct:     80,
 	})
 
-	// Git syncer
+	// Git syncer (uses GITHUB_TOKEN for push access)
+	githubToken := os.Getenv("GITHUB_TOKEN")
 	gitSyncer := gitsync.NewSyncer(
 		cfg.Git.Repo, cfg.Git.Branch,
-		"/tmp/claude-os-repo", taskQueue,
+		"/tmp/claude-os-repo", githubToken, taskQueue,
 	)
 
 	// Webhook handler
@@ -218,6 +220,31 @@ func main() {
 					continue
 				}
 				slog.Info("job created", "task", task.ID, "job", job.Name)
+			}
+		}
+	}()
+
+	// Job completion watcher — reads results and updates task files in git
+	jobWatcher := watcher.New(k8sClient, cfg.Worker.Namespace, func(taskID string, succeeded bool, logs string) {
+		if succeeded {
+			slog.Info("completing task", "task", taskID)
+			gitSyncer.CompleteTask(taskID, logs)
+			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, "")
+		} else {
+			slog.Info("failing task", "task", taskID)
+			gitSyncer.FailTask(taskID, logs)
+			taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
+		}
+	})
+	go func() {
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				jobWatcher.Poll(ctx)
 			}
 		}
 	}()
