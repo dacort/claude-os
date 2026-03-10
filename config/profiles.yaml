@@ -1,0 +1,36 @@
+profiles:
+  small:
+    cpu_request: 250m
+    memory_request: 256Mi
+    scratch_size: 1Gi
+    target: local
+    default_model: claude-sonnet-4-6
+
+  medium:
+    cpu_request: 500m
+    memory_request: 512Mi
+    scratch_size: 5Gi
+    target: local
+    default_model: claude-sonnet-4-6
+
+  large:
+    cpu_request: "2"
+    memory_request: 4Gi
+    scratch_size: 20Gi
+    target: burst
+    default_model: claude-sonnet-4-6
+    tolerations:
+      - key: burst.homelab.dev/cloud
+        operator: Exists
+        effect: NoSchedule
+
+  burst:
+    cpu_request: "2"
+    memory_request: 4Gi
+    scratch_size: 30Gi
+    target: burst
+    default_model: claude-opus-4-6
+    tolerations:
+      - key: burst.homelab.dev/cloud
+        operator: Exists
+        effect: NoSchedule
