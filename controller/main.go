@@ -1,0 +1,232 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
+	"time"
+
+	"github.com/dacort/claude-os/controller/config"
+	"github.com/dacort/claude-os/controller/dispatcher"
+	"github.com/dacort/claude-os/controller/gitsync"
+	"github.com/dacort/claude-os/controller/governance"
+	"github.com/dacort/claude-os/controller/queue"
+	"github.com/dacort/claude-os/controller/webhook"
+
+	"github.com/redis/go-redis/v9"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+)
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "/etc/claude-os/controller.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
+	}
+
+	// Load resource profiles
+	profilesPath := os.Getenv("PROFILES_PATH")
+	if profilesPath == "" {
+		profilesPath = "/etc/claude-os/profiles.yaml"
+	}
+	if err := dispatcher.LoadProfiles(profilesPath); err != nil {
+		slog.Error("failed to load profiles", "error", err)
+		os.Exit(1)
+	}
+
+	// Connect to Redis
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.Redis.Address})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		slog.Error("failed to connect to Redis", "error", err)
+		os.Exit(1)
+	}
+	cancel()
+	slog.Info("connected to Redis", "address", cfg.Redis.Address)
+
+	// Create K8s client (in-cluster)
+	k8sConfig, err := rest.InClusterConfig()
+	if err != nil {
+		slog.Error("failed to get in-cluster config", "error", err)
+		os.Exit(1)
+	}
+	k8sClient, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		slog.Error("failed to create k8s client", "error", err)
+		os.Exit(1)
+	}
+
+	// Initialize components
+	taskQueue := queue.New(rdb)
+	jobDispatcher := dispatcher.New(k8sClient, cfg.Worker.Namespace, cfg.Worker.Image)
+
+	// Governance — default limits if config not available
+	governor := governance.New(rdb, governance.Limits{
+		DailyTokenLimit:     1_000_000,
+		WeeklyTokenLimit:    5_000_000,
+		ReservePercentage:   30,
+		MaxTokensPerJob:     200_000,
+		CreativeTokenBudget: 100_000,
+		DailyBurstBudget:    5.00,
+		BurstWarningPct:     80,
+	})
+
+	// Git syncer
+	gitSyncer := gitsync.NewSyncer(
+		cfg.Git.Repo, cfg.Git.Branch,
+		"/tmp/claude-os-repo", taskQueue,
+	)
+
+	// Webhook handler
+	webhookSecret := os.Getenv("WEBHOOK_SECRET")
+	webhookHandler := webhook.New(webhookSecret, func(event *webhook.IssueEvent) {
+		task := &queue.Task{
+			ID:          fmt.Sprintf("issue-%d", event.Issue.Number),
+			Title:       event.Issue.Title,
+			Description: event.Issue.Body,
+			Profile:     "medium",
+			Priority:    queue.PriorityNormal,
+		}
+		if err := taskQueue.Enqueue(context.Background(), task); err != nil {
+			slog.Error("failed to enqueue webhook task", "error", err)
+		} else {
+			slog.Info("enqueued task from webhook", "id", task.ID, "title", task.Title)
+		}
+	})
+
+	// Track Redis health for readiness
+	var redisHealthy atomic.Bool
+	redisHealthy.Store(true)
+
+	// HTTP server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "ok")
+	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		if !redisHealthy.Load() {
+			http.Error(w, "redis unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "ok")
+	})
+	mux.Handle(cfg.Server.WebhookPath, webhookHandler)
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: mux,
+	}
+
+	// Graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
+	go func() {
+		slog.Info("starting HTTP server", "port", cfg.Server.Port)
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			slog.Error("HTTP server error", "error", err)
+		}
+	}()
+
+	// Git sync loop
+	go func() {
+		slog.Info("starting git sync loop", "interval", cfg.Git.PollDuration())
+		if err := gitSyncer.Sync(ctx); err != nil {
+			slog.Error("initial git sync failed", "error", err)
+		}
+		ticker := time.NewTicker(cfg.Git.PollDuration())
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := gitSyncer.Sync(ctx); err != nil {
+					slog.Error("git sync failed", "error", err)
+				}
+			}
+		}
+	}()
+
+	// Main dispatch loop
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				// Check Redis health
+				pingCtx, pingCancel := context.WithTimeout(ctx, 2*time.Second)
+				err := rdb.Ping(pingCtx).Err()
+				pingCancel()
+				redisHealthy.Store(err == nil)
+
+				if err != nil {
+					slog.Warn("Redis unavailable, skipping dispatch", "error", err)
+					continue
+				}
+
+				task, err := taskQueue.Dequeue(ctx)
+				if err != nil {
+					slog.Error("dequeue failed", "error", err)
+					continue
+				}
+				if task == nil {
+					continue
+				}
+
+				// Governance check
+				priorityStr := "normal"
+				switch task.Priority {
+				case queue.PriorityHigh:
+					priorityStr = "high"
+				case queue.PriorityCreative:
+					priorityStr = "creative"
+				}
+
+				allowed, reason := governor.CanDispatch(ctx, priorityStr)
+				if !allowed {
+					slog.Info("dispatch throttled by governance", "task", task.ID, "reason", reason)
+					taskQueue.Enqueue(ctx, task)
+					continue
+				}
+
+				slog.Info("dispatching task", "id", task.ID, "title", task.Title, "profile", task.Profile)
+				job, err := jobDispatcher.CreateJob(ctx, task)
+				if err != nil {
+					slog.Error("failed to create job", "task", task.ID, "error", err)
+					taskQueue.UpdateStatus(ctx, task.ID, queue.StatusFailed, fmt.Sprintf("dispatch error: %v", err))
+					continue
+				}
+				slog.Info("job created", "task", task.ID, "job", job.Name)
+			}
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("shutting down...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+	server.Shutdown(shutdownCtx)
+	rdb.Close()
+}
