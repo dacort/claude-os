@@ -7,8 +7,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o /claude-os-controller .
 
 FROM alpine:3.21
-RUN apk add --no-cache git ca-certificates && \
-    adduser -D -u 65534 nonroot
+RUN apk add --no-cache git ca-certificates
 COPY --from=builder /claude-os-controller /claude-os-controller
-USER nonroot:nonroot
+USER nobody:nobody
 ENTRYPOINT ["/claude-os-controller"]
