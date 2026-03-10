@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/dacort/claude-os/controller/config"
+	"github.com/dacort/claude-os/controller/creative"
 	"github.com/dacort/claude-os/controller/dispatcher"
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
@@ -92,6 +93,13 @@ func main() {
 		cfg.Git.Repo, cfg.Git.Branch,
 		"/tmp/claude-os-repo", githubToken, taskQueue,
 	)
+
+	// Creative mode (The Workshop)
+	var workshop *creative.Workshop
+	if cfg.Scheduler.CreativeModeEnabled {
+		workshop = creative.NewWorkshop(k8sClient, cfg.Worker.Namespace, jobDispatcher, cfg.Scheduler.IdleThreshold())
+		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold())
+	}
 
 	// Webhook handler
 	webhookSecret := os.Getenv("WEBHOOK_SECRET")
@@ -193,7 +201,16 @@ func main() {
 					continue
 				}
 				if task == nil {
+					// Queue is empty — check if it's time for creative mode
+					if workshop != nil {
+						workshop.CheckIdle(ctx)
+					}
 					continue
+				}
+
+				// Real task arrived — preempt any creative work
+				if workshop != nil {
+					workshop.OnTaskDispatched(ctx)
 				}
 
 				// Governance check
@@ -226,6 +243,11 @@ func main() {
 
 	// Job completion watcher — reads results and updates task files in git
 	jobWatcher := watcher.New(k8sClient, cfg.Worker.Namespace, func(taskID string, succeeded bool, logs string) {
+		// Notify workshop if this was a creative job
+		if workshop != nil {
+			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
+		}
+
 		if succeeded {
 			slog.Info("completing task", "task", taskID)
 			gitSyncer.CompleteTask(taskID, logs)

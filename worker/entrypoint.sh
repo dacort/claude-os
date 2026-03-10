@@ -25,12 +25,15 @@ if [ -n "${GITHUB_TOKEN:-}" ]; then
     echo "${GITHUB_TOKEN}" | gh auth login --with-token 2>/dev/null || true
 fi
 
-# Clone target repo if specified
+# Clone target repo if specified, or the claude-os repo for workshop tasks
 WORKDIR="/workspace"
 if [ -n "${TARGET_REPO:-}" ]; then
     echo "Cloning target repo: ${TARGET_REPO}"
     git clone "https://${GITHUB_TOKEN}@github.com/${TARGET_REPO}.git" /workspace/repo
     WORKDIR="/workspace/repo"
+elif [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "Cloning claude-os repo for workspace access"
+    git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/dacort/claude-os.git" /workspace/claude-os 2>/dev/null || true
 fi
 
 # Build the system prompt
@@ -43,7 +46,10 @@ Working directory: ${WORKDIR}
 Execute the task step by step. Be thorough but efficient.
 If the task involves a repo, it has been cloned to /workspace/repo.
 If you need to create a PR, use gh pr create. If you need to commit, use git commit.
-When done, output a clear summary of what you accomplished."
+When done, output a clear summary of what you accomplished.
+
+IMPORTANT: Your output will be written to a PUBLIC git repository. NEVER include secrets,
+API keys, tokens, passwords, or any sensitive information in your output."
 
 # Select model if specified and using API key auth
 MODEL_ARGS=""
