@@ -37,6 +37,7 @@ func (s *Syncer) Sync(ctx context.Context) error {
 	if err := s.pull(); err != nil {
 		return fmt.Errorf("pull: %w", err)
 	}
+	slog.Info("git sync completed, scanning for tasks")
 	return s.syncPendingTasks(ctx)
 }
 
@@ -68,6 +69,7 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 		return err
 	}
 
+	slog.Info("found pending tasks", "count", len(tasks))
 	for _, tf := range tasks {
 		taskID := strings.TrimSuffix(tf.Filename, ".md")
 		if s.knownTasks[taskID] {

@@ -3,6 +3,7 @@ package gitsync
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,6 +104,7 @@ func ScanPendingTasks(tasksPath string) ([]*TaskFile, error) {
 		}
 		task, err := ParseTaskFile(entry.Name(), data)
 		if err != nil {
+			slog.Warn("skipping task file", "file", entry.Name(), "error", err)
 			continue
 		}
 		tasks = append(tasks, task)
