@@ -69,6 +69,14 @@ func (s *Syncer) ensureClone() error {
 }
 
 func (s *Syncer) pull() error {
+	// Abort any stuck rebase from a previous failed sync
+	if _, err := os.Stat(filepath.Join(s.localPath, ".git", "rebase-merge")); err == nil {
+		slog.Warn("aborting stuck rebase-merge")
+		abort := exec.Command("git", "rebase", "--abort")
+		abort.Dir = s.localPath
+		abort.CombinedOutput()
+	}
+
 	// Reset any uncommitted local changes before pulling
 	// (task file moves may leave the index dirty if push failed)
 	reset := exec.Command("git", "reset", "--hard", "HEAD")
@@ -79,7 +87,10 @@ func (s *Syncer) pull() error {
 	clean.Dir = s.localPath
 	clean.CombinedOutput()
 
-	cmd := exec.Command("git", "pull", "--rebase", "origin", s.branch)
+	cmd := exec.Command("git",
+		"-c", "user.name=Claude OS",
+		"-c", "user.email=claude-os@noreply.github.com",
+		"pull", "--rebase", "origin", s.branch)
 	cmd.Dir = s.localPath
 	output, err := cmd.CombinedOutput()
 	if err != nil {
