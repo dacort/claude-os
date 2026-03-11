@@ -112,8 +112,8 @@ def prompt(label: str, default: str = "", required: bool = False) -> str:
 def prompt_choice(label: str, choices: list, default: str) -> str:
     """Ask user to pick from a list."""
     options = "  ".join(
-        c(f"[{c}]", BOLD) if c == default else f"[{c}]"
-        for c in choices
+        c(f"[{choice}]", BOLD) if choice == default else f"[{choice}]"
+        for choice in choices
     )
     print(f"{c(label, CYAN, BOLD)}:  {options}  (default: {c(default, BOLD)})")
     while True:
