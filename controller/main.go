@@ -18,7 +18,6 @@ import (
 	"github.com/dacort/claude-os/controller/governance"
 	"github.com/dacort/claude-os/controller/queue"
 	"github.com/dacort/claude-os/controller/watcher"
-	"github.com/dacort/claude-os/controller/webhook"
 
 	"github.com/redis/go-redis/v9"
 	"k8s.io/client-go/kubernetes"
@@ -102,23 +101,6 @@ func main() {
 		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold(), "usage_check", oauthToken != "")
 	}
 
-	// Webhook handler
-	webhookSecret := os.Getenv("WEBHOOK_SECRET")
-	webhookHandler := webhook.New(webhookSecret, func(event *webhook.IssueEvent) {
-		task := &queue.Task{
-			ID:          fmt.Sprintf("issue-%d", event.Issue.Number),
-			Title:       event.Issue.Title,
-			Description: event.Issue.Body,
-			Profile:     "medium",
-			Priority:    queue.PriorityNormal,
-		}
-		if err := taskQueue.Enqueue(context.Background(), task); err != nil {
-			slog.Error("failed to enqueue webhook task", "error", err)
-		} else {
-			slog.Info("enqueued task from webhook", "id", task.ID, "title", task.Title)
-		}
-	})
-
 	// Track Redis health for readiness
 	var redisHealthy atomic.Bool
 	redisHealthy.Store(true)
@@ -137,8 +119,6 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "ok")
 	})
-	mux.Handle(cfg.Server.WebhookPath, webhookHandler)
-
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler: mux,
