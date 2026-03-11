@@ -95,10 +95,11 @@ func main() {
 	)
 
 	// Creative mode (The Workshop)
+	oauthToken := os.Getenv("CLAUDE_CODE_OAUTH_TOKEN")
 	var workshop *creative.Workshop
 	if cfg.Scheduler.CreativeModeEnabled {
-		workshop = creative.NewWorkshop(k8sClient, cfg.Worker.Namespace, jobDispatcher, cfg.Scheduler.IdleThreshold())
-		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold())
+		workshop = creative.NewWorkshop(k8sClient, cfg.Worker.Namespace, jobDispatcher, cfg.Scheduler.IdleThreshold(), oauthToken)
+		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold(), "usage_check", oauthToken != "")
 	}
 
 	// Webhook handler

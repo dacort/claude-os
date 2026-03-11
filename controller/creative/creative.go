@@ -16,23 +16,29 @@ import (
 
 const workshopTaskID = "workshop"
 
+// MaxCreativeUtilization is the usage percentage above which creative mode won't start.
+// Keeps 30% of your subscription headroom for real work.
+const MaxCreativeUtilization = 70.0
+
 // Workshop manages creative mode — self-directed work when the queue is idle.
 type Workshop struct {
 	client     kubernetes.Interface
 	namespace  string
 	dispatcher *dispatcher.Dispatcher
 	threshold  time.Duration
+	oauthToken string
 	lastTask   time.Time
 	active     bool
 	activeJob  string
 }
 
-func NewWorkshop(client kubernetes.Interface, namespace string, d *dispatcher.Dispatcher, threshold time.Duration) *Workshop {
+func NewWorkshop(client kubernetes.Interface, namespace string, d *dispatcher.Dispatcher, threshold time.Duration, oauthToken string) *Workshop {
 	return &Workshop{
 		client:     client,
 		namespace:  namespace,
 		dispatcher: d,
 		threshold:  threshold,
+		oauthToken: oauthToken,
 		lastTask:   time.Now(),
 	}
 }
@@ -52,6 +58,16 @@ func (w *Workshop) CheckIdle(ctx context.Context) {
 	}
 	if time.Since(w.lastTask) < w.threshold {
 		return
+	}
+
+	// Check subscription usage before burning credits on creative work
+	if w.oauthToken != "" {
+		allowed, reason := CanUseCreativeTime(ctx, w.oauthToken, MaxCreativeUtilization)
+		if !allowed {
+			slog.Info("workshop: skipping creative mode, subscription usage too high", "reason", reason)
+			w.lastTask = time.Now() // Reset timer so we don't spam the check
+			return
+		}
 	}
 
 	slog.Info("workshop: queue idle, entering creative mode",

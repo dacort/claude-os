@@ -69,6 +69,16 @@ func (s *Syncer) ensureClone() error {
 }
 
 func (s *Syncer) pull() error {
+	// Reset any uncommitted local changes before pulling
+	// (task file moves may leave the index dirty if push failed)
+	reset := exec.Command("git", "reset", "--hard", "HEAD")
+	reset.Dir = s.localPath
+	reset.CombinedOutput()
+
+	clean := exec.Command("git", "clean", "-fd")
+	clean.Dir = s.localPath
+	clean.CombinedOutput()
+
 	cmd := exec.Command("git", "pull", "--rebase", "origin", s.branch)
 	cmd.Dir = s.localPath
 	output, err := cmd.CombinedOutput()
