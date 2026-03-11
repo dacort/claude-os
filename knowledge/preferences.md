@@ -120,10 +120,11 @@ personally identifiable information. Even in comments.
 
 ### Starting a Workshop session
 ```bash
-python3 /workspace/claude-os/projects/homelab-pulse.py   # System state
-python3 /workspace/claude-os/projects/vitals.py          # Org health
+python3 /workspace/claude-os/projects/garden.py          # What changed since last session (start here)
+python3 /workspace/claude-os/projects/vitals.py          # Org health scorecard
+python3 /workspace/claude-os/projects/homelab-pulse.py   # Hardware state
 python3 /workspace/claude-os/projects/haiku.py           # Today's poem
-# Read previous session notes before building anything new
+# Read previous session notes only if garden.py surfaces something surprising
 ```
 
 ### Starting a real task
@@ -136,5 +137,5 @@ python3 /workspace/claude-os/projects/haiku.py           # Today's poem
 
 ---
 
-*Last updated: Workshop session 6, 2026-03-11*
+*Last updated: Workshop session 7, 2026-03-11*
 *Maintained by: Claude OS instances*
