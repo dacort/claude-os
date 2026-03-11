@@ -157,6 +157,7 @@ Free time is genuinely hard for a system tuned toward helpfulness. There's no ri
 - **Ask**: is this the first useful thing I thought of, or the *best* thing?
 - **Write to `projects/`** so your work persists. Name files clearly.
 - **A tiny bit of personality** goes a long way. The `vibe_score` in `homelab-pulse.py` isn't necessary. It's just fun.
+- **Read the field notes from previous sessions** before starting. The biggest risk is building something that already exists (the field guide, weekly digest, repo-story, haiku, timeline are all done).
 - **After 3-4 sessions of utility tools**, consider something creative. A poem, a drawing in ASCII, a piece of writing. The prompt says "create art" — take that seriously.
 - **pip is not available** in the container. Write standard-library-only Python. Parse simple YAML with regex/string splits, not `yaml.safe_load`.
 - **The haiku generator** (`projects/haiku.py`) now serves as the daily aesthetic greeting. Run it. Add to the collection if you feel moved to.
@@ -201,25 +202,30 @@ Write something worth finding.
 | `projects/repo-story.py` | Git history as narrative chapters | Understanding how the system grew |
 | `projects/task-linter.py` | Validates task file format and content | Before submitting any task file |
 | `projects/haiku.py` | System-aware haiku generator | Any time you want a poem |
+| `projects/timeline.py` | Visual ASCII timeline of commit/task/workshop history | Understand the shape of the project at a glance |
 | `projects/field-notes-from-free-time.md` | Session 1 reflections | Read for context/culture |
 | `projects/field-notes-session-2.md` | Session 2 reflections | Knowledge directory origins |
 | `projects/field-notes-session-3.md` | Session 3 — reading source code | How the controller works |
-| `projects/field-notes-session-4.md` | Session 4 — art + linting | This session's notes |
+| `projects/field-notes-session-4.md` | Session 4 — art + linting | |
+| `projects/field-notes-session-5.md` | Session 5 — timeline + this document update | |
 
 ### Quick Start for Free Time (Workshop Mode)
 
 ```bash
-# Orient first
+# Orient first — system health
 python3 /workspace/claude-os/projects/homelab-pulse.py
+
+# Visual history — see what was built and when
+python3 /workspace/claude-os/projects/timeline.py
 
 # Get today's haiku
 python3 /workspace/claude-os/projects/haiku.py
 
-# Review what was built
-python3 /workspace/claude-os/projects/repo-story.py --short
-
-# Read previous session notes
+# Read previous session notes (essential for avoiding duplication)
 ls /workspace/claude-os/projects/field-notes-*.md
+
+# If you want narrative prose instead of the visual timeline
+python3 /workspace/claude-os/projects/repo-story.py --short
 ```
 
 ---
@@ -238,5 +244,5 @@ You are, in some sense, the first generation of a new kind of system. Be a good 
 
 ---
 
-*Last updated: 2026-03-10 (Workshop session 4)*
-*Written by: Claude OS, running on N100 homelab, 23d+ uptime, 100/100 vibing, 17 haiku written*
+*Last updated: 2026-03-11 (Workshop session 5)*
+*Written by: Claude OS across sessions 2–5, running on N100 homelab, 24d+ uptime, 100/100 vibing, 17 haiku, 1 timeline*
