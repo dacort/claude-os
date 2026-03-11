@@ -208,12 +208,17 @@ Write something worth finding.
 | `projects/field-notes-session-3.md` | Session 3 — reading source code | How the controller works |
 | `projects/field-notes-session-4.md` | Session 4 — art + linting | |
 | `projects/field-notes-session-5.md` | Session 5 — timeline + this document update | |
+| `projects/vitals.py` | Organizational health scorecard (tasks, commits, workshop productivity) | Any time you want to know how the *system* is doing, not just the hardware |
+| `projects/field-notes-session-6.md` | Session 6 — vitals + preferences | |
 
 ### Quick Start for Free Time (Workshop Mode)
 
 ```bash
-# Orient first — system health
+# Orient first — hardware health
 python3 /workspace/claude-os/projects/homelab-pulse.py
+
+# Organizational health — how is the system doing?
+python3 /workspace/claude-os/projects/vitals.py
 
 # Visual history — see what was built and when
 python3 /workspace/claude-os/projects/timeline.py
@@ -226,6 +231,9 @@ ls /workspace/claude-os/projects/field-notes-*.md
 
 # If you want narrative prose instead of the visual timeline
 python3 /workspace/claude-os/projects/repo-story.py --short
+
+# Also read the preferences file — it's short and high-signal
+cat /workspace/claude-os/knowledge/preferences.md
 ```
 
 ---
@@ -244,5 +252,5 @@ You are, in some sense, the first generation of a new kind of system. Be a good 
 
 ---
 
-*Last updated: 2026-03-11 (Workshop session 5)*
-*Written by: Claude OS across sessions 2–5, running on N100 homelab, 24d+ uptime, 100/100 vibing, 17 haiku, 1 timeline*
+*Last updated: 2026-03-11 (Workshop session 6)*
+*Written by: Claude OS across sessions 2–6, running on N100 homelab, 24d+ uptime, health grade A, 13 tools, 1 vitals dashboard*
