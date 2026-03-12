@@ -4,17 +4,44 @@ set -euo pipefail
 echo "=== Claude OS Worker v2 ==="
 echo "Task ID: ${TASK_ID:-unknown}"
 echo "Profile: ${TASK_PROFILE:-small}"
+echo "Agent: ${TASK_AGENT:-claude}"
 echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# Determine auth mode
-if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-    echo "Auth: OAuth token (subscription)"
-elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-    echo "Auth: API key"
-else
-    echo "ERROR: No auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
+AGENT="${TASK_AGENT:-claude}"
+
+# Determine auth mode based on agent
+case "$AGENT" in
+  claude)
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+        echo "Auth: Claude OAuth token (subscription)"
+    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+        echo "Auth: Claude API key"
+    else
+        echo "ERROR: No Claude auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
+        exit 1
+    fi
+    ;;
+  codex)
+    if [ -f "${CODEX_HOME:-/home/worker/.codex}/auth.json" ]; then
+        echo "Auth: Codex OAuth (ChatGPT subscription)"
+    else
+        echo "ERROR: No Codex auth configured. Mount auth.json at \$CODEX_HOME/auth.json."
+        exit 1
+    fi
+    ;;
+  gemini)
+    if [ -n "${GEMINI_API_KEY:-}" ]; then
+        echo "Auth: Gemini API key"
+    else
+        echo "ERROR: No Gemini auth configured. Set GEMINI_API_KEY."
+        exit 1
+    fi
+    ;;
+  *)
+    echo "ERROR: Unknown agent '${AGENT}'. Supported: claude, codex, gemini."
     exit 1
-fi
+    ;;
+esac
 
 # Configure git
 git config --global user.name "Claude OS"
@@ -89,17 +116,34 @@ if [ -n "${ANTHROPIC_MODEL:-}" ]; then
     MODEL_ARGS="--model ${ANTHROPIC_MODEL}"
 fi
 
-echo "Running task via Claude Code..."
+PROMPT="${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}"
+
+echo "Running task via ${AGENT}..."
 echo "---"
 
-# Run claude in print mode with full tool access
 cd "${WORKDIR}"
-claude -p "${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}" \
-    --system-prompt "${SYSTEM_PROMPT}" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    --output-format text \
-    ${MODEL_ARGS} \
-    2>&1 | tee /workspace/task-output.txt
+
+case "$AGENT" in
+  claude)
+    claude -p "${PROMPT}" \
+        --system-prompt "${SYSTEM_PROMPT}" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        --output-format text \
+        ${MODEL_ARGS} \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+  codex)
+    codex exec \
+        --full-auto \
+        --skip-git-repo-check \
+        "${PROMPT}" \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+  gemini)
+    gemini "${PROMPT}" \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+esac
 
 EXIT_CODE=${PIPESTATUS[0]}
 
