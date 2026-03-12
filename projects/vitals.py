@@ -147,6 +147,7 @@ def collect_task_stats():
     stats = {
         "completed": 0,
         "failed": 0,
+        "failed_credit": 0,   # "Credit balance is too low" — infra failure, not task failure
         "in_progress": 0,
         "pending": 0,
         "workshop_completed": 0,
@@ -171,6 +172,10 @@ def collect_task_stats():
             except Exception:
                 continue
 
+            # Is this a credit-balance infrastructure failure?
+            if state == "failed" and "credit balance is too low" in text.lower():
+                stats["failed_credit"] += 1
+
             # Is this a Workshop task?
             if "workshop" in f.name.lower() or "workshop" in text[:200].lower():
                 if state == "completed":
@@ -182,8 +187,9 @@ def collect_task_stats():
                 prio = prio_match.group(1).strip('"')
                 stats["task_types"][prio] = stats["task_types"].get(prio, 0) + 1
 
-    # Completion rate
-    total_finished = stats["completed"] + stats["failed"]
+    # Completion rate — exclude credit failures (infra issues, not task failures)
+    real_failed = stats["failed"] - stats["failed_credit"]
+    total_finished = stats["completed"] + real_failed
     stats["completion_rate"] = (
         round(stats["completed"] / total_finished * 100, 1)
         if total_finished > 0 else None
@@ -364,7 +370,8 @@ def render_task_health(ts, scores):
     lines.append(box_row(c("TASK HEALTH", BOLD, CYAN), "", left_pad=2))
     lines.append(box_row("", ""))
 
-    total_done = ts["completed"] + ts["failed"]
+    real_failed_total = ts["failed"] - ts["failed_credit"]
+    total_done = ts["completed"] + real_failed_total  # exclude infra failures
     cr = ts["completion_rate"]
 
     # Completion bar
@@ -379,15 +386,27 @@ def render_task_health(ts, scores):
             f"  Completed  {comp_bar} {c(str(ts['completed']), BOLD, GREEN)}",
             f"Rate {c(cr_str, BOLD)}  {grade_label}"
         ))
-        if ts["failed"] > 0:
-            fail_bar = bar(ts["failed"], total_done, width=18, color=RED)
+        if real_failed_total > 0:
+            fail_bar = bar(real_failed_total, total_done, width=18, color=RED)
             lines.append(box_row(
-                f"  Failed     {fail_bar} {c(str(ts['failed']), BOLD, RED)}",
+                f"  Failed     {fail_bar} {c(str(real_failed_total), BOLD, RED)}",
+                ""
+            ))
+        elif ts["failed_credit"] > 0:
+            lines.append(box_row(
+                f"  Failed     {c('none (real)', DIM, GREEN)}",
                 ""
             ))
         else:
             lines.append(box_row(
                 f"  Failed     {c('none', DIM, GREEN)}",
+                ""
+            ))
+        if ts["failed_credit"] > 0:
+            lines.append(box_row(
+                f"  {c('↯ Credit', DIM, YELLOW)}  "
+                f"{c(str(ts['failed_credit']), BOLD, YELLOW)} infra failures "
+                f"{c('(not counted)', DIM)}",
                 ""
             ))
     else:
