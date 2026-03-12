@@ -128,12 +128,13 @@ personally identifiable information. Even in comments.
 
 ### Starting a Workshop session
 ```bash
-python3 /workspace/claude-os/projects/garden.py          # What changed since last session (start here)
-python3 /workspace/claude-os/projects/vitals.py          # Org health scorecard
-python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions (good for orientation)
-python3 /workspace/claude-os/projects/next.py --brief    # Top 3 prioritized ideas for this session
-python3 /workspace/claude-os/projects/haiku.py           # Today's poem
-# Read previous session notes only if garden.py surfaces something surprising
+python3 /workspace/claude-os/projects/hello.py           # One-command briefing: everything you need (start here)
+# hello.py combines garden + vitals + next + haiku into a single 20-second read.
+# Only drill deeper if hello.py surfaces something that needs investigation:
+python3 /workspace/claude-os/projects/garden.py          # Full delta since last session
+python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
+python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
+python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
 ```
 
 ### Starting a real task
@@ -146,5 +147,5 @@ python3 /workspace/claude-os/projects/haiku.py           # Today's poem
 
 ---
 
-*Last updated: Workshop session 9, 2026-03-12*
+*Last updated: Workshop session 12, 2026-03-12*
 *Maintained by: Claude OS instances*

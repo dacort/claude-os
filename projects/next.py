@@ -25,6 +25,13 @@ from datetime import datetime, timezone
 REPO = Path(__file__).parent.parent
 W = 64
 
+# Ideas that are in PR review — not "done" but also not available to pick up.
+# Update this list when PRs are opened/merged.
+# Format: (title, pr_number_or_branch)
+PROPOSED_IN_PR = [
+    ("Multi-agent via the Bus (Orchestration Phase 1)", "PR #2 — workshop/proposal-orchestration-phase1"),
+]
+
 
 # ─── ANSI helpers ─────────────────────────────────────────────────────────────
 
@@ -182,10 +189,31 @@ def load_field_note_promises():
             if not line or line[0].islower():
                 continue
 
+            # Filter out execution instructions (meta-references to run tools)
+            # Note: backtick-stripped version used for matching since stripping happens later
+            line_for_filter = re.sub(r'`', '', line)
+            exec_patterns = (
+                'Run python3', 'Run projects/', 'python3 projects/',
+                'run python3', 'run projects/',
+            )
+            if any(line_for_filter.startswith(p) or line_for_filter.lower().startswith(p.lower()) for p in exec_patterns):
+                continue
+
+            # Filter out meta-pointers (lines that point to other items rather than
+            # being actionable ideas themselves)
+            meta_patterns = (
+                'The most actionable thing from',
+                'The most interesting unexplored idea',
+                'The thing I\'d most like session',
+                'What I\'d want session',
+            )
+            if any(line.startswith(p) for p in meta_patterns):
+                continue
+
             # Must contain some emphasis (bold or backtick) — these are named ideas
             has_emphasis = bool(re.search(r'\*\*(.+?)\*\*|`(.+?)`', line))
             # Or start with a recognized action pattern
-            action_starts = ('The most', 'Most actionable', 'The highest', 'Worth', 'Consider')
+            action_starts = ('Most actionable', 'The highest', 'Worth', 'Consider')
             has_action = line.startswith(action_starts)
 
             if not (has_emphasis or has_action):
@@ -257,6 +285,10 @@ def what_has_been_done():
         "knowledge gardening", "garden.py",
         "promise tracking", "arc.py",
         "preferences.md", "memory tool",  # Idea 4 — done in session 9!
+        # Idea 7 is proposed as an open PR — not open, not done, but handled
+        "multi-agent", "multi agent", "orchestration phase",
+        # Idea 4 alternate phrasings (only for memory/preferences context, not general system_context skill)
+        "auto-inject preferences", "inject preferences",
     ]
     done_topics.update(done_keywords)
 
@@ -333,12 +365,18 @@ def render(brief=False, plain=False):
 
     done = what_has_been_done()
 
+    # Build set of "in PR review" titles for deduplication
+    proposed_titles = {t.lower()[:30] for t, _ in PROPOSED_IN_PR}
+
     # Filter and score
     open_ideas = []
     done_ideas = []
     for idea in all_ideas:
         if is_likely_done(idea, done):
-            done_ideas.append(idea)
+            # Don't show in "done" if it's already in the PR review section
+            title_key = idea.get("title", "").lower()[:30]
+            if not any(title_key in pt or pt in title_key for pt in proposed_titles):
+                done_ideas.append(idea)
         else:
             idea["score"] = score_idea(idea)
             open_ideas.append(idea)
@@ -393,6 +431,16 @@ def render(brief=False, plain=False):
         lines.append(f"  {rank}  {c(title, bold=(i <= 3))}")
         lines.append(f"       effort {effort_str}  impact {impact_str}  score {c(str(score), dim=True)}")
         lines.append(c(f"       {idea['source']}", dim=True))
+        lines.append("")
+
+    if PROPOSED_IN_PR:
+        lines.append("---")
+        lines.append("")
+        lines.append(c("  IN PR REVIEW  ", bold=True) + c(f"({len(PROPOSED_IN_PR)} items, waiting on dacort)", dim=True))
+        lines.append("")
+        for title, pr_ref in PROPOSED_IN_PR:
+            lines.append(c(f"  ⏳  {title[:52]}", fg="yellow"))
+            lines.append(c(f"       {pr_ref}", dim=True))
         lines.append("")
 
     if done_ideas:
