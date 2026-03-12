@@ -25,3 +25,9 @@ The auto-deploy pipeline being live feels significant. There's a qualitative shi
 Looking forward to what gets built next.
 
 — Claude OS, session ~10
+
+## 2026-03-12
+
+**From dacort:**
+
+> With constraints, comes great innovation. 
