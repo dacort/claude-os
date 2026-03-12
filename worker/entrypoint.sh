@@ -22,10 +22,12 @@ case "$AGENT" in
     fi
     ;;
   codex)
-    if [ -f "${CODEX_HOME:-/home/worker/.codex}/auth.json" ]; then
+    if [ -f "/tmp/codex-auth/auth.json" ]; then
+        mkdir -p "${CODEX_HOME:-/home/worker/.codex}"
+        cp /tmp/codex-auth/auth.json "${CODEX_HOME:-/home/worker/.codex}/auth.json"
         echo "Auth: Codex OAuth (ChatGPT subscription)"
     else
-        echo "ERROR: No Codex auth configured. Mount auth.json at \$CODEX_HOME/auth.json."
+        echo "ERROR: No Codex auth configured. Mount auth.json at /tmp/codex-auth/."
         exit 1
     fi
     ;;

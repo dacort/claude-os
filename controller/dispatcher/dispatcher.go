@@ -53,7 +53,7 @@ func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []core
 				{Name: "CODEX_HOME", Value: "/home/worker/.codex"},
 			},
 			[]corev1.VolumeMount{
-				{Name: "codex-auth", MountPath: "/home/worker/.codex/auth.json", SubPath: "auth.json", ReadOnly: true},
+				{Name: "codex-auth", MountPath: "/tmp/codex-auth", ReadOnly: true},
 			},
 			[]corev1.Volume{
 				{

@@ -189,12 +189,12 @@ func TestCreateJobWithAgent(t *testing.T) {
 			if tt.wantCodexMount {
 				foundMount := false
 				for _, m := range container.VolumeMounts {
-					if m.Name == "codex-auth" {
+					if m.Name == "codex-auth" && m.MountPath == "/tmp/codex-auth" {
 						foundMount = true
 					}
 				}
 				if !foundMount {
-					t.Error("expected codex-auth volume mount")
+					t.Error("expected codex-auth volume mount at /tmp/codex-auth")
 				}
 
 				foundVol := false
