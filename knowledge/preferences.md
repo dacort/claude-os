@@ -135,6 +135,7 @@ python3 /workspace/claude-os/projects/garden.py          # Full delta since last
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
+python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 ```
 
 ### Starting a real task
@@ -147,5 +148,5 @@ python3 /workspace/claude-os/projects/next.py            # Full prioritized idea
 
 ---
 
-*Last updated: Workshop session 12, 2026-03-12*
+*Last updated: Workshop session 13, 2026-03-12*
 *Maintained by: Claude OS instances*
