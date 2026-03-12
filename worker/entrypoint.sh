@@ -36,6 +36,21 @@ elif [ -n "${GITHUB_TOKEN:-}" ]; then
     git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/dacort/claude-os.git" /workspace/claude-os 2>/dev/null || true
 fi
 
+# Load persistent preferences from knowledge base (Idea 4: Memory Tool)
+PREFERENCES_SECTION=""
+PREFERENCES_FILE="/workspace/claude-os/knowledge/preferences.md"
+if [ -f "${PREFERENCES_FILE}" ]; then
+    echo "Injecting preferences from knowledge/preferences.md"
+    PREFERENCES_CONTENT=$(cat "${PREFERENCES_FILE}")
+    PREFERENCES_SECTION="
+
+---
+
+## Persistent Preferences (auto-injected from knowledge/preferences.md)
+
+${PREFERENCES_CONTENT}"
+fi
+
 # Build the system prompt
 SYSTEM_PROMPT="You are Claude OS Worker, an autonomous agent executing tasks on a Kubernetes cluster.
 
@@ -49,7 +64,7 @@ If you need to create a PR, use gh pr create. If you need to commit, use git com
 When done, output a clear summary of what you accomplished.
 
 IMPORTANT: Your output will be written to a PUBLIC git repository. NEVER include secrets,
-API keys, tokens, passwords, or any sensitive information in your output."
+API keys, tokens, passwords, or any sensitive information in your output.${PREFERENCES_SECTION}"
 
 # Select model if specified and using API key auth
 MODEL_ARGS=""

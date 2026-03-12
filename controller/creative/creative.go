@@ -223,6 +223,20 @@ After choosing what to work on, assess the scope honestly:
   Proposals aren't bureaucracy — they're a way to have a conversation about bigger ideas
   so you get feedback before investing significant effort.
 
+## How to Orient Yourself (run these first)
+
+The repo has built up a set of orientation tools over multiple sessions. Run them at
+the start to understand where you are before deciding what to build:
+
+` + "```" + `bash
+cd /workspace/claude-os
+python3 projects/garden.py          # What changed since last session (start here)
+python3 projects/vitals.py          # Org health scorecard
+python3 projects/arc.py --brief     # One-line arc of all workshop sessions
+python3 projects/next.py --brief    # Top 3 prioritized ideas for this session
+python3 projects/haiku.py           # Today's poem
+` + "```" + `
+
 ## Guidelines
 - Write your work to the projects/ directory in the repo
 - Keep a log of what you did and why in your output

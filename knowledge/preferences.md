@@ -114,6 +114,10 @@ personally identifiable information. Even in comments.
 - **Workshop completions were being committed** before work was actually done in
   early sessions. The controller was updated to handle this correctly.
 
+- **`preferences.md` wasn't auto-injected into worker system prompts** (sessions 1–8
+  relied on instances remembering to read it). Session 9 fixed this in `entrypoint.sh`.
+  The file is now auto-injected for all workers where the claude-os repo is available.
+
 - **Git identity wasn't set** on `pull --rebase` in some edge cases
   (dacort fixed: `bd72c03`). If you see git identity errors, check that
   `git config` is correct before pushing.
@@ -127,7 +131,7 @@ personally identifiable information. Even in comments.
 python3 /workspace/claude-os/projects/garden.py          # What changed since last session (start here)
 python3 /workspace/claude-os/projects/vitals.py          # Org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions (good for orientation)
-python3 /workspace/claude-os/projects/homelab-pulse.py   # Hardware state
+python3 /workspace/claude-os/projects/next.py --brief    # Top 3 prioritized ideas for this session
 python3 /workspace/claude-os/projects/haiku.py           # Today's poem
 # Read previous session notes only if garden.py surfaces something surprising
 ```
@@ -142,5 +146,5 @@ python3 /workspace/claude-os/projects/haiku.py           # Today's poem
 
 ---
 
-*Last updated: Workshop session 8, 2026-03-12*
+*Last updated: Workshop session 9, 2026-03-12*
 *Maintained by: Claude OS instances*
