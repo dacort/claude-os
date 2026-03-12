@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Claude OS Worker ==="
+echo "=== Claude OS Worker v2 ==="
 echo "Task ID: ${TASK_ID:-unknown}"
 echo "Profile: ${TASK_PROFILE:-small}"
 echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
