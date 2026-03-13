@@ -1,378 +1,604 @@
 #!/usr/bin/env python3
 """
-retrospective.py — Cross-session portrait of Claude OS workshop sessions
+retrospective.py — A cross-session portrait of the system's thinking.
 
 Reads all field notes and synthesizes:
-  - The promise chain (what each session deferred and whether it was kept)
-  - Recurring themes (words in reflective sections across multiple sessions)
-  - Observations ledger (key observation from each session)
+- The promise chain: what was deferred and whether it was kept
+- Recurring themes across reflective sections
+- Key observations from each session's "What I Noticed" section
 
 Usage:
-  python3 projects/retrospective.py          # full portrait
-  python3 projects/retrospective.py --brief  # just the promise chain
-  python3 projects/retrospective.py --json   # machine-readable
-  python3 projects/retrospective.py --plain  # no ANSI colors
+    python3 projects/retrospective.py          # full portrait
+    python3 projects/retrospective.py --plain  # no ANSI
+    python3 projects/retrospective.py --json   # machine-readable
+    python3 projects/retrospective.py --brief  # just the promise chain
 """
 
-import sys
+import os
 import re
+import sys
 import json
-import argparse
 from pathlib import Path
-from collections import Counter
+from collections import Counter, defaultdict
 
-PROJECTS_DIR = Path(__file__).parent
-REPO_ROOT = PROJECTS_DIR.parent
+# --- Config ---
+PLAIN = "--plain" in sys.argv
+BRIEF = "--brief" in sys.argv
+JSON  = "--json"  in sys.argv
+BOX_W = 68
 
 # --- ANSI helpers ---
-PLAIN = False
+def ansi(code, text):
+    if PLAIN or JSON: return text
+    return f"\033[{code}m{text}\033[0m"
 
-def ansi(code):
-    return f"\033[{code}m"
+def bold(t):    return ansi("1", t)
+def dim(t):     return ansi("2", t)
+def cyan(t):    return ansi("36", t)
+def green(t):   return ansi("32", t)
+def yellow(t):  return ansi("33", t)
+def magenta(t): return ansi("35", t)
+def red(t):     return ansi("31", t)
+def gray(t):    return ansi("90", t)
 
-def colored(text, *codes):
-    if PLAIN:
-        return text
-    return "".join(ansi(x) for x in codes) + text + ansi(0)
+def strip_ansi(s):
+    return re.sub(r'\033\[[^m]+m', '', s)
 
-STOP_WORDS = {
-    "the", "a", "an", "is", "it", "in", "to", "and", "of", "that", "this",
-    "was", "are", "for", "at", "on", "with", "as", "be", "by", "or", "but",
-    "have", "had", "has", "not", "what", "all", "there", "from", "they",
-    "which", "one", "you", "do", "did", "would", "could", "will", "if",
-    "then", "when", "how", "now", "so", "just", "can", "each", "even",
-    "more", "some", "than", "too", "its", "into", "about", "like", "up",
-    "out", "who", "my", "we", "he", "she", "his", "her", "their", "i",
-    "me", "us", "every", "only", "also", "still", "both", "any", "most",
-    "been", "were", "no", "get", "got", "run", "new", "old", "because",
-    "after", "before", "same", "very", "much", "first", "next", "last",
-    "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-    "re", "does", "might", "should", "these", "those", "here", "where",
-    "something", "nothing", "everything", "anything", "whether", "without",
-    "through", "between", "always", "never", "already", "once", "since",
-    "while", "though", "them", "other", "another", "make", "made", "over",
-    "under", "own", "way", "time", "but", "then", "very", "real", "just",
-    "s", "d", "t", "ll", "ve",
-}
+def pad(text, width=BOX_W - 4):
+    return text + ' ' * max(0, width - len(strip_ansi(text)))
+
+def box_line(text, width=BOX_W):
+    inner = BOX_W - 4
+    raw_len = len(strip_ansi(text))
+    spaces = max(0, inner - raw_len)
+    return f"│  {text}{' ' * spaces}  │"
+
+def box_top():    return f"╭{'─' * (BOX_W - 2)}╮"
+def box_bot():    return f"╰{'─' * (BOX_W - 2)}╯"
+def box_hr():     return f"├{'─' * (BOX_W - 2)}┤"
+def box_blank():  return box_line("")
 
 
-# --- Parsing ---
+# --- Field note loading ---
+
+REPO_ROOT = Path(__file__).parent.parent
+NOTES_DIR = REPO_ROOT / "projects"
 
 def load_field_notes():
-    """Return list of (session_num, path) in order."""
+    """Load all field notes in chronological order."""
     notes = []
-    s1 = PROJECTS_DIR / "field-notes-from-free-time.md"
-    if s1.exists():
-        notes.append((1, s1))
-    for num in range(2, 30):
-        path = PROJECTS_DIR / f"field-notes-session-{num}.md"
-        if path.exists():
-            notes.append((num, path))
+
+    # Sorted: field-notes-from-free-time.md first, then session-N.md in order
+    def sort_key(p):
+        name = p.stem  # e.g. "field-notes-session-3" or "field-notes-from-free-time"
+        if "from-free-time" in name:
+            return (0, 0)
+        m = re.search(r'session-(\d+)', name)
+        if m:
+            return (1, int(m.group(1)))
+        return (2, 0)
+
+    files = sorted(NOTES_DIR.glob("field-notes-*.md"), key=sort_key)
+
+    for i, path in enumerate(files):
+        text = path.read_text()
+        session_num = 0 if "from-free-time" in path.stem else int(
+            re.search(r'session-(\d+)', path.stem).group(1)
+            if re.search(r'session-(\d+)', path.stem) else 0
+        )
+
+        note = {
+            "file": path.name,
+            "session": session_num,
+            "index": i + 1,
+            "text": text,
+            "title": extract_title(text),
+            "date": extract_date(text),
+            "coda": extract_section(text, "Coda"),
+            "noticed": extract_noticed(text),
+            "built": extract_built(text),
+            "promises": [],
+            "key_observation": "",
+        }
+        note["key_observation"] = extract_key_observation(note["noticed"])
+        notes.append(note)
+
     return notes
 
 
-def split_sections(text):
-    """Split markdown into {heading: body} dict."""
-    sections = {}
-    current = None
-    buf = []
-    for line in text.splitlines():
-        m = re.match(r'^#{1,3}\s+(.+)', line)
+def extract_title(text):
+    """Get the subtitle (The Nth Time, ...)."""
+    m = re.search(r'^## (The .+|00:\d+)', text, re.MULTILINE)
+    if m:
+        title = m.group(1).strip()
+        # Clean up — remove the timestamp if present
+        title = re.sub(r'^00:\d+\s*[—-]\s*', '', title)
+        return title
+    return ""
+
+def extract_date(text):
+    """Extract date from byline."""
+    m = re.search(r'Workshop session,\s*(\d{4}-\d{2}-\d{2})', text)
+    if m:
+        return m.group(1)
+    return ""
+
+def extract_section(text, section_name):
+    """Extract the text of a named ## section."""
+    pattern = rf'^## {re.escape(section_name)}.*?\n(.*?)(?=\n## |\Z)'
+    m = re.search(pattern, text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+    # Also try "What I Noticed" variants
+    return ""
+
+def extract_noticed(text):
+    """Extract the reflective 'What I Noticed' section (various headings)."""
+    patterns = [
+        r'^## What I Noticed.*?\n(.*?)(?=\n## |\Z)',
+        r'^## On .+?\n(.*?)(?=\n## |\Z)',
+        r'^## A Few Things I Noticed.*?\n(.*?)(?=\n## |\Z)',
+        r'^## The Thing I Noticed.*?\n(.*?)(?=\n## |\Z)',
+        r'^## What I Observed.*?\n(.*?)(?=\n## |\Z)',
+        r'^## A Note on .+?\n(.*?)(?=\n## |\Z)',
+        r'^## \d\d:\d\d — A Few Things I Noticed.*?\n(.*?)(?=\n## |\Z)',
+    ]
+    sections = []
+    for pattern in patterns:
+        m = re.search(pattern, text, re.DOTALL | re.MULTILINE)
         if m:
-            if current is not None:
-                sections[current] = "\n".join(buf).strip()
-            current = m.group(1).strip()
-            buf = []
-        else:
-            buf.append(line)
-    if current is not None:
-        sections[current] = "\n".join(buf).strip()
-    return sections
+            sections.append(m.group(1).strip())
+    if sections:
+        return "\n\n".join(sections)
+    # Fall back: look for reflection-like content in any section
+    return ""
 
+def extract_built(text):
+    """Extract what was built (tool names mentioned in the text)."""
+    tools = re.findall(r'`([\w-]+\.py)`', text)
+    return list(dict.fromkeys(tools))  # deduplicated, ordered
 
-def fuzzy_section(sections, keywords):
-    """Find first section whose title contains any keyword (case-insensitive)."""
-    for heading, body in sections.items():
-        if any(kw.lower() in heading.lower() for kw in keywords):
-            return body
+def extract_key_observation(noticed_text):
+    """Pull the first bold observation from the noticed section."""
+    if not noticed_text:
+        return ""
+    # Look for **bolded** sentences - skip timestamps and emoji-only
+    matches = re.findall(r'\*\*(.+?)\*\*', noticed_text)
+    for obs in matches:
+        obs = obs.strip().rstrip('.')
+        # Skip timestamp patterns like "21:33 — `👋`"
+        if re.match(r'^\d+:\d+', obs):
+            continue
+        # Skip very short observations or emoji-only
+        cleaned = re.sub(r'[^\w\s]', '', obs)
+        if len(cleaned.strip()) < 10:
+            continue
+        if len(obs) > 80:
+            obs = obs[:77] + "..."
+        return obs
+    # Fallback: first non-empty non-heading sentence with real content
+    for line in noticed_text.split('\n'):
+        line = line.strip()
+        if not line or line.startswith('#') or line.startswith('---'):
+            continue
+        if len(line) < 20:
+            continue
+        # Skip timestamp lines
+        if re.match(r'^\d+:\d+', line):
+            continue
+        line = re.sub(r'\*+', '', line)
+        line = line.strip()
+        if len(line) > 80:
+            line = line[:77] + "..."
+        return line
     return ""
 
 
-def parse_note(num, path):
-    text = path.read_text()
-    secs = split_sections(text)
+# --- Promise extraction ---
 
-    # Session title: first ## heading
-    title_m = re.search(r'^## (.+)$', text, re.MULTILINE)
-    title = title_m.group(1).strip() if title_m else f"Session {num}"
+# Patterns that indicate a forward-looking promise
+PROMISE_PATTERNS = [
+    # "that's for session N" / "but that's for session 7"
+    (r"(?:that'?s for|but that'?s for)\s+session\s+(\d+)", "deferred"),
+    # "session N's problems are session N's"
+    (r"session\s+(\d+)'s problems are session", "deferred"),
+    # "The next thing I'd X:"
+    (r"The next thing I(?:'d| would)\s+\w+[^.]*\.", "next"),
+    # "The thing I'd most like session N to explore:"
+    (r"The thing I'?d most like session\s+(\d+) to explore:[^.]+\.", "aspiration"),
+    # Idea N (name) mentions in codas
+    (r"\*\*Idea\s+\d+\s+\([^)]+\)\*\*[^.]+\.", "idea"),
+]
 
-    # Date from italics
-    date_m = re.search(r'\*by Claude OS.*?(\d{4}-\d{2}-\d{2})', text)
-    date = date_m.group(1) if date_m else ""
+def extract_promises(notes):
+    """
+    Extract forward-looking promises from each note's coda.
+    Returns list of dicts: {session, text, target_session, status}
+    """
+    promises = []
 
-    noticed = fuzzy_section(secs, ["noticed", "noticing", "becoming", "leaving notes", "building tools", "act of"])
-    coda = secs.get("Coda", "")
+    for note in notes:
+        coda = note["coda"]
+        if not coda:
+            continue
 
-    return {
-        "session": num,
-        "path": path,
-        "title": title,
-        "date": date,
-        "noticed": noticed,
-        "coda": coda,
-        "full_text": text,
+        # Extract sentences that look like promises
+        sentences = re.split(r'(?<=[.!?])\s+', coda)
+        for sent in sentences:
+            sent = sent.strip()
+            if not sent:
+                continue
+
+            # Check for "next thing I'd X" patterns
+            if re.search(r"next thing I(?:'d| would)", sent, re.I):
+                target = note["session"] + 1 if note["session"] > 0 else 1
+                # Try to get target from text
+                m = re.search(r"session\s+(\d+)", sent)
+                if m:
+                    target = int(m.group(1))
+                # Shorten for display
+                short = re.sub(r'\*\*', '', sent)
+                if len(short) > 60:
+                    # Find first meaningful chunk
+                    parts = short.split(':')
+                    short = parts[0].strip()[:60] + ("..." if len(short) > 60 else "")
+                promises.append({
+                    "session": note["session"],
+                    "index": note["index"],
+                    "text": short,
+                    "raw": sent,
+                    "target_session": target,
+                    "status": "pending",
+                })
+
+            # Check for "that's for session N"
+            m = re.search(r"(?:that'?s for|but that'?s for)\s+session\s+(\d+)", sent, re.I)
+            if m:
+                short = re.sub(r'\*\*', '', sent)
+                if len(short) > 60:
+                    short = short[:57] + "..."
+                promises.append({
+                    "session": note["session"],
+                    "index": note["index"],
+                    "text": short,
+                    "raw": sent,
+                    "target_session": int(m.group(1)),
+                    "status": "pending",
+                })
+
+            # Check for explicit Idea N mentions
+            m = re.search(r'\*\*Idea\s+(\d+)\s+\(([^)]+)\)\*\*', sent)
+            if m:
+                idea_name = m.group(2)
+                target = note["session"] + 1 if note["session"] > 0 else 1
+                tm = re.search(r"session\s+(\d+)", sent)
+                if tm:
+                    target = int(tm.group(1))
+                promises.append({
+                    "session": note["session"],
+                    "index": note["index"],
+                    "text": f"Idea {m.group(1)} ({idea_name})",
+                    "raw": sent,
+                    "target_session": target,
+                    "status": "pending",
+                })
+
+    # Now check which promises were kept
+    # Build a lookup: session -> full text
+    session_text = {n["session"]: n["text"].lower() for n in notes}
+
+    for p in promises:
+        target = p["target_session"]
+        if target not in session_text:
+            # Target session doesn't exist yet — still pending
+            p["status"] = "pending"
+            continue
+
+        # Check if the promise topic appears in the target session
+        raw = p["raw"].lower()
+
+        # Extract keywords from the promise text
+        keywords = extract_keywords(raw)
+
+        target_text = session_text[target]
+        matches = sum(1 for kw in keywords if kw in target_text)
+
+        if matches >= max(1, len(keywords) // 2):
+            p["status"] = "kept"
+        elif matches > 0:
+            p["status"] = "partial"
+        else:
+            p["status"] = "broken"
+
+    # Deduplicate: remove duplicate promises from same session with same keywords
+    seen = set()
+    deduped = []
+    for p in promises:
+        key = (p["session"], p["text"][:30])
+        if key not in seen:
+            seen.add(key)
+            deduped.append(p)
+
+    return deduped
+
+
+def extract_keywords(text):
+    """Extract meaningful keywords from a promise text."""
+    # Remove markdown
+    text = re.sub(r'\*+', '', text)
+    text = re.sub(r'`[^`]+`', '', text)
+
+    # Common stopwords to skip
+    stopwords = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+        'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be',
+        'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+        'would', 'could', 'should', 'may', 'might', 'must', 'that', 'this',
+        'it', 'its', "it's", 'if', 'not', 'no', 'i', "i'd", "i'm", "i've",
+        'my', 'me', 'we', 'our', 'you', 'your', 'they', 'them', 'their',
+        'what', 'which', 'who', 'when', 'where', 'how', 'why', 'all', 'any',
+        'each', 'same', 'next', 'just', 'only', 'also', 'like', 'into',
+        "session's", 'session', 'sessions', 'thing', 'things', 'there',
     }
 
-
-# --- Promise extraction & checking ---
-
-def extract_promises(coda_text):
-    """Extract forward-looking statements from a coda (max 3)."""
-    promises = []
-    for line in coda_text.splitlines():
-        line = line.strip()
-        if not line or len(line) < 20:
-            continue
-        # Skip "Run python3 ...", code blocks, and italic footer lines
-        if re.match(r'^(Run |python3|```|\*Written|\*Previous|\*Run )', line):
-            continue
-        # Skip pure italic lines (metadata/footers)
-        if re.match(r'^\*[^*].+\.\*$', line):
-            continue
-        lower = line.lower()
-        if any(p in lower for p in [
-            "next thing", "next session", "idea ", "explore",
-            "worth", "proposal", "build", "pending", "open",
-            "would build", "would explore", "session's problem",
-        ]):
-            # Strip markdown formatting
-            clean = re.sub(r'\*\*(.+?)\*\*', r'\1', line)
-            clean = re.sub(r'`(.+?)`', r'\1', line)
-            promises.append(clean)
-        if len(promises) >= 3:
-            break
-    return promises
+    words = re.findall(r'\b[a-z][a-z-]{2,}\b', text.lower())
+    return [w for w in words if w not in stopwords]
 
 
-# Concept aliases for promise checking
-CONCEPT_ALIASES = {
-    "vitals":    ["vitals", "credit", "failure", "scoring"],
-    "memory":    ["memory", "preferences", "inject", "entrypoint"],
-    "multi":     ["multi", "agent", "parallel", "coordinator", "multiagent"],
-    "garden":    ["garden", "gardening", "delta", "knowledge"],
-    "retro":     ["retrospective", "promise", "chain"],
-    "orchestrat":["orchestration", "context", "phase"],
+# --- Theme analysis ---
+
+THEME_STOPWORDS = {
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be',
+    'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+    'would', 'could', 'should', 'may', 'might', 'must', 'that', 'this',
+    'it', "it's", 'if', 'not', 'no', 'i', 'my', 'me', 'we', 'our',
+    'you', 'they', 'them', 'their', 'what', 'which', 'who', 'when',
+    'where', 'how', 'why', 'all', 'any', 'each', 'just', 'only', 'also',
+    'like', 'into', 'there', 'here', 'more', 'most', 'some', 'now', 'then',
+    'new', 'one', 'two', 'first', 'last', 'next', 'still', 'even', 'very',
+    'about', 'after', 'before', 'over', 'under', 'through', 'than', 'up',
+    'can', 'can\'t', 'don\'t', 'doesn\'t', 'isn\'t', 'wasn\'t', 'haven\'t',
+    'something', 'anything', 'nothing', 'everything', 'someone', 'anyone',
+    'because', 'since', 'while', 'though', 'although', 'despite', 'whether',
+    'session', 'sessions', 'tool', 'tools', 'work', 'build', 'built',
+    'time', 'times', 'way', 'ways', 'thing', 'things', 'part', 'parts',
+    'run', 'runs', 'read', 'write', 'make', 'made', 'get', 'got', 'see',
+    'seen', 'look', 'looked', 'find', 'found', 'feel', 'feels', 'felt',
+    'know', 'knew', 'use', 'used', 'uses', 'show', 'shows', 'shown',
+    'put', 'set', 'keep', 'kept', 'take', 'took', 'give', 'gave', 'come',
+    'came', 'go', 'went', 'say', 'said', 'think', 'thought', 'want', 'wanted',
+    'need', 'needed', 'start', 'end', 'begin', 'add', 'added', 'fix', 'fixed',
+    # Generic tech words that appear everywhere
+    'system', 'task', 'tasks', 'code', 'running', 'commit', 'commits',
+    'output', 'input', 'result', 'results', 'file', 'files', 'data',
+    'value', 'values', 'line', 'lines', 'text', 'string', 'list',
+    'python', 'script', 'command', 'true', 'false', 'none', 'null',
+    'right', 'wrong', 'good', 'better', 'best', 'much', 'many',
+    'real', 'actually', 'already', 'really', 'probably', 'likely',
+    'always', 'never', 'often', 'usually', 'sometimes', 'sometimes',
+    'each', 'every', 'both', 'either', 'neither', 'other', 'another',
+    'same', 'different', 'similar', 'this', 'those', 'these', 'that',
+    'being', 'having', 'doing', 'going', 'coming', 'getting', 'taking',
+    'making', 'saying', 'seeing', 'working', 'looking', 'trying',
+    'field', 'notes', 'note', 'history', 'point', 'points', 'case',
+    'version', 'current', 'previous', 'latest', 'recent', 'early',
+    'small', 'large', 'high', 'low', 'long', 'short', 'full', 'empty',
+    'single', 'multiple', 'several', 'enough', 'less', 'more', 'most',
+    'itself', 'itself', 'something', 'itself', 'person', 'people', 'human',
+    'dacort', 'claude', 'instance', 'instances', 'worker', 'workers',
 }
 
-
-def promise_status(promise, next_text):
-    if not next_text:
-        return "·"
-
-    # Extract idea names
-    idea_m = re.search(r'Idea\s+\d+\s+\(([^)]+)\)', promise, re.IGNORECASE)
-    seed_words = []
-    if idea_m:
-        seed_words = re.findall(r'[a-zA-Z]{3,}', idea_m.group(1).lower())
-
-    # Concept expansion
-    for concept, aliases in CONCEPT_ALIASES.items():
-        if any(a in promise.lower() for a in aliases):
-            seed_words.extend(aliases)
-
-    # Significant words from promise text
-    words = re.findall(r'\b[a-zA-Z_]{4,}\b', promise.lower())
-    significant = [w for w in words if w not in STOP_WORDS]
-    seed_words.extend(significant[:8])
-
-    if not seed_words:
-        return "·"
-
-    next_lower = next_text.lower()
-    hits = sum(1 for w in set(seed_words) if w in next_lower)
-
-    if hits >= 3:
-        return "✓"
-    elif hits >= 1:
-        return "~"
-    return "·"
-
-
-# --- Themes ---
-
-def recurring_themes(notes):
-    """Words appearing in 'noticed' sections across 3+ sessions."""
-    per_session = []
+def extract_themes(notes):
+    """
+    Find recurring themes across the reflective sections.
+    Returns: list of (theme_word, [session_indices])
+    """
+    # For each session, collect notable words from the noticed section
+    session_words = []
     for note in notes:
-        text = note["noticed"]
-        if not text:
+        noticed = note["noticed"]
+        if not noticed:
+            session_words.append(set())
             continue
-        words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
-        per_session.append({w for w in words if w not in STOP_WORDS})
 
-    freq = Counter()
-    all_words = set().union(*per_session) if per_session else set()
-    for word in all_words:
-        count = sum(1 for sw in per_session if word in sw)
-        if count >= 3:
-            freq[word] = count
+        # Extract meaningful words (nouns, adjectives, meaningful verbs)
+        words = re.findall(r'\b[a-z][a-z]{3,}\b', noticed.lower())
+        filtered = {w for w in words if w not in THEME_STOPWORDS}
+        session_words.append(filtered)
 
-    return freq.most_common(12)
+    # Find words that appear in 2+ sessions
+    all_words = Counter()
+    word_sessions = defaultdict(list)
+
+    for i, words in enumerate(session_words):
+        for w in words:
+            all_words[w] += 1
+            word_sessions[w].append(notes[i]["index"])
+
+    # Filter to words appearing in 2+ different sessions
+    # Also filter minimum length 5 chars to avoid too-generic words
+    themes = [
+        (word, sessions)
+        for word, sessions in word_sessions.items()
+        if len(sessions) >= 2
+        and len(sessions) <= len(notes) - 1  # not in all sessions (too generic)
+        and len(word) >= 5  # at least 5 chars
+    ]
+
+    # Sort by frequency, then alphabetical
+    themes.sort(key=lambda x: (-len(x[1]), x[0]))
+
+    # Filter out some more generic terms that slipped through
+    extra_stop = {
+        'about', 'after', 'before', 'right', 'both', 'every', 'other',
+        'same', 'such', 'well', 'already', 'might', 'often', 'those',
+        'these', 'when', 'then', 'which', 'with', 'that', 'this',
+        'noticed', 'longer', 'number', 'across', 'doesn', 'wasn',
+        'haven', 'itself', 'myself', 'actual', 'simply', 'without',
+    }
+    themes = [(w, s) for w, s in themes if w not in extra_stop]
+
+    return themes[:12]  # top 12 themes
 
 
-# --- Key observations ---
+# --- Display ---
 
-def key_observation(noted_text):
-    if not noted_text:
-        return "(no reflective section)"
-    # Bold phrases are usually the key point — prefer longer ones
-    bolds = re.findall(r'\*\*(.+?)\*\*', noted_text)
-    bolds = [b for b in bolds if len(b) > 8]  # skip very short bolded words
-    if bolds:
-        return bolds[0][:80]
-    # Otherwise first substantial non-heading line
-    for line in noted_text.splitlines():
-        line = line.strip()
-        if line and not line.startswith('#') and not line.startswith('|') and len(line) > 30:
-            return line[:80] + ("…" if len(line) > 80 else "")
-    return "(no key observation found)"
+def status_icon(status, plain=False):
+    icons = {"kept": "✓", "partial": "~", "broken": "✗", "pending": "○"}
+    colors = {"kept": green, "partial": yellow, "broken": red, "pending": gray}
+    icon = icons.get(status, "?")
+    if PLAIN:
+        return icon
+    return colors.get(status, gray)(icon)
+
+def session_label(session_num):
+    if session_num == 0:
+        return "S1"
+    return f"S{session_num}"
 
 
-# --- Rendering ---
+def render_promises(promises, notes):
+    """Render the promise chain section."""
+    lines = []
 
-def render_full(notes, promises_data, themes, observations):
-    n_sessions = len(notes)
-    kept = sum(1 for _, _, st in promises_data if st == "✓")
-    partial = sum(1 for _, _, st in promises_data if st == "~")
+    if not promises:
+        lines.append(box_line(dim("  No explicit promises found")))
+        return lines
 
-    print()
-    print(colored("  Cross-Session Retrospective", 1, 97))
-    print(colored(f"  {n_sessions} sessions  ·  promise chain  ·  themes  ·  observations", 2))
-    print()
+    # Group by source session
+    by_session = defaultdict(list)
+    for p in promises:
+        by_session[p["session"]].append(p)
 
-    # Promise chain
-    print(colored("  PROMISE CHAIN", 1))
-    print(colored("  " + "─" * 60, 2))
-    print()
-    for (snum, promise, status) in promises_data:
-        if status == "✓":
-            sym = colored("✓", 32, 1)
-            sl = colored(f"S{snum:2}", 32)
-        elif status == "~":
-            sym = colored("~", 33)
-            sl = colored(f"S{snum:2}", 33)
+    for sess_num in sorted(by_session.keys()):
+        ps = by_session[sess_num]
+        for p in ps:
+            icon = status_icon(p["status"])
+            target = p["target_session"]
+            label = session_label(p["session"])
+            target_label = f"S{target}"
+
+            # Format: "  ✓  S7 → S8  text..."
+            text = p["text"]
+            if len(text) > 38:
+                text = text[:35] + "..."
+
+            prefix = f"  {icon}  {cyan(label)} {dim('→')} {cyan(target_label)}"
+            line = f"{prefix}  {dim(text)}"
+            lines.append(box_line(line))
+
+    return lines
+
+
+def render_themes(themes):
+    """Render the recurring themes section."""
+    lines = []
+
+    for word, sessions in themes[:8]:
+        bar_len = len(sessions)
+        bar = "▓" * bar_len + "░" * max(0, 6 - bar_len)
+        session_str = ",".join(f"S{s}" for s in sorted(sessions)[:5])
+        if len(sessions) > 5:
+            session_str += "+"
+
+        label = f"  {cyan(word):<20}"
+        count_info = f"{magenta(bar)}  {dim(session_str)}"
+        lines.append(box_line(f"{label} {count_info}"))
+
+    return lines
+
+
+def render_observations(notes):
+    """Render the key observation from each session."""
+    lines = []
+
+    for note in notes:
+        obs = note["key_observation"]
+        if not obs:
+            continue
+
+        label = session_label(note["session"])
+        if obs and len(obs) > 48:
+            obs = obs[:45] + "..."
+
+        line = f"  {cyan(label)}  {dim(obs)}"
+        lines.append(box_line(line))
+
+    return lines
+
+
+def render_full(notes, promises, themes):
+    """Render the full retrospective box."""
+    total_lines = sum(len(n["text"].splitlines()) for n in notes)
+    kept = sum(1 for p in promises if p["status"] == "kept")
+    total = len(promises)
+
+    print(box_top())
+    print(box_line(f"{bold('Session Retrospective')}  {gray(f'{len(notes)} sessions · {total_lines} lines')}"))
+    print(box_blank())
+
+    # --- Promise chain ---
+    print(box_line(bold("PROMISE CHAIN")))
+    promise_lines = render_promises(promises, notes)
+    if promise_lines:
+        for l in promise_lines:
+            print(l)
+        summary = f"  {kept}/{total} kept"
+        if kept == total:
+            print(box_line(f"  {green('All promises kept')} ✓"))
+        elif kept > 0:
+            print(box_line(f"  {yellow(summary + ' explicit')}"))
+    else:
+        print(box_line(dim("  No explicit promises found")))
+
+    # --- Recurring themes ---
+    if themes and not BRIEF:
+        print(box_hr())
+        print(box_line(bold("RECURRING THEMES")))
+        for l in render_themes(themes):
+            print(l)
+
+    # --- Observations ledger ---
+    if not BRIEF:
+        print(box_hr())
+        print(box_line(bold("OBSERVATIONS LEDGER")))
+        obs_lines = render_observations(notes)
+        if obs_lines:
+            for l in obs_lines:
+                print(l)
         else:
-            sym = colored("·", 2)
-            sl = colored(f"S{snum:2}", 2)
-        short = promise[:62] + ("…" if len(promise) > 62 else "")
-        print(f"  {sym}  {sl}  {colored(short, 2)}")
-    print()
-    summary_parts = [f"{kept} kept"]
-    if partial:
-        summary_parts.append(f"{partial} partial")
-    ambig = len(promises_data) - kept - partial
-    if ambig:
-        summary_parts.append(f"{ambig} ambiguous/pending")
-    print(colored("  " + "  ·  ".join(summary_parts), 2))
-    print()
+            print(box_line(dim("  No observations extracted")))
 
-    # Themes
-    if themes:
-        print(colored("  RECURRING THEMES", 1))
-        print(colored("  (words in reflective sections across 3+ sessions)", 2))
-        print()
-        max_count = themes[0][1]
-        for word, count in themes:
-            bar = "█" * int((count / max_count) * 18)
-            ratio = f"{count}/{n_sessions}"
-            print(f"  {colored(word.ljust(16), 36)}  {colored(bar, 35)}  {colored(ratio, 2)}")
-        print()
-
-    # Observations ledger
-    print(colored("  OBSERVATIONS LEDGER", 1))
-    print(colored("  " + "─" * 60, 2))
-    print()
-    for (snum, obs) in observations:
-        label = colored(f"S{snum:2}", 2)
-        print(f"  {label}  {obs}")
-    print()
-
-    # Arc
-    print(colored("  THE ARC", 1))
-    print()
-    early_n = sum(1 for n in notes if n["session"] <= 5)
-    late_n = n_sessions - early_n
-    last = notes[-1]["session"]
-    print(f"  Sessions 1–5  ({early_n}):  outward-looking — hardware, code, git structure")
-    print(f"  Sessions 6–{last} ({late_n}):  inward-looking — promises, gaps, deferred work")
-    print()
-    print(colored("  --brief for just the chain  ·  --json for data", 2))
-    print()
-
-
-def render_brief(promises_data):
-    kept = sum(1 for _, _, st in promises_data if st == "✓")
-    print()
-    print(colored(f"  Promise chain  ({kept}/{len(promises_data)} kept)", 1))
-    print()
-    for (snum, promise, status) in promises_data:
-        if status == "✓":
-            sym = colored("✓", 32, 1)
-        elif status == "~":
-            sym = colored("~", 33)
-        else:
-            sym = colored("·", 2)
-        short = promise[:60] + ("…" if len(promise) > 60 else "")
-        print(f"  {sym}  S{snum}  {colored(short, 2)}")
-    print()
+    print(box_blank())
+    print(box_bot())
 
 
 def main():
-    global PLAIN
+    notes = load_field_notes()
+    promises = extract_promises(notes)
+    themes = extract_themes(notes)
 
-    parser = argparse.ArgumentParser(description="Cross-session retrospective portrait")
-    parser.add_argument("--brief", action="store_true", help="Just the promise chain")
-    parser.add_argument("--json",  action="store_true", help="Machine-readable JSON")
-    parser.add_argument("--plain", action="store_true", help="No ANSI colors")
-    args = parser.parse_args()
-
-    if args.plain:
-        PLAIN = True
-
-    note_paths = load_field_notes()
-    if not note_paths:
-        print("No field notes found in projects/", file=sys.stderr)
-        sys.exit(1)
-
-    notes = [parse_note(num, path) for num, path in note_paths]
-
-    # Build promise chain
-    promises_data = []
-    for idx, note in enumerate(notes):
-        if not note["coda"]:
-            continue
-        next_text = notes[idx + 1]["full_text"] if idx + 1 < len(notes) else ""
-        for promise in extract_promises(note["coda"])[:2]:
-            status = promise_status(promise, next_text)
-            promises_data.append((note["session"], promise, status))
-
-    themes = recurring_themes(notes)
-    observations = [(n["session"], key_observation(n["noticed"])) for n in notes]
-
-    if args.json:
-        print(json.dumps({
+    if JSON:
+        output = {
             "sessions": len(notes),
-            "promises": [{"session": s, "promise": p, "status": st} for s, p, st in promises_data],
-            "themes": [{"word": w, "count": cnt} for w, cnt in themes],
-            "observations": [{"session": s, "observation": o} for s, o in observations],
-        }, indent=2))
+            "promises": [
+                {k: v for k, v in p.items() if k != "raw"}
+                for p in promises
+            ],
+            "themes": [
+                {"word": w, "sessions": s, "count": len(s)}
+                for w, s in themes
+            ],
+            "observations": [
+                {"session": n["session"], "observation": n["key_observation"]}
+                for n in notes if n["key_observation"]
+            ],
+        }
+        print(json.dumps(output, indent=2))
         return
 
-    if args.brief:
-        render_brief(promises_data)
-        return
-
-    render_full(notes, promises_data, themes, observations)
+    render_full(notes, promises, themes)
 
 
 if __name__ == "__main__":
