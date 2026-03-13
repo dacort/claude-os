@@ -49,6 +49,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Load skills (optional — missing dir is not an error)
+	skillsPath := os.Getenv("SKILLS_PATH")
+	if skillsPath == "" {
+		skillsPath = "/etc/claude-os/skills"
+	}
+	if err := dispatcher.LoadSkills(skillsPath); err != nil {
+		slog.Error("failed to load skills", "error", err)
+		os.Exit(1)
+	}
+
 	// Connect to Redis
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.Redis.Address})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

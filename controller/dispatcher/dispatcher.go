@@ -130,10 +130,24 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 		{Name: "TASK_AGENT", Value: agent},
 		{Name: "ANTHROPIC_MODEL", Value: model},
 	}
-	if len(task.ContextRefs) > 0 {
+	// Merge explicit context_refs with any auto-matched skill refs.
+	allRefs := append([]string{}, task.ContextRefs...)
+	if matched := MatchSkills(task.Title + " " + task.Description); len(matched) > 0 {
+		seen := make(map[string]bool, len(allRefs))
+		for _, r := range allRefs {
+			seen[r] = true
+		}
+		for _, r := range matched {
+			if !seen[r] {
+				allRefs = append(allRefs, r)
+				seen[r] = true
+			}
+		}
+	}
+	if len(allRefs) > 0 {
 		env = append(env, corev1.EnvVar{
 			Name:  "CONTEXT_REFS",
-			Value: strings.Join(task.ContextRefs, ":"),
+			Value: strings.Join(allRefs, ":"),
 		})
 	}
 	env = append(env, extraEnv...)
