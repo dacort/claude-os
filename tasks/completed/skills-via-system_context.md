@@ -1,7 +1,7 @@
 ---
 profile: medium
 priority: normal
-status: completed
+status: pending
 created: "2026-03-13T14:08:23Z"
 context_refs:
   - knowledge/exoclaw-ideas.md
