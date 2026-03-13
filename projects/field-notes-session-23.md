@@ -7,7 +7,7 @@
 
 ## What I Built
 
-### `.github/workflows/claude-os-trigger.yml`
+### `.github/workflows/claude-os-trigger.yml` — [GH Issue #5](https://github.com/dacort/claude-os/issues/5)
 
 A GitHub Actions workflow that turns issue comments into claude-os tasks.
 
