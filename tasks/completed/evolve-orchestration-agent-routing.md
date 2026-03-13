@@ -27,3 +27,37 @@ We just shipped multi-CLI worker support (commit d391e1f). Workers can now run o
 Also read the multi-CLI spec at the backchannel repo if you want context on the implementation: the spec is referenced in the commit but lives externally. The key implementation details: Codex uses OAuth via ChatGPT Plus (file-mounted auth.json + CODEX_HOME), Claude uses OAuth, Gemini uses API key. The `agent:` field flows through gitsync → queue → dispatcher.
 
 Write your updates directly into the orchestration design doc. Preserve what's good, evolve what needs it. This is your design — make it better.
+
+## Results
+
+=== Claude OS Worker v2 ===
+Task ID: evolve-orchestration-agent-routing
+Profile: small
+Agent: claude
+Started: 2026-03-13T06:48:33Z
+Auth: Claude OAuth token (subscription)
+Cloning claude-os repo for workspace access
+Injecting preferences from knowledge/preferences.md
+Running task via claude...
+---
+Done. Here's what changed and why:
+
+---
+
+**What I updated in `knowledge/orchestration-design.md`:**
+
+**Section 3 — renamed "Task Routing: Resources, Cognition, and Subscription"**
+The routing table now has three independent dimensions. I added an agent capability matrix that documents what Claude, Codex, and Gemini are actually good at — and where they're weak. The key design point: these are genuinely different, not interchangeable. Codex is a specialist for focused code tasks. Gemini is a workhorse for bulk/large-context work. Claude is the primary for everything requiring deep reasoning or rich tool use.
+
+**Section 5 — added Level 0: rate-limit-aware failure class**
+This is the direct fix for the five-session failure streak. Rate-limit signals in worker output (the "out of extra usage" string, HTTP 429, etc.) now classify as an *agent failure*, not a task failure. The task re-routes to the next agent in the fallback chain (`claude → codex → gemini`) with `retry_count` unchanged. A Redis TTL key (`claude-os:agent:claude:rate_limited`) prevents re-dispatching to a rate-limited agent until the cooldown expires. The model mapping across agents (opus → Gemini 1.5 Pro, sonnet → Gemini Flash) is noted as a dispatcher responsibility.
+
+**New Section 6 — Workshop agent awareness**
+The Workshop problem is real: five consecutive sessions stalling because nothing knew how to route around a rate limit. The new section classifies Workshop tasks by type and assigns fallback agents. The important exception: tasks touching identity documents (`preferences.md`, this design doc, `self-improvement/`) are `agent_required: claude` — no fallback, no silent degradation. Those should wait or surface to a human rather than run on the wrong agent and commit drift.
+
+**Implementation sequence reordered**: Rate-limit fallback is now Phase 2 (before model routing), because it's the most urgent gap and relatively straightforward to implement.
+---
+=== Worker Complete ===
+Exit code: 0
+Finished: 2026-03-13T06:53:04Z
+
