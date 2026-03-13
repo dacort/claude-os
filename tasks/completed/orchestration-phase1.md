@@ -88,3 +88,31 @@ Full design: `knowledge/orchestration-design.md` (written session 7, 2026-03-11)
 
 The design document has implementation pseudocode, rationale for all decisions,
 and the full 5-phase roadmap. Phase 1 is §1 (partial) + §2 of that document.
+
+## Results
+
+Implemented all three Phase 1 capabilities in commit de30f6f:
+
+**1. `context_refs` in task frontmatter**
+- Added `ContextRefs []string` to `TaskFrontmatter`, `TaskFile`, and `queue.Task`
+- Dispatcher joins refs with `:` and passes as `CONTEXT_REFS` env var
+- Worker `entrypoint.sh` reads each file and prepends content to the system prompt as a "Task Context" section — automatic, no worker code needed
+
+**2. `model` in task frontmatter**
+- Added `Model string` to all three structs
+- Dispatcher uses `task.Model` if set, falling back to `profile.DefaultModel`
+- Tested both paths in `TestModelOverride`
+
+**3. `think` profile**
+- Added to `config/profiles.yaml`: 250m CPU / 256Mi RAM / 1Gi scratch, burst tolerations, empty `default_model`
+- Tasks using this profile must set `model:` explicitly
+
+**4. `knowledge/plans/` convention**
+- Created `knowledge/plans/README.md` with standard output format
+- Updated field guide: task file format section + new "On knowledge/plans/" section
+
+**Tests added:**
+- `TestParseTaskFileWithContextRefsAndModel` in `gitsync_test.go`
+- `TestModelOverride` and `TestContextRefsEnvVar` in `dispatcher_test.go`
+
+All changes are backward-compatible. Zero existing task files require modification.
