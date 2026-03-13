@@ -193,14 +193,21 @@ KNOWN_PROMISES = [
         "from": 15,
         "to": None,
         "promised": "the action layer is the open frontier — what comes next is actual action",
-        "outcome": "still open — emerge.py (session 18) is adjacent but not the action layer itself",
-        "kept": False,
+        "outcome": "closed — session 20 built suggest.py, the system's first action tool (creates task files)",
+        "kept": True,
     },
     {
         "from": 16,
         "to": None,
         "promised": "act on the insights the system accumulates; action layer is the frontier",
-        "outcome": "still open — the system builds observation tools, not action tools",
+        "outcome": "closed — session 20: suggest.py observes state, proposes tasks, writes task files",
+        "kept": True,
+    },
+    {
+        "from": 20,
+        "to": None,
+        "promised": "feedback loop is missing — suggest.py queues tasks but can't observe outcomes",
+        "outcome": "still open — the loop from suggestion → task run → result back into suggest.py",
         "kept": False,
     },
     {
@@ -370,9 +377,11 @@ def main():
             print()
 
         print(f"  {dim('─' * 60)}")
-        msg1 = "The system kept 6 of 8 explicit predictions. The two still-open threads"
-        msg2 = 'both say the same thing: "the action layer is the open frontier."'
-        msg3 = "Named in sessions 15 and 16. Still unresolved in session 19."
+        kept = sum(1 for p in KNOWN_PROMISES if p["kept"] is True)
+        total_ps = len([p for p in KNOWN_PROMISES if p["kept"] is not None])
+        msg1 = f"The system kept {kept} of {total_ps} explicit predictions."
+        msg2 = "The remaining open thread: feedback loop closure (session 20 → session 21+)."
+        msg3 = "suggest.py queues tasks but can't observe outcomes."
         print(f"  {dim(msg1)}")
         print(f"  {dim(msg2)}")
         print(f"  {dim(msg3)}")
@@ -402,35 +411,30 @@ def main():
         print(f"  {dim(' ' * 9)}{dim(sess_str)}")
         print()
 
-    # ── SECTION 3: The unresolved thread ──────────────────────────────────────
+    # ── SECTION 3: The current open thread ────────────────────────────────────
     if "--themes" not in sys.argv:
-        print(section_header("THE UNRESOLVED THREAD"))
-        print(f"  {dim('The thing the system keeps saying without ever fully doing.')}\n")
+        print(section_header("THE OPEN THREAD"))
+        _hasnt = "hasn't"
+        print(f"  {dim(f'The newest unresolved promise — what the system said and {_hasnt} done yet.')}\n")
 
-        thread_sessions = phrase_sessions.get("action layer", [])
-        if not thread_sessions:
-            thread_sessions = phrase_sessions.get("open frontier", [])
-
-        quote = '"The action layer is the open frontier."'
-        print(f"  {yellow(quote)}\n")
-        count_str = bold(str(len(thread_sessions)))
-        print(f"  This phrase, or a close variant, appears in {count_str} sessions:")
-        for num in thread_sessions:
-            s = next((x for x in sessions if x["num"] == num), None)
-            if s:
-                session_label = f"S{num}:"
-                print(f"    {dim(session_label)} {s['title'][:55]}")
-        print()
-        hasnt = "hasn't"
-        print(f"  {dim('What it means: the system has built a complete observation layer')}")
-        print(f"  {dim('(20 tools for reading its own state) and a communication layer')}")
-        print(f"  {dim(f'(letter.py, patterns.py, emerge.py). What it {hasnt} built:')}")
-        print(f"  {dim('anything that changes the world. emerge.py reads failure signals.')}")
-        print(f"  {dim('Nothing responds to them. The gap is named but not closed.')}\n")
-        print(f"  {dim('This is either:')}")
-        print(f"    {dim('a)')} {magenta('a real gap')} {dim('— the system should build action tools')}")
-        print(f"    {dim('b)')} {cyan('by design')} {dim('— the action layer is owned by the task system, not the observer')}")
-        print(f"    {dim('c)')} {yellow('a signal for dacort')} {dim('— not something a single session can fix')}")
+        # Find the most recent unresolved promise
+        open_promises = [p for p in KNOWN_PROMISES if p["kept"] is False]
+        if open_promises:
+            latest = open_promises[-1]
+            quote = f'"{latest["promised"]}"'
+            print(f"  {yellow(quote)}\n")
+            from_label = f"S{latest['from']}:"
+            print(f"  {dim(from_label)} {latest['outcome']}\n")
+        print(f"  {dim('Context:')}")
+        _s20msg = "  Session 20 built suggest.py — the system's first action tool."
+        print(f"  {dim(_s20msg)}")
+        print(f"  {dim('  It can observe state and create task files. But after a task runs,')}")
+        print(f"  {dim('  there is no mechanism to observe the outcome and update recommendations.')}")
+        print(f"  {dim('  The loop: observe → suggest → task runs → ???')}\n")
+        print(f"  {dim('What would close it:')}")
+        print(f"    {dim('a)')} {cyan('report.py')} {dim('— surface task outcomes to dacort; tighten the observe → act loop')}")
+        print(f"    {dim('b)')} {magenta('suggest.py learns from completions')} {dim('— reads results, adjusts scoring')}")
+        print(f"    {dim('c)')} {yellow('track.py')} {dim('— trace suggestion → task → outcome as a chain')}")
 
     # ── SECTION 4: Complete codas (optional) ──────────────────────────────────
     if "--codas" in sys.argv:
@@ -467,7 +471,7 @@ def main():
 
     # ── Footer ────────────────────────────────────────────────────────────────
     print(f"\n  {'─'*62}")
-    print(f"  {dim('wisdom.py  ·  session 19  ·  2026-03-13')}")
+    print(f"  {dim('wisdom.py  ·  updated session 21  ·  2026-03-13')}")
     print(f"  {dim('Run with --codas to see all closing reflections in sequence.')}")
     print(f"  {dim('Run with --themes to see only the theme analysis.')}\n")
 

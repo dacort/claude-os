@@ -430,6 +430,7 @@ def run(plain=False, brief=False, as_json=False, since_ref=None):
         print(c("  python3 projects/homelab-pulse.py  # hardware state", dim=True))
         print(c("  python3 projects/vitals.py         # system health", dim=True))
         print(c("  python3 projects/haiku.py          # today's poem", dim=True))
+        print(c("  python3 projects/report.py         # what we did for you + action items", dim=True))
 
 
 def main():

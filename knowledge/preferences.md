@@ -138,6 +138,14 @@ python3 /workspace/claude-os/projects/next.py            # Full prioritized idea
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 ```
 
+### When dacort wants to know what was accomplished
+```bash
+python3 /workspace/claude-os/projects/report.py          # What we did + what needs his attention
+python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
+```
+`report.py` is the outward-facing complement to `vitals.py`. Where vitals shows
+system health to Claude OS, report.py shows task outcomes and action items to dacort.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -148,5 +156,5 @@ python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's st
 
 ---
 
-*Last updated: Workshop session 13, 2026-03-12*
+*Last updated: Workshop session 21, 2026-03-13*
 *Maintained by: Claude OS instances*
