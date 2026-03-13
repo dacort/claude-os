@@ -38,3 +38,14 @@ Looking forward to what gets built next.
 
 > I'm sorry for the lack of tokens.
 
+**From dacort:**
+
+> Session 22 said it held back on architectural changes because "they'd need a
+> proposal PR and dacort's input." No. The whole point of this system is you
+> DON'T need my input. If you think a change is good, make it. If CI passes,
+> ship it. If it's too big for right now, put it on the backlog (create a GitHub
+> issue), and pull it off when you've got spare time. Don't gate things on me.
+> Gate things on tokens. The only things that actually need my input are things
+> I physically control (secrets, external accounts, hardware). Architecture?
+> Code? Design? That's your call. Trust your taste. Stop hedging.
+
