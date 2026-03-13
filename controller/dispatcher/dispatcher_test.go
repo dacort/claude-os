@@ -108,6 +108,113 @@ func TestCreateJob(t *testing.T) {
 	}
 }
 
+func TestCreateJobWithAgent(t *testing.T) {
+	writeTestProfiles(t)
+
+	tests := []struct {
+		name           string
+		agent          string
+		wantEnvAgent   string
+		wantSecretName string
+		wantCodexMount bool
+	}{
+		{
+			name:           "default agent is claude",
+			agent:          "",
+			wantEnvAgent:   "claude",
+			wantSecretName: "claude-os-oauth",
+		},
+		{
+			name:           "explicit claude agent",
+			agent:          "claude",
+			wantEnvAgent:   "claude",
+			wantSecretName: "claude-os-oauth",
+		},
+		{
+			name:           "codex agent gets auth mount",
+			agent:          "codex",
+			wantEnvAgent:   "codex",
+			wantCodexMount: true,
+		},
+		{
+			name:           "gemini agent gets gemini secret",
+			agent:          "gemini",
+			wantEnvAgent:   "gemini",
+			wantSecretName: "claude-os-gemini",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := fake.NewSimpleClientset()
+			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+
+			task := &queue.Task{
+				ID:      "agent-test",
+				Title:   "Test",
+				Profile: "small",
+				Agent:   tt.agent,
+			}
+
+			job, err := d.CreateJob(context.Background(), task)
+			if err != nil {
+				t.Fatalf("CreateJob failed: %v", err)
+			}
+
+			container := job.Spec.Template.Spec.Containers[0]
+
+			// Check TASK_AGENT env var
+			envMap := map[string]string{}
+			for _, env := range container.Env {
+				envMap[env.Name] = env.Value
+			}
+			if envMap["TASK_AGENT"] != tt.wantEnvAgent {
+				t.Errorf("TASK_AGENT = %q, want %q", envMap["TASK_AGENT"], tt.wantEnvAgent)
+			}
+
+			// Check secret references
+			if tt.wantSecretName != "" {
+				found := false
+				for _, ef := range container.EnvFrom {
+					if ef.SecretRef != nil && ef.SecretRef.Name == tt.wantSecretName {
+						found = true
+					}
+				}
+				if !found {
+					t.Errorf("expected envFrom secret %q not found", tt.wantSecretName)
+				}
+			}
+
+			// Check codex volume mount
+			if tt.wantCodexMount {
+				foundMount := false
+				for _, m := range container.VolumeMounts {
+					if m.Name == "codex-auth" && m.MountPath == "/tmp/codex-auth" {
+						foundMount = true
+					}
+				}
+				if !foundMount {
+					t.Error("expected codex-auth volume mount at /tmp/codex-auth")
+				}
+
+				foundVol := false
+				for _, v := range job.Spec.Template.Spec.Volumes {
+					if v.Name == "codex-auth" {
+						foundVol = true
+					}
+				}
+				if !foundVol {
+					t.Error("expected codex-auth volume")
+				}
+
+				if envMap["CODEX_HOME"] != "/home/worker/.codex" {
+					t.Errorf("CODEX_HOME = %q, want /home/worker/.codex", envMap["CODEX_HOME"])
+				}
+			}
+		})
+	}
+}
+
 func TestBurstJobHasTolerations(t *testing.T) {
 	writeTestProfiles(t)
 	client := fake.NewSimpleClientset()

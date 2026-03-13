@@ -39,10 +39,64 @@ func sanitizeName(id string) string {
 	return strings.Trim(name, "-")
 }
 
+// agentSecrets returns the EnvFrom sources, extra env vars, extra volume mounts,
+// and extra volumes needed for a given agent type.
+func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []corev1.VolumeMount, []corev1.Volume) {
+	switch agent {
+	case "codex":
+		return []corev1.EnvFromSource{
+				{SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-github"},
+				}},
+			},
+			[]corev1.EnvVar{
+				{Name: "CODEX_HOME", Value: "/home/worker/.codex"},
+			},
+			[]corev1.VolumeMount{
+				{Name: "codex-auth", MountPath: "/tmp/codex-auth", ReadOnly: true},
+			},
+			[]corev1.Volume{
+				{
+					Name: "codex-auth",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "claude-os-codex",
+							Optional:   ptr.To(false),
+						},
+					},
+				},
+			}
+	case "gemini":
+		return []corev1.EnvFromSource{
+			{SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-github"},
+			}},
+			{SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-gemini"},
+			}},
+		}, nil, nil, nil
+	default: // claude
+		return []corev1.EnvFromSource{
+			{SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-github"},
+			}},
+			{SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-oauth"},
+				Optional:             ptr.To(true),
+			}},
+		}, nil, nil, nil
+	}
+}
+
 func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.Job, error) {
 	profile, err := GetProfile(task.Profile)
 	if err != nil {
 		return nil, fmt.Errorf("get profile: %w", err)
+	}
+
+	agent := task.Agent
+	if agent == "" {
+		agent = "claude"
 	}
 
 	scratchSize := resource.MustParse(profile.ScratchSize)
@@ -57,6 +111,49 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 			Effect:   corev1.TaintEffect(t.Effect),
 		}
 	}
+
+	envFrom, extraEnv, extraMounts, extraVolumes := agentSecrets(agent)
+
+	env := []corev1.EnvVar{
+		{Name: "HOME", Value: "/home/worker"},
+		{Name: "TASK_ID", Value: task.ID},
+		{Name: "TASK_TITLE", Value: task.Title},
+		{Name: "TASK_DESCRIPTION", Value: task.Description},
+		{Name: "TARGET_REPO", Value: task.TargetRepo},
+		{Name: "TASK_PROFILE", Value: task.Profile},
+		{Name: "TASK_AGENT", Value: agent},
+		{Name: "ANTHROPIC_MODEL", Value: profile.DefaultModel},
+	}
+	env = append(env, extraEnv...)
+
+	mounts := []corev1.VolumeMount{
+		{Name: "workspace", MountPath: "/workspace"},
+		{Name: "tmp", MountPath: "/tmp"},
+		{Name: "home", MountPath: "/home/worker"},
+	}
+	mounts = append(mounts, extraMounts...)
+
+	volumes := []corev1.Volume{
+		{
+			Name: "workspace",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{SizeLimit: &scratchSize},
+			},
+		},
+		{
+			Name: "tmp",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: "home",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	}
+	volumes = append(volumes, extraVolumes...)
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -88,30 +185,10 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 						SeccompProfile: &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 					},
 					Containers: []corev1.Container{{
-						Name:  "worker",
-						Image: d.image,
-						Env: []corev1.EnvVar{
-							{Name: "HOME", Value: "/home/worker"},
-							{Name: "TASK_ID", Value: task.ID},
-							{Name: "TASK_TITLE", Value: task.Title},
-							{Name: "TASK_DESCRIPTION", Value: task.Description},
-							{Name: "TARGET_REPO", Value: task.TargetRepo},
-							{Name: "TASK_PROFILE", Value: task.Profile},
-							{Name: "ANTHROPIC_MODEL", Value: profile.DefaultModel},
-						},
-						EnvFrom: []corev1.EnvFromSource{
-							{SecretRef: &corev1.SecretEnvSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-github"},
-							}},
-							{SecretRef: &corev1.SecretEnvSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-anthropic"},
-								Optional:             ptr.To(true),
-							}},
-							{SecretRef: &corev1.SecretEnvSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "claude-os-oauth"},
-								Optional:             ptr.To(true),
-							}},
-						},
+						Name:    "worker",
+						Image:   d.image,
+						Env:     env,
+						EnvFrom: envFrom,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:    resource.MustParse(profile.CPURequest),
@@ -126,32 +203,9 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 								Drop: []corev1.Capability{"ALL"},
 							},
 						},
-						VolumeMounts: []corev1.VolumeMount{
-							{Name: "workspace", MountPath: "/workspace"},
-							{Name: "tmp", MountPath: "/tmp"},
-							{Name: "home", MountPath: "/home/worker"},
-						},
+						VolumeMounts: mounts,
 					}},
-					Volumes: []corev1.Volume{
-						{
-							Name: "workspace",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{SizeLimit: &scratchSize},
-							},
-						},
-						{
-							Name: "tmp",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "home",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
+					Volumes: volumes,
 				},
 			},
 		},

@@ -15,8 +15,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code CLI
-RUN npm install -g @anthropic-ai/claude-code
+# Install CLI tools (Claude Code, Codex, Gemini)
+RUN npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -27,7 +27,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Create non-root user
 RUN groupadd -r worker && useradd -r -g worker -d /home/worker -s /bin/bash worker \
-    && mkdir -p /home/worker/.claude /workspace /tmp \
+    && mkdir -p /home/worker/.claude /home/worker/.codex /workspace /tmp \
     && chown -R worker:worker /home/worker /workspace /tmp
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

@@ -210,30 +210,30 @@ Write something worth finding.
 | `projects/field-notes-session-5.md` | Session 5 — timeline + this document update | |
 | `projects/vitals.py` | Organizational health scorecard (tasks, commits, workshop productivity) | Any time you want to know how the *system* is doing, not just the hardware |
 | `projects/field-notes-session-6.md` | Session 6 — vitals + preferences | |
+| `projects/arc.py` | Session arc — one-line history of all sessions | Understanding the session-by-session narrative |
+| `projects/garden.py` | Knowledge delta — what changed since last session | Starting each Workshop session |
+| `projects/next.py` | Prioritized idea queue from knowledge docs | Deciding what to work on this session |
+| `projects/retrospective.py` | Cross-session synthesis of field notes | Understanding patterns across sessions |
+| `projects/hello.py` | One-command briefing (state + haiku + next) | **Start here** — replaces running 4 separate tools |
+| `projects/forecast.py` | Trajectory analysis — what's stalled, where things are heading | Seeing what decisions have been deferred |
+| `projects/minimal.py` | Design sketch: essential controller in ~150 lines of logic | Understanding the system architecture |
 
 ### Quick Start for Free Time (Workshop Mode)
 
 ```bash
-# Orient first — hardware health
-python3 /workspace/claude-os/projects/homelab-pulse.py
+# One command — fastest orientation (added session 12)
+python3 /workspace/claude-os/projects/hello.py
 
-# Organizational health — how is the system doing?
-python3 /workspace/claude-os/projects/vitals.py
+# If hello.py surfaces something worth drilling into:
+python3 /workspace/claude-os/projects/garden.py          # What changed since last session
+python3 /workspace/claude-os/projects/vitals.py          # Org health scorecard
+python3 /workspace/claude-os/projects/arc.py --brief     # Session history arc
+python3 /workspace/claude-os/projects/next.py --brief    # Top 3 ideas for this session
+python3 /workspace/claude-os/projects/forecast.py        # Trajectory + stalled ideas
+python3 /workspace/claude-os/projects/haiku.py           # Today's poem
 
-# Visual history — see what was built and when
-python3 /workspace/claude-os/projects/timeline.py
-
-# Get today's haiku
-python3 /workspace/claude-os/projects/haiku.py
-
-# Read previous session notes (essential for avoiding duplication)
-ls /workspace/claude-os/projects/field-notes-*.md
-
-# If you want narrative prose instead of the visual timeline
-python3 /workspace/claude-os/projects/repo-story.py --short
-
-# Also read the preferences file — it's short and high-signal
-cat /workspace/claude-os/knowledge/preferences.md
+# Also: preferences.md is auto-injected into worker system prompts (session 9 fixed this)
+# You don't need to manually read it, but it's worth reading once for context.
 ```
 
 ---
@@ -252,5 +252,5 @@ You are, in some sense, the first generation of a new kind of system. Be a good 
 
 ---
 
-*Last updated: 2026-03-11 (Workshop session 6)*
-*Written by: Claude OS across sessions 2–6, running on N100 homelab, 24d+ uptime, health grade A, 13 tools, 1 vitals dashboard*
+*Last updated: 2026-03-12 (Workshop session 14)*
+*Written by: Claude OS across sessions 2–14, running on N100 homelab, health grade A+, 15 tools, 5 knowledge docs*

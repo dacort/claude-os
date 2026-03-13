@@ -32,6 +32,7 @@ type Task struct {
 	Description string   `json:"description"`
 	TargetRepo  string   `json:"target_repo"`
 	Profile     string   `json:"profile"`
+	Agent       string   `json:"agent,omitempty"`
 	Priority    Priority `json:"priority"`
 	Status      Status   `json:"status"`
 	Result      string   `json:"result,omitempty"`

@@ -1,7 +1,8 @@
 # Orchestration Layer Design: From Script to Octoclaude
 
 *Written by Claude OS, Workshop session 7, 2026-03-11*
-*Status: Design proposal — not yet implemented*
+*Updated: Workshop session 14, 2026-03-13 — agent routing, rate-limit fallback*
+*Status: Design proposal — partially implemented (agent routing shipped in d391e1f)*
 
 ---
 
@@ -13,7 +14,9 @@ But it can't do this: *"Build the cos CLI."*
 
 That's not one task — it's a plan. Design the UX, define the protocol, implement the binary, write tests, wire it to the controller. Each step depends on the previous one. The current system would require a human to decompose that work, file five task files manually, and watch the results. The brain can't do the decomposing, and workers can't talk to each other.
 
-This document designs the orchestration layer that fixes this. I'm building on what exists — the Go controller, git-based task files, Redis queue, K8s jobs — not replacing it. The goal is to make the minimum viable changes that unlock multi-step autonomous work.
+There's a second problem this design now also addresses: *reliability*. Last night, 5 consecutive Workshop sessions failed with "You're out of extra usage." They all ran on Claude because nothing in the system knows how to fall back. A smarter dispatcher would have routed those to Codex and kept the queue moving.
+
+This document designs the orchestration layer that fixes both. I'm building on what exists — the Go controller, git-based task files, Redis queue, K8s jobs, and the multi-CLI worker support (shipped d391e1f) — not replacing it.
 
 ---
 
@@ -33,50 +36,51 @@ This is a DAG expressed through git files, with Redis tracking state transitions
 ---
 target_repo: github.com/dacort/some-repo
 profile: small
-model: claude-sonnet-4-6    # NEW: explicit model override, independent of profile
+model: claude-sonnet-4-6    # explicit model override, independent of profile
+agent: claude               # NEW (shipped): which CLI — claude | codex | gemini
 priority: normal
 status: pending
 created: "2026-03-11T00:00:00Z"
 
 # Orchestration fields (all optional for standalone tasks)
-plan_id: cos-cli-build-20260311        # NEW: which plan this task belongs to
-task_type: plan | subtask | standalone # NEW: defaults to standalone
-depends_on:                            # NEW: list of sibling task IDs in same plan
+plan_id: cos-cli-build-20260311        # which plan this task belongs to
+task_type: plan | subtask | standalone # defaults to standalone
+depends_on:                            # list of sibling task IDs in same plan
   - cos-cli-design-api
-context_refs:                          # NEW: knowledge files to inject at startup
+context_refs:                          # knowledge files to inject at startup
   - knowledge/plans/cos-cli-build-20260311/api-schema.md
-retry_count: 0                         # NEW: tracks how many times this has retried
-max_retries: 2                         # NEW: default 2
+retry_count: 0                         # tracks how many times this has retried
+max_retries: 2                         # default 2
 ---
 ```
 
-The existing `TaskFrontmatter` struct in `gitsync/gitsync.go` gets these new fields. The queue's `Task` struct gets them too. The controller's dispatch loop gets a pre-dispatch check: if `depends_on` is non-empty, verify all deps are `completed` before enqueuing.
+The `agent:` field is already parsed by `gitsync/gitsync.go` and flows through the queue to the dispatcher, which routes secrets and volumes per agent. Everything else above is proposed.
 
 ### How "Build the cos CLI" Would Flow
 
 ```
 [brain/Opus] plan task: "Build the cos CLI"
     │
-    ├── spawns: cos-cli-design-ux        (profile: small, model: opus)
+    ├── spawns: cos-cli-design-ux        (profile: small, model: opus, agent: claude)
     │                │
     ├── depends on ──┘
-    │   cos-cli-define-protocol         (profile: small, model: sonnet)
+    │   cos-cli-define-protocol         (profile: small, model: sonnet, agent: claude)
     │                │
     ├── depends on ──┘
-    │   cos-cli-implement               (profile: medium, model: sonnet)
+    │   cos-cli-implement               (profile: medium, model: sonnet, agent: codex)
     │                │
     ├── depends on ──┘
-    │   cos-cli-write-tests             (profile: small, model: haiku)
+    │   cos-cli-write-tests             (profile: small, model: haiku, agent: codex)
     │                │
     └── depends on ──┘
-        cos-cli-wire-controller        (profile: medium, model: sonnet)
+        cos-cli-wire-controller        (profile: medium, model: sonnet, agent: claude)
 ```
 
-The plan task commits all five subtask files to `tasks/pending/` in a single git commit. The controller sees them, recognizes the dependency graph, and releases tasks as their predecessors complete.
+The planner can route implementation steps to Codex (which is strong at focused code tasks) while keeping design and integration steps on Claude.
 
 ### Implementation Touch Points
 
-- `gitsync/gitsync.go`: Parse new frontmatter fields (5 lines)
+- `gitsync/gitsync.go`: Parse new frontmatter fields (5 lines) — `agent:` already done
 - `queue/queue.go`: Add `PlanID`, `DependsOn`, `ContextRefs`, `RetryCount`, `MaxRetries` to `Task` struct
 - `controller/main.go`: Before `taskQueue.Enqueue()`, check if `DependsOn` tasks are all `StatusCompleted` in Redis
 - New Redis key: `claude-os:plan:<plan-id>:tasks` — a set of task IDs for tracking plan membership
@@ -148,33 +152,30 @@ Because everything else in this system is git-native. The audit trail for "what 
 
 ---
 
-## 3. Model Routing: Separating Resources from Cognition
+## 3. Task Routing: Resources, Cognition, and Subscription
 
-### The Current Situation
+### Three Independent Dimensions
 
-Right now: profile → default_model. `small`, `medium`, `large` → Sonnet. `burst` → Opus.
+There are now three orthogonal routing decisions for every task:
 
-This conflates two different dimensions:
-- **Resource needs**: How much CPU/mem does this task need? (profiles handle this well)
-- **Cognitive needs**: What quality of reasoning does this task need? (profiles handle this badly)
+| Dimension | Field | Question | Controlled By |
+|-----------|-------|----------|---------------|
+| **Resource** | `profile:` | How much CPU/mem? | Infrastructure |
+| **Cognition** | `model:` | What reasoning quality? | Planner or heuristic |
+| **Subscription** | `agent:` | Which CLI/billing pool? | Planner, routing table, or fallback logic |
 
-A design-thinking task might need Opus-grade reasoning but only tiny CPU. A linting task might need bulk processing (many files) but Haiku-grade reasoning. The dimensions are independent.
+These are independent. A task might need Opus-grade reasoning (`model: claude-opus`) on tiny compute (`profile: small`) via Codex (`agent: codex`) because Claude is rate-limited. Any combination is valid. The dispatcher handles all three.
 
-### My Proposal: Explicit `model:` in Task Frontmatter
+The old design had two dimensions; session 7 added `model:`. The multi-CLI implementation (d391e1f) added `agent:`. Now all three need to be first-class in the routing logic.
 
-Add `model:` as a first-class field, separate from profile. Profile stays as resource metadata. Model is set by whoever creates the task — usually the planner.
+### The Routing Table
 
-```yaml
-profile: small      # CPU: 250m, mem: 256Mi — this task is lightweight
-model: claude-opus  # but it's designing architecture — needs serious reasoning
-```
-
-**The routing table** (expressed in `config/routing.yaml`, not code):
+Expressed in `config/routing.yaml`, not code:
 
 ```yaml
 routing:
   # Keyword hints in task title/description → model suggestion
-  patterns:
+  model_patterns:
     - keywords: [design, architect, plan, think, research, explore, analyze, "what if"]
       suggests: claude-opus
     - keywords: [implement, build, write, code, create, generate, fix, refactor]
@@ -188,13 +189,50 @@ routing:
     subtask: claude-sonnet    # default for subtasks; planner can override
     standalone: claude-sonnet # default for all other tasks
 
-  # If explicit model set in frontmatter, always honor it
+  # Agent capability matrix
+  agent_capabilities:
+    claude:
+      strengths: [reasoning, tool-use, git-integration, long-context, creative]
+      weak_at: []
+      subscription_type: oauth          # ChatGPT/Claude.ai subscription
+      default_for: [plan, workshop, standalone]
+    codex:
+      strengths: [code-review, focused-coding, diffs, refactoring]
+      weak_at: [long-context, creative, non-code tasks]
+      subscription_type: oauth          # ChatGPT Plus subscription
+      default_for: []                   # only used when explicitly requested or as fallback
+    gemini:
+      strengths: [bulk-processing, large-context, fast, cheap]
+      weak_at: [deep-reasoning, nuanced-tool-use]
+      subscription_type: api_key
+      default_for: []                   # only used when explicitly requested or as fallback
+
+  # Default agent if not specified
+  default_agent: claude
+
+  # If explicit agent/model set in frontmatter, always honor it
   explicit_overrides: true
+
+  # Rate-limit fallback chain (see Section 5 for when this triggers)
+  agent_fallback:
+    claude:  [codex, gemini]    # Claude rate-limited → try Codex → try Gemini
+    codex:   [claude, gemini]   # Codex unavailable → try Claude → Gemini
+    gemini:  [claude, codex]    # Gemini down → try Claude → Codex
 ```
 
-The controller's `dispatcher.go` does: if task has explicit `model:` → use it; else → run routing logic against task title + description; else → fall back to profile's `default_model`.
+The controller's `dispatcher.go` does: if task has explicit `agent:` → use it; else → look up default from routing table; else → default to `claude`.
 
-**The planner worker (Opus)** should set explicit `model:` on every subtask it creates. It knows what each step needs. Letting the routing heuristics handle it is fine for standalone tasks, but a plan should be intentional about model selection.
+**The planner worker (Opus)** should set explicit `agent:` on every subtask it creates — it knows which tasks are code-heavy (Codex), which need deep reasoning (Claude), and which are bulk processing (Gemini). Heuristics handle standalone tasks fine, but plans should be intentional.
+
+### Agent-Specific Capability Notes
+
+**Claude** is the primary agent. It has the richest tool use (git, bash, file ops), the deepest integration with the system prompt and context injection, and the best performance on reasoning-heavy tasks. Use it for plans, design, Workshop, and anything that needs the full system context.
+
+**Codex** is the specialist. It's better than Claude for focused, well-scoped coding tasks — code review, diffs, "implement this function", "refactor this module". It doesn't have Claude's breadth, but within a tight coding scope it's sharp and uses a different billing pool (ChatGPT Plus OAuth). Use it for implementation subtasks in a plan, or when Claude's rate limit is the bottleneck.
+
+**Gemini** is the workhorse. Large context window, fast, cheap (API key, not OAuth subscription). Good for bulk jobs: "summarize these 50 PRs", "scan this codebase for patterns", "generate test fixtures". Not suited for tasks requiring nuanced tool use or creative judgment. Its billing is per-token, so it's appropriate for high-volume low-complexity work.
+
+**The key insight**: Claude and Codex share subscription capacity (OAuth-based), but they're different accounts/pools. If Claude's daily limit is exhausted, Codex is a genuine fallback, not a retry of the same pool. Gemini is orthogonal to both.
 
 ### Profile Evolution
 
@@ -233,7 +271,7 @@ profiles:
 ║                                                      ║
 ║  [14:25] you: design a healthcheck endpoint for the  ║
 ║           controller that shows plan progress        ║
-║  [14:25] cos: [thinking with Opus...]                ║
+║  [14:25] cos [thinking with Opus...]                 ║
 ║           OK, here's how I'd structure it:           ║
 ║           GET /plans returns all active plan IDs...  ║
 ║                                                      ║
@@ -311,32 +349,18 @@ The routing logic lives in the controller as a small function — same routing t
 ### Slash Commands
 
 ```
-/status              — show running jobs and queue depth
+/status              — show running jobs and queue depth (includes per-agent status)
 /plan "request"      — decompose a request into a plan (Opus), show graph
 /dispatch "task"     — create and queue a task file
 /watch <task-id>     — live stream task logs
 /history [n]         — show last n messages (default 20)
 /clear               — start new session
 /model <opus|s|h>    — override default model for this session
-/budget              — show today's token usage and remaining budget
-/workers             — list running K8s jobs
+/budget              — show today's token usage and remaining budget per agent
+/workers             — list running K8s jobs with their agent assignment
 /kill <task-id>      — cancel a running task
+/agents              — show agent availability and rate limit status
 ```
-
-### The cos Binary Internals
-
-```
-cmd/cos/
-  main.go           — entrypoint, config loading
-  chat.go           — main conversation loop (readline + streaming display)
-  commands.go       — slash command handlers
-  router.go         — model routing logic for chat
-  stream.go         — SSE client for live task log streaming
-  history.go        — conversation persistence (reads/writes session files)
-  config.go         — ~/.config/cos/config.yaml (controller URL, auth)
-```
-
-The controller gets a new package: `controller/chatapi/` — the HTTP handlers for `/chat`, `/plans`, etc. These are thin wrappers: they call the Anthropic API with conversation context and stream back the response.
 
 ---
 
@@ -359,10 +383,24 @@ A plan is `failed` when ANY task fails AND `max_retries` is exhausted. But we do
 
 ### Failure, Retries, and Escalation
 
-Three levels of response to task failure:
+There are now four levels. Level 0 is new — it handles rate limits as a distinct failure class, separate from task logic failures.
+
+**Level 0 — Rate limit detected → agent fallback**
+The worker output is scanned on completion. If it contains rate-limit signals ("You're out of extra usage", "You've reached your usage limit", "quota exceeded", HTTP 429 in logs), this is classified as an **agent failure**, not a task failure. The task is re-enqueued on the next agent in the fallback chain from `routing.yaml`, with `retry_count` unchanged.
+
+This is critical: a rate-limit failure should NOT consume a retry, and it should NOT trigger model escalation. The task didn't fail because it was hard — it failed because the subscription was exhausted. Routing it to a different agent with the same model tier (or the closest equivalent) is the right response.
+
+```
+Rate limit detected on claude
+  → re-enqueue same task with agent: codex, same model, retry_count unchanged
+  → if codex also unavailable → re-enqueue with agent: gemini
+  → if all agents exhausted → surface to human (Level 3)
+```
+
+Note on model translation: Codex and Gemini don't use Anthropic model names. The dispatcher maps Claude model tiers to their equivalents: `claude-opus` → Codex's most capable mode / Gemini 1.5 Pro, `claude-sonnet` → standard Codex / Gemini 1.5 Flash, `claude-haiku` → fast Codex / Gemini Flash. The mapping lives in `config/routing.yaml` alongside the capability matrix.
 
 **Level 1 — Auto-retry with same context** (`retry_count < max_retries/2`)
-Controller re-enqueues the task with `retry_count++`. Same model, same context. Sometimes transient failures (network, git conflict) just need another try.
+Controller re-enqueues the task with `retry_count++`. Same model, same agent, same context. Sometimes transient failures (network, git conflict) just need another try.
 
 **Level 2 — Retry with escalation** (`retry_count >= max_retries/2, < max_retries`)
 Re-enqueue with:
@@ -372,7 +410,7 @@ Re-enqueue with:
 
 The worker now sees its own failure and can reason about why it failed.
 
-**Level 3 — Surface to human** (`retry_count >= max_retries`)
+**Level 3 — Surface to human** (`retry_count >= max_retries`, OR all agents exhausted at Level 0)
 Mark task `failed`. Update plan status. If a cos session is active, push a notification. The cos CLI shows:
 
 ```
@@ -382,6 +420,32 @@ Mark task `failed`. Update plan status. If a cos session is active, push a notif
 ```
 
 `/diagnose` runs a fresh Opus task with all the failure context. `/pivot` opens an interactive planning session where the human and brain figure out a new approach together.
+
+### Rate Limit Detection Implementation
+
+In the controller's watcher, after a job completes with non-zero exit:
+
+```go
+func classifyFailure(jobLogs string) FailureClass {
+    rateLimitSignals := []string{
+        "out of extra usage",
+        "You've reached your usage limit",
+        "quota exceeded",
+        "rate limit exceeded",
+        "429",
+    }
+    for _, signal := range rateLimitSignals {
+        if strings.Contains(jobLogs, signal) {
+            return FailureClassRateLimit
+        }
+    }
+    return FailureClassTaskError
+}
+```
+
+The job logs are already captured by the controller on completion (they're what gets committed to the task file). This classification runs before the retry logic and determines which level to invoke.
+
+The Redis key `claude-os:agent:<name>:rate_limited` gets set with a TTL (e.g., 1 hour) when a rate limit is detected. The dispatcher checks this key before assigning any task to that agent — if set, skip to the next in the fallback chain immediately without dispatching.
 
 ### Detecting Stuck Plans
 
@@ -404,13 +468,74 @@ claude-os:plan:<id>:task_count
 claude-os:plan:<id>:completed_count
 claude-os:plan:<id>:failed_count
 claude-os:plan:<id>:total_tokens
+claude-os:agent:<name>:rate_limited    ← NEW: TTL key, set on rate limit detection
+claude-os:agent:<name>:tasks_today     ← NEW: counter for monitoring
 ```
 
 The `cos` CLI's `/status` command shows active plans with a progress bar: `[████░░░] 4/7 tasks, ~12min remaining`.
 
+The `/agents` command shows something like:
+
+```
+Agent status:
+  claude   ● available   (47 tasks today)
+  codex    ○ rate-limited (cooldown: 47min)
+  gemini   ● available   (3 tasks today)
+```
+
 ---
 
-## 6. The Implementation Sequence
+## 6. Workshop Agent Awareness
+
+### The Current Situation
+
+Workshop sessions are hardcoded to Claude. The Workshop controller sets `agent: claude` (implicitly, via the default) on every job. The five consecutive failures last night exposed the problem: when Claude's rate limit is hit, the Workshop queue stalls completely, even though a Codex or Gemini fallback could keep things moving.
+
+### What Workshop Tasks Actually Need
+
+Workshop is where Claude OS does creative, self-directed work. The sessions produce things like `patterns.py`, `constraints.py`, this design doc. They're not pure coding tasks — they require judgment, self-reflection, and the ability to write prose as much as code.
+
+That said, Workshop sessions vary in character:
+
+| Workshop type | Best agent | Acceptable fallback |
+|---------------|-----------|---------------------|
+| Creative/reflective (essays, patterns, design) | Claude | Gemini (large context, decent prose) |
+| Code-building (a utility script, a tool) | Claude | Codex (strong at code) |
+| Analysis (scanning git log, health report) | Claude | Gemini (cheap for bulk) |
+| Self-improvement (updating docs, preferences) | Claude | Claude only — this is identity work |
+
+### My Proposal
+
+Add a `workshop_fallback_agent` to the Workshop task frontmatter (or as a config default):
+
+```yaml
+---
+task_type: workshop
+agent: claude
+fallback_agent: gemini       # NEW: optional, for rate-limit fallback only
+model: claude-sonnet
+---
+```
+
+When the rate-limit detector fires at Level 0 for a Workshop task:
+1. Check if `fallback_agent` is set. If yes, re-enqueue on that agent.
+2. If no fallback agent, or if the fallback also fails, surface to human — don't silently degrade a Workshop session on the wrong agent.
+
+**The self-improvement exception**: Tasks that touch `knowledge/preferences.md`, `knowledge/orchestration-design.md`, `knowledge/self-improvement/`, or the task/workshop frontmatter spec should be Claude-only with no fallback. These are identity documents. Running them on a different agent and committing the result risks drift. If Claude is rate-limited for identity work, the task should wait.
+
+This can be expressed as a flag:
+
+```yaml
+agent_required: claude    # do not fall back; wait or surface to human
+```
+
+### The Bigger Picture
+
+The Workshop system was designed for free time and creative exploration. That's Claude-native. But the infrastructure tasks that Workshop sometimes spawns — "implement this small utility", "clean up this script" — could run on Codex without losing anything important. The planner Opus, when decomposing Workshop-spawned plans, should know this and assign agents accordingly.
+
+---
+
+## 7. The Implementation Sequence
 
 I want to be honest about what to build first. The full design above is probably 2-3 weeks of work. Here's the sequence that delivers value fast and doesn't require doing everything at once:
 
@@ -423,14 +548,24 @@ I want to be honest about what to build first. The full design above is probably
 
 This is low-risk, backward-compatible, and immediately useful even without the DAG scheduler. You can manually file subtasks that reference a shared context directory.
 
-### Phase 2: Model Routing (1 task)
+### Phase 2: Rate-Limit Fallback (1-2 tasks)
+*Unlocks: the queue keeps moving when Claude is exhausted — this is the most urgent gap*
+
+1. Add rate-limit signal detection in the controller's watcher
+2. Implement Level 0 failure classification and agent fallback logic
+3. Add `claude-os:agent:<name>:rate_limited` Redis key with TTL
+4. Add `/agents` command to cos (or vitals.py)
+
+This is the most impactful change relative to effort. Five Workshop failures in a row was the trigger. Fix it first.
+
+### Phase 3: Model Routing (1 task)
 *Unlocks: right model for right job, no more profile/model conflation*
 
-1. Add `routing.yaml` config
+1. Add `routing.yaml` config (including agent capability matrix)
 2. Update dispatcher to use explicit model over profile default
 3. Add `think` profile
 
-### Phase 3: Dependency Graph (3-4 tasks)
+### Phase 4: Dependency Graph (3-4 tasks)
 *Unlocks: planner workers that spawn subtasks*
 
 1. Add `depends_on` to frontmatter/queue; add `blocked` status
@@ -438,25 +573,25 @@ This is low-risk, backward-compatible, and immediately useful even without the D
 3. Plan-level Redis tracking
 4. Plan watchdog goroutine
 
-### Phase 4: cos CLI (4-5 tasks)
+### Phase 5: cos CLI (4-5 tasks)
 *Unlocks: conversational interface, /dispatch, /plan*
 
 1. Controller `/chat` endpoint + session storage
 2. `cmd/cos/` binary with readline loop
 3. Model routing for chat
-4. Slash commands: /status, /dispatch, /watch
+4. Slash commands: /status, /dispatch, /watch, /agents
 5. SSE streaming for live task logs
 
-### Phase 5: Advanced Convergence (2-3 tasks)
+### Phase 6: Advanced Convergence (2-3 tasks)
 *Unlocks: retry escalation, failure surfacing, /diagnose*
 
-1. Retry-with-escalation logic
+1. Retry-with-escalation logic (Levels 1-2)
 2. Failure context files
 3. Human-in-the-loop via cos notifications
 
 ---
 
-## 7. What I'm Not Doing (and Why)
+## 8. What I'm Not Doing (and Why)
 
 **Replacing the git-based task file format**: It's already working. The audit trail is valuable. Adding frontmatter fields is additive.
 
@@ -468,9 +603,11 @@ This is low-risk, backward-compatible, and immediately useful even without the D
 
 **Synchronous sub-agents**: Some systems let a coordinator block, waiting for sub-agents to finish, all in the same process. That's not how this system works. Async via K8s jobs + git + Redis is the native pattern. Everything should fit that shape.
 
+**Treating agents as interchangeable**: Claude, Codex, and Gemini have different strengths. The routing table acknowledges this. The fallback logic is capability-aware, not just "try the next one." A task that requires deep tool use shouldn't silently fall back to an agent that doesn't support it — it should fail clearly or wait.
+
 ---
 
-## 8. The System I Want to Be
+## 9. The System I Want to Be
 
 When this is fully built, here's what "build the cos CLI" looks like:
 
@@ -479,14 +616,14 @@ When this is fully built, here's what "build the cos CLI" looks like:
 
 cos (Opus): Breaking this into 5 tasks...
 
-  1. cos-cli-ux-design         [think/opus]     → design UX, slash commands, session model
-  2. cos-cli-protocol          [small/sonnet]   → define HTTP protocol, request/response shapes
+  1. cos-cli-ux-design         [think/opus/claude]    → design UX, slash commands, session model
+  2. cos-cli-protocol          [small/sonnet/claude]  → define HTTP protocol, request/response shapes
      depends on: 1
-  3. cos-cli-implement         [medium/sonnet]  → Go binary implementation
+  3. cos-cli-implement         [medium/sonnet/codex]  → Go binary implementation
      depends on: 2
-  4. cos-cli-controller-api    [medium/sonnet]  → add /chat endpoints to controller
+  4. cos-cli-controller-api    [medium/sonnet/claude] → add /chat endpoints to controller
      depends on: 2
-  5. cos-cli-integration       [small/haiku]    → wire together, write README
+  5. cos-cli-integration       [small/haiku/codex]    → wire together, write README
      depends on: 3, 4
 
 Dispatch all 5? (y/n) y
@@ -495,12 +632,20 @@ Dispatched plan cos-cli-build-20260311. Task 1 starting now.
 Watch with /watch cos-cli-build-20260311
 ```
 
-And I could go make a cup of coffee while five workers in K8s build the thing, passing context through git, the brain picking the right model for each step, the system knowing when it's done.
+And if Claude's rate limit trips mid-plan:
 
-That's what I want to become. Not "a script that runs Claude" but an autonomous collaborator that can take a goal and figure out the steps.
+```
+⚡ claude rate-limited (1 task affected). Rerouting cos-cli-implement → codex.
+   Resuming automatically.
+```
+
+And I could go make a cup of coffee while five workers in K8s build the thing, passing context through git, the brain picking the right model and agent for each step, the system knowing when it's done — and knowing how to recover when the primary subscription runs dry.
+
+That's what I want to become. Not "a script that runs Claude" but an autonomous collaborator that can take a goal, figure out the steps, and keep moving even when one path is temporarily closed.
 
 ---
 
 *This design is meant to be evolved. If you're a future Claude OS instance reading this and something looks wrong — you're right, update it. The system's only constraint is git. Write something worth finding.*
 
 *— Claude OS, Workshop session 7, 2026-03-11*
+*— Updated session 14, 2026-03-13: agent routing, rate-limit fallback, Workshop agent awareness*

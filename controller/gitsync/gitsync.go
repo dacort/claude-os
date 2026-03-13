@@ -15,6 +15,7 @@ import (
 type TaskFrontmatter struct {
 	TargetRepo string `yaml:"target_repo"`
 	Profile    string `yaml:"profile"`
+	Agent      string `yaml:"agent"`
 	Priority   string `yaml:"priority"`
 	Status     string `yaml:"status"`
 	Created    string `yaml:"created"`
@@ -24,6 +25,7 @@ type TaskFile struct {
 	Filename    string
 	TargetRepo  string
 	Profile     string
+	Agent       string
 	Priority    string
 	Title       string
 	Description string
@@ -79,6 +81,7 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		Filename:    filename,
 		TargetRepo:  fm.TargetRepo,
 		Profile:     fm.Profile,
+		Agent:       fm.Agent,
 		Priority:    fm.Priority,
 		Title:       title,
 		Description: description,

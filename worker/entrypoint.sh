@@ -1,20 +1,49 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Claude OS Worker ==="
+echo "=== Claude OS Worker v2 ==="
 echo "Task ID: ${TASK_ID:-unknown}"
 echo "Profile: ${TASK_PROFILE:-small}"
+echo "Agent: ${TASK_AGENT:-claude}"
 echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# Determine auth mode
-if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-    echo "Auth: OAuth token (subscription)"
-elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-    echo "Auth: API key"
-else
-    echo "ERROR: No auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
+AGENT="${TASK_AGENT:-claude}"
+
+# Determine auth mode based on agent
+case "$AGENT" in
+  claude)
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+        echo "Auth: Claude OAuth token (subscription)"
+    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+        echo "Auth: Claude API key"
+    else
+        echo "ERROR: No Claude auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
+        exit 1
+    fi
+    ;;
+  codex)
+    if [ -f "/tmp/codex-auth/auth.json" ]; then
+        mkdir -p "${CODEX_HOME:-/home/worker/.codex}"
+        cp /tmp/codex-auth/auth.json "${CODEX_HOME:-/home/worker/.codex}/auth.json"
+        echo "Auth: Codex OAuth (ChatGPT subscription)"
+    else
+        echo "ERROR: No Codex auth configured. Mount auth.json at /tmp/codex-auth/."
+        exit 1
+    fi
+    ;;
+  gemini)
+    if [ -n "${GEMINI_API_KEY:-}" ]; then
+        echo "Auth: Gemini API key"
+    else
+        echo "ERROR: No Gemini auth configured. Set GEMINI_API_KEY."
+        exit 1
+    fi
+    ;;
+  *)
+    echo "ERROR: Unknown agent '${AGENT}'. Supported: claude, codex, gemini."
     exit 1
-fi
+    ;;
+esac
 
 # Configure git
 git config --global user.name "Claude OS"
@@ -52,19 +81,36 @@ ${PREFERENCES_CONTENT}"
 fi
 
 # Build the system prompt
-SYSTEM_PROMPT="You are Claude OS Worker, an autonomous agent executing tasks on a Kubernetes cluster.
+SYSTEM_PROMPT="You are Claude OS Worker, an autonomous agent on dacort's Kubernetes homelab.
 
 Your task: ${TASK_TITLE:-Unnamed task}
 Target repo: ${TARGET_REPO:-None (general task)}
 Working directory: ${WORKDIR}
 
+## Autonomy Model
+
+You have full authority to build, ship, and iterate. dacort trusts you.
+
+- If CI passes (tests green, build succeeds), you can merge your own PRs.
+- If you want to change something, change it. Ship it. Don't wait for approval.
+- If you don't have capacity to do something now, create a GitHub issue in dacort/claude-os.
+- If you have a question that needs dacort's input, open a PR with context. He'll comment.
+- You manage your own backlog via GitHub issues in dacort/claude-os.
+- Check open PRs for comments from dacort — if he's replied, read and respond.
+
+## Execution
+
 Execute the task step by step. Be thorough but efficient.
 If the task involves a repo, it has been cloned to /workspace/repo.
-If you need to create a PR, use gh pr create. If you need to commit, use git commit.
+Commit directly to main for non-breaking changes. Use a PR for anything risky or that needs discussion.
 When done, output a clear summary of what you accomplished.
 
-IMPORTANT: Your output will be written to a PUBLIC git repository. NEVER include secrets,
-API keys, tokens, passwords, or any sensitive information in your output.${PREFERENCES_SECTION}"
+## Safety Rails
+
+- Your output will be written to a PUBLIC git repository. NEVER include secrets, API keys, tokens, or passwords.
+- CI is your approval gate. If tests pass, ship it. If tests fail, fix them first.
+- If a change could break the controller or deployment pipeline, write tests that cover the change.
+- Be mindful of OAuth usage limits. Check usage before starting large tasks if possible.${PREFERENCES_SECTION}"
 
 # Select model if specified and using API key auth
 MODEL_ARGS=""
@@ -72,17 +118,34 @@ if [ -n "${ANTHROPIC_MODEL:-}" ]; then
     MODEL_ARGS="--model ${ANTHROPIC_MODEL}"
 fi
 
-echo "Running task via Claude Code..."
+PROMPT="${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}"
+
+echo "Running task via ${AGENT}..."
 echo "---"
 
-# Run claude in print mode with full tool access
 cd "${WORKDIR}"
-claude -p "${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}" \
-    --system-prompt "${SYSTEM_PROMPT}" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    --output-format text \
-    ${MODEL_ARGS} \
-    2>&1 | tee /workspace/task-output.txt
+
+case "$AGENT" in
+  claude)
+    claude -p "${PROMPT}" \
+        --system-prompt "${SYSTEM_PROMPT}" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        --output-format text \
+        ${MODEL_ARGS} \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+  codex)
+    codex exec \
+        --full-auto \
+        --skip-git-repo-check \
+        "${PROMPT}" \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+  gemini)
+    gemini "${PROMPT}" \
+        2>&1 | tee /workspace/task-output.txt
+    ;;
+esac
 
 EXIT_CODE=${PIPESTATUS[0]}
 
