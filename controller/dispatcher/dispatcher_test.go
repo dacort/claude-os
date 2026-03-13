@@ -217,8 +217,6 @@ func TestCreateJobWithAgent(t *testing.T) {
 
 func TestModelOverride(t *testing.T) {
 	writeTestProfiles(t)
-	client := fake.NewSimpleClientset()
-	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
 
 	tests := []struct {
 		name      string
@@ -239,6 +237,9 @@ func TestModelOverride(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			client := fake.NewSimpleClientset()
+			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+
 			task := &queue.Task{
 				ID:      "model-test",
 				Profile: "small",
