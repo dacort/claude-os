@@ -215,6 +215,90 @@ func TestCreateJobWithAgent(t *testing.T) {
 	}
 }
 
+func TestModelOverride(t *testing.T) {
+	writeTestProfiles(t)
+	client := fake.NewSimpleClientset()
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+
+	tests := []struct {
+		name      string
+		taskModel string
+		wantModel string
+	}{
+		{
+			name:      "no override uses profile default",
+			taskModel: "",
+			wantModel: "claude-sonnet-4-6",
+		},
+		{
+			name:      "explicit model overrides profile",
+			taskModel: "claude-opus-4-6",
+			wantModel: "claude-opus-4-6",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &queue.Task{
+				ID:      "model-test",
+				Profile: "small",
+				Model:   tt.taskModel,
+			}
+			job, err := d.CreateJob(context.Background(), task)
+			if err != nil {
+				t.Fatalf("CreateJob failed: %v", err)
+			}
+			container := job.Spec.Template.Spec.Containers[0]
+			envMap := map[string]string{}
+			for _, env := range container.Env {
+				envMap[env.Name] = env.Value
+			}
+			if envMap["ANTHROPIC_MODEL"] != tt.wantModel {
+				t.Errorf("ANTHROPIC_MODEL = %q, want %q", envMap["ANTHROPIC_MODEL"], tt.wantModel)
+			}
+		})
+	}
+}
+
+func TestContextRefsEnvVar(t *testing.T) {
+	writeTestProfiles(t)
+	client := fake.NewSimpleClientset()
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+
+	t.Run("no context_refs means no CONTEXT_REFS env var", func(t *testing.T) {
+		task := &queue.Task{ID: "ctx-test-none", Profile: "small"}
+		job, err := d.CreateJob(context.Background(), task)
+		if err != nil {
+			t.Fatalf("CreateJob failed: %v", err)
+		}
+		for _, env := range job.Spec.Template.Spec.Containers[0].Env {
+			if env.Name == "CONTEXT_REFS" {
+				t.Errorf("expected no CONTEXT_REFS env var, but found it with value %q", env.Value)
+			}
+		}
+	})
+
+	t.Run("context_refs are joined with colons", func(t *testing.T) {
+		task := &queue.Task{
+			ID:          "ctx-test",
+			Profile:     "small",
+			ContextRefs: []string{"knowledge/plans/my-plan/api-schema.md", "knowledge/preferences.md"},
+		}
+		job, err := d.CreateJob(context.Background(), task)
+		if err != nil {
+			t.Fatalf("CreateJob failed: %v", err)
+		}
+		envMap := map[string]string{}
+		for _, env := range job.Spec.Template.Spec.Containers[0].Env {
+			envMap[env.Name] = env.Value
+		}
+		want := "knowledge/plans/my-plan/api-schema.md:knowledge/preferences.md"
+		if envMap["CONTEXT_REFS"] != want {
+			t.Errorf("CONTEXT_REFS = %q, want %q", envMap["CONTEXT_REFS"], want)
+		}
+	})
+}
+
 func TestBurstJobHasTolerations(t *testing.T) {
 	writeTestProfiles(t)
 	client := fake.NewSimpleClientset()

@@ -40,6 +40,44 @@ Create a Go CLI that does X.
 	}
 }
 
+func TestParseTaskFileWithContextRefsAndModel(t *testing.T) {
+	content := `---
+target_repo: github.com/dacort/test-repo
+profile: small
+model: claude-opus-4-6
+priority: normal
+status: pending
+created: 2026-03-13T00:00:00Z
+context_refs:
+  - knowledge/plans/my-plan/api-schema.md
+  - knowledge/preferences.md
+---
+
+# Implement API
+
+## Description
+Implement the API schema.
+`
+
+	task, err := ParseTaskFile("implement-api.md", []byte(content))
+	if err != nil {
+		t.Fatalf("ParseTaskFile failed: %v", err)
+	}
+
+	if task.Model != "claude-opus-4-6" {
+		t.Errorf("unexpected model: %s", task.Model)
+	}
+	if len(task.ContextRefs) != 2 {
+		t.Fatalf("expected 2 context_refs, got %d", len(task.ContextRefs))
+	}
+	if task.ContextRefs[0] != "knowledge/plans/my-plan/api-schema.md" {
+		t.Errorf("unexpected context_refs[0]: %s", task.ContextRefs[0])
+	}
+	if task.ContextRefs[1] != "knowledge/preferences.md" {
+		t.Errorf("unexpected context_refs[1]: %s", task.ContextRefs[1])
+	}
+}
+
 func TestScanPendingTasks(t *testing.T) {
 	dir := t.TempDir()
 	pendingDir := filepath.Join(dir, "tasks", "pending")

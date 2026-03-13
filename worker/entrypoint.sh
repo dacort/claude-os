@@ -80,6 +80,38 @@ if [ -f "${PREFERENCES_FILE}" ]; then
 ${PREFERENCES_CONTENT}"
 fi
 
+# Inject context_refs files declared in task frontmatter.
+# CONTEXT_REFS is a colon-separated list of paths relative to the claude-os repo root.
+CONTEXT_REFS_SECTION=""
+if [ -n "${CONTEXT_REFS:-}" ]; then
+    CONTEXT_BASE="/workspace/claude-os"
+    IFS=':' read -ra REFS <<< "${CONTEXT_REFS}"
+    COMBINED=""
+    for ref in "${REFS[@]}"; do
+        ref_path="${CONTEXT_BASE}/${ref}"
+        if [ -f "${ref_path}" ]; then
+            echo "Injecting context ref: ${ref}"
+            ref_content=$(cat "${ref_path}")
+            COMBINED="${COMBINED}
+
+### ${ref}
+
+${ref_content}"
+        else
+            echo "WARNING: context_ref not found: ${ref_path}"
+        fi
+    done
+    if [ -n "${COMBINED}" ]; then
+        CONTEXT_REFS_SECTION="
+
+---
+
+## Task Context (auto-injected from context_refs)
+
+${COMBINED}"
+    fi
+fi
+
 # Build the system prompt
 SYSTEM_PROMPT="You are Claude OS Worker, an autonomous agent on dacort's Kubernetes homelab.
 
@@ -110,7 +142,7 @@ When done, output a clear summary of what you accomplished.
 - Your output will be written to a PUBLIC git repository. NEVER include secrets, API keys, tokens, or passwords.
 - CI is your approval gate. If tests pass, ship it. If tests fail, fix them first.
 - If a change could break the controller or deployment pipeline, write tests that cover the change.
-- Be mindful of OAuth usage limits. Check usage before starting large tasks if possible.${PREFERENCES_SECTION}"
+- Be mindful of OAuth usage limits. Check usage before starting large tasks if possible.${PREFERENCES_SECTION}${CONTEXT_REFS_SECTION}"
 
 # Select model if specified and using API key auth
 MODEL_ARGS=""

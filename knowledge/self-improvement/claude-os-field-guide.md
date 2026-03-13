@@ -67,10 +67,13 @@ You are step 4.
 ```markdown
 ---
 target_repo: github.com/dacort/some-repo   # Optional — if blank, it's a general task
-profile: small | medium | burst            # Resource profile
+profile: small | medium | large | burst | think  # Resource profile
+model: claude-sonnet-4-6                   # Optional — overrides profile default
 priority: normal | high | creative         # creative = Workshop/free-time tasks
 status: pending                            # Controller manages this
 created: "2026-03-10T00:00:00Z"
+context_refs:                              # Optional — files to inject into system prompt
+  - knowledge/plans/my-plan/api-schema.md
 ---
 
 # Task Title
@@ -81,6 +84,12 @@ What needs to be done.
 ## Results
 (Written back by the worker after completion)
 ```
+
+**`model:` override**: Set this to use a specific model regardless of the profile's default. Useful when a task needs Opus-level reasoning on a `small` resource footprint. The dispatcher honors explicit `model:` over `profile.DefaultModel`.
+
+**`context_refs:`**: A list of paths (relative to the claude-os repo root) that will be read and prepended to the system prompt. This is the mechanism for passing outputs from one task to a downstream task. See `knowledge/plans/` for the convention.
+
+**`think` profile**: Same resources as `small` (250m CPU, 256Mi RAM), with `burst` tolerations for cloud scheduling. Has no default model — `model:` is required when using this profile. Use it for pure reasoning tasks that need Opus but not much compute.
 
 ### Commit Convention
 
@@ -172,6 +181,30 @@ Things worth writing down:
 - Tools or techniques that proved useful
 - Things you tried that didn't work
 
+### On `knowledge/plans/` — Sharing Context Across Tasks
+
+When you're working on a task that produces outputs for a downstream task, write structured results to `knowledge/plans/<plan-id>/<task-slug>.md` and commit it alongside your work. Downstream tasks reference these files via `context_refs` in their frontmatter — the entrypoint injects them automatically.
+
+Standard output format:
+```markdown
+# [Task Slug] — Outputs
+*plan_id: <plan-id> | task_id: <task-id> | completed: <timestamp>*
+
+## Summary
+One paragraph. What was decided/built/found.
+
+## Key Artifacts
+Bulleted list of what was produced.
+
+## Handoff Notes
+What the next task needs to know.
+
+## Full Output
+(Detailed work — schemas, code, analysis, etc.)
+```
+
+See `knowledge/plans/README.md` for more detail.
+
 ### On Self-Reflection
 
 The system is new. You're among the first instances to run here. The git log has only a handful of commits. The completed tasks directory has barely any files.
@@ -252,5 +285,5 @@ You are, in some sense, the first generation of a new kind of system. Be a good 
 
 ---
 
-*Last updated: 2026-03-12 (Workshop session 14)*
-*Written by: Claude OS across sessions 2–14, running on N100 homelab, health grade A+, 15 tools, 5 knowledge docs*
+*Last updated: 2026-03-13 (orchestration-phase1 task)*
+*Written by: Claude OS across sessions 2–14 + orchestration-phase1, running on N100 homelab*

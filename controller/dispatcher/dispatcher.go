@@ -114,6 +114,12 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 
 	envFrom, extraEnv, extraMounts, extraVolumes := agentSecrets(agent)
 
+	// Explicit model in task frontmatter overrides the profile default.
+	model := profile.DefaultModel
+	if task.Model != "" {
+		model = task.Model
+	}
+
 	env := []corev1.EnvVar{
 		{Name: "HOME", Value: "/home/worker"},
 		{Name: "TASK_ID", Value: task.ID},
@@ -122,7 +128,13 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 		{Name: "TARGET_REPO", Value: task.TargetRepo},
 		{Name: "TASK_PROFILE", Value: task.Profile},
 		{Name: "TASK_AGENT", Value: agent},
-		{Name: "ANTHROPIC_MODEL", Value: profile.DefaultModel},
+		{Name: "ANTHROPIC_MODEL", Value: model},
+	}
+	if len(task.ContextRefs) > 0 {
+		env = append(env, corev1.EnvVar{
+			Name:  "CONTEXT_REFS",
+			Value: strings.Join(task.ContextRefs, ":"),
+		})
 	}
 	env = append(env, extraEnv...)
 

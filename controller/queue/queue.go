@@ -27,19 +27,21 @@ const (
 )
 
 type Task struct {
-	ID          string   `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	TargetRepo  string   `json:"target_repo"`
-	Profile     string   `json:"profile"`
-	Agent       string   `json:"agent,omitempty"`
-	Priority    Priority `json:"priority"`
-	Status      Status   `json:"status"`
-	Result      string   `json:"result,omitempty"`
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	TargetRepo  string    `json:"target_repo"`
+	Profile     string    `json:"profile"`
+	Agent       string    `json:"agent,omitempty"`
+	Model       string    `json:"model,omitempty"`
+	ContextRefs []string  `json:"context_refs,omitempty"`
+	Priority    Priority  `json:"priority"`
+	Status      Status    `json:"status"`
+	Result      string    `json:"result,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	StartedAt   time.Time `json:"started_at,omitempty"`
 	FinishedAt  time.Time `json:"finished_at,omitempty"`
-	TokensUsed  int64    `json:"tokens_used,omitempty"`
+	TokensUsed  int64     `json:"tokens_used,omitempty"`
 }
 
 const (

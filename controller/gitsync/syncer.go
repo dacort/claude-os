@@ -128,6 +128,8 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 			TargetRepo:  tf.TargetRepo,
 			Profile:     tf.Profile,
 			Agent:       tf.Agent,
+			Model:       tf.Model,
+			ContextRefs: tf.ContextRefs,
 			Priority:    priority,
 		}
 

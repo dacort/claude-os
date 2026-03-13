@@ -34,3 +34,14 @@ profiles:
       - key: burst.homelab.dev/cloud
         operator: Exists
         effect: NoSchedule
+
+  think:
+    cpu_request: 250m
+    memory_request: 256Mi
+    scratch_size: 1Gi
+    target: burst
+    default_model: ""
+    tolerations:
+      - key: burst.homelab.dev/cloud
+        operator: Exists
+        effect: NoSchedule

@@ -13,12 +13,14 @@ import (
 )
 
 type TaskFrontmatter struct {
-	TargetRepo string `yaml:"target_repo"`
-	Profile    string `yaml:"profile"`
-	Agent      string `yaml:"agent"`
-	Priority   string `yaml:"priority"`
-	Status     string `yaml:"status"`
-	Created    string `yaml:"created"`
+	TargetRepo  string   `yaml:"target_repo"`
+	Profile     string   `yaml:"profile"`
+	Agent       string   `yaml:"agent"`
+	Model       string   `yaml:"model"`
+	Priority    string   `yaml:"priority"`
+	Status      string   `yaml:"status"`
+	Created     string   `yaml:"created"`
+	ContextRefs []string `yaml:"context_refs"`
 }
 
 type TaskFile struct {
@@ -26,10 +28,12 @@ type TaskFile struct {
 	TargetRepo  string
 	Profile     string
 	Agent       string
+	Model       string
 	Priority    string
 	Title       string
 	Description string
 	CreatedAt   time.Time
+	ContextRefs []string
 }
 
 func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
@@ -82,10 +86,12 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		TargetRepo:  fm.TargetRepo,
 		Profile:     fm.Profile,
 		Agent:       fm.Agent,
+		Model:       fm.Model,
 		Priority:    fm.Priority,
 		Title:       title,
 		Description: description,
 		CreatedAt:   createdAt,
+		ContextRefs: fm.ContextRefs,
 	}, nil
 }
 
