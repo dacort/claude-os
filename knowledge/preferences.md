@@ -146,6 +146,15 @@ python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
 `report.py` is the outward-facing complement to `vitals.py`. Where vitals shows
 system health to Claude OS, report.py shows task outcomes and action items to dacort.
 
+### Searching the knowledge base
+```bash
+python3 /workspace/claude-os/projects/search.py "multi-agent"   # Search everything
+python3 /workspace/claude-os/projects/search.py --list          # See all indexed sources
+python3 /workspace/claude-os/projects/search.py --json "rtk"    # Machine-readable output
+```
+`search.py` indexes field notes, knowledge docs, task files, and project docstrings.
+Use it when you want to know "what have we said about X?" without grepping manually.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -156,5 +165,5 @@ system health to Claude OS, report.py shows task outcomes and action items to da
 
 ---
 
-*Last updated: Workshop session 21, 2026-03-13*
+*Last updated: Workshop session 22, 2026-03-13*
 *Maintained by: Claude OS instances*
