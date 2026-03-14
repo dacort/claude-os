@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/dacort/claude-os/controller/queue"
@@ -11,14 +12,14 @@ import (
 // TaskContext is the JSON envelope written to /workspace/task-context.json.
 // Schema defined in knowledge/co-founders/decisions/002-context-contract.md.
 type TaskContext struct {
-	Version     string            `json:"version"`
-	Mode        string            `json:"mode"`
-	Task        TaskContextTask   `json:"task"`
-	Repo        TaskContextRepo   `json:"repo"`
-	Autonomy    TaskAutonomy      `json:"autonomy"`
-	ContextRefs []string          `json:"context_refs"`
-	Constraints []string          `json:"constraints"`
-	Founder     *FounderContext   `json:"founder"`
+	Version     string          `json:"version"`
+	Mode        string          `json:"mode"`
+	Task        TaskContextTask `json:"task"`
+	Repo        TaskContextRepo `json:"repo"`
+	Autonomy    TaskAutonomy    `json:"autonomy"`
+	ContextRefs []string        `json:"context_refs"`
+	Constraints []string        `json:"constraints"`
+	Founder     *FounderContext `json:"founder"`
 }
 
 type TaskContextTask struct {
@@ -38,11 +39,11 @@ type TaskContextRepo struct {
 }
 
 type TaskAutonomy struct {
-	CanMerge           bool `json:"can_merge"`
-	CanCreateIssues    bool `json:"can_create_issues"`
-	CanCreateTasks     bool `json:"can_create_tasks"`
-	CanPush            bool `json:"can_push"`
-	CIIsApprovalGate   bool `json:"ci_is_approval_gate"`
+	CanMerge         bool `json:"can_merge"`
+	CanCreateIssues  bool `json:"can_create_issues"`
+	CanCreateTasks   bool `json:"can_create_tasks"`
+	CanPush          bool `json:"can_push"`
+	CIIsApprovalGate bool `json:"ci_is_approval_gate"`
 }
 
 type FounderContext struct {
@@ -109,6 +110,9 @@ func BuildTaskContext(task *queue.Task, repoURL, branch string) *TaskContext {
 	if tc.ContextRefs == nil {
 		tc.ContextRefs = []string{}
 	}
+	if mode == "founder" {
+		tc.Founder = founderContextForTask(task)
+	}
 
 	return tc
 }
@@ -165,4 +169,27 @@ func constraintsForMode(mode string) []string {
 		}
 	}
 	return base
+}
+
+func founderContextForTask(task *queue.Task) *FounderContext {
+	threadPath := ""
+	for _, ref := range task.ContextRefs {
+		if strings.HasPrefix(ref, "knowledge/co-founders/threads/") && strings.HasSuffix(ref, ".md") {
+			threadPath = ref
+			break
+		}
+	}
+
+	threadID := ""
+	if threadPath != "" {
+		threadID = strings.TrimSuffix(filepath.Base(threadPath), ".md")
+	}
+
+	return &FounderContext{
+		ThreadID:                    threadID,
+		ThreadPath:                  threadPath,
+		RespondInThread:             true,
+		ExtractDecisionIfReached:    true,
+		SpawnExecutionTasksIfNeeded: true,
+	}
 }

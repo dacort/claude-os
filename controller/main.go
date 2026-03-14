@@ -314,8 +314,11 @@ func main() {
 			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
 		}
 
+		var parsedResult *queue.TaskResult
+
 		// Try new reporting contract first (decision 002), fall back to legacy.
 		if result := queue.ParseResult(logs); result != nil {
+			parsedResult = result
 			slog.Info("task result (v1 contract)",
 				"task", taskID,
 				"agent", result.Agent,
@@ -351,11 +354,11 @@ func main() {
 
 		if succeeded {
 			slog.Info("completing task", "task", taskID)
-			gitSyncer.CompleteTask(taskID, logs)
+			gitSyncer.CompleteTask(taskID, parsedResult, logs)
 			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, "")
 		} else {
 			slog.Info("failing task", "task", taskID)
-			gitSyncer.FailTask(taskID, logs)
+			gitSyncer.FailTask(taskID, parsedResult, logs)
 			taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
 		}
 	})

@@ -3,7 +3,10 @@ package gitsync
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/dacort/claude-os/controller/queue"
 )
 
 func TestParseTaskFile(t *testing.T) {
@@ -110,5 +113,97 @@ Do thing two.
 	}
 	if len(tasks) != 2 {
 		t.Errorf("expected 2 tasks, got %d", len(tasks))
+	}
+}
+
+func TestFormatStructuredResult(t *testing.T) {
+	result := &queue.TaskResult{
+		Version: "1",
+		TaskID:  "task-001",
+		Agent:   "codex",
+		Model:   "gpt-5.4",
+		Outcome: "success",
+		Summary: "Implemented the adapter contract.",
+		Artifacts: []queue.ResultArtifact{
+			{Type: "commit", Ref: "abc1234"},
+			{Type: "decision", Path: "knowledge/co-founders/decisions/002-context-contract.md"},
+		},
+		Usage: queue.ResultUsage{
+			TokensIn:        100,
+			TokensOut:       50,
+			DurationSeconds: 12,
+		},
+		NextAction: &queue.ResultAction{
+			Type:     "await_reply",
+			Awaiting: "claude",
+			ThreadID: "002-context-contract",
+		},
+	}
+
+	got := formatStructuredResult(result)
+	for _, want := range []string{
+		"## Outcome",
+		"- Agent: codex",
+		"## Summary",
+		"Implemented the adapter contract.",
+		"## Usage",
+		"- Tokens in: 100",
+		"## Artifacts",
+		"commit (ref=abc1234)",
+		"decision (path=knowledge/co-founders/decisions/002-context-contract.md)",
+		"## Next Action",
+		"- Awaiting: claude",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("formatted result missing %q\n%s", want, got)
+		}
+	}
+}
+
+func TestAppendTaskResult(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "task.md")
+	if err := os.WriteFile(path, []byte("# Task\n"), 0644); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	result := &queue.TaskResult{
+		Version:   "1",
+		TaskID:    "task-002",
+		Agent:     "claude",
+		Model:     "claude-sonnet-4-6",
+		Outcome:   "failure",
+		Summary:   "Tests failed.",
+		Artifacts: []queue.ResultArtifact{},
+		Usage: queue.ResultUsage{
+			TokensIn:        20,
+			TokensOut:       5,
+			DurationSeconds: 3,
+		},
+		Failure: &queue.ResultFailure{
+			Reason:    "tests_failed",
+			Detail:    "TestFoo failed",
+			Retryable: true,
+		},
+	}
+
+	if err := appendTaskResult(path, "Failure", result, "worker log line"); err != nil {
+		t.Fatalf("appendTaskResult: %v", err)
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read temp file: %v", err)
+	}
+	got := string(content)
+	for _, want := range []string{
+		"## Failure",
+		"## Structured Result (raw)",
+		"tests_failed",
+		"## Worker Logs",
+		"worker log line",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("appended file missing %q\n%s", want, got)
+		}
 	}
 }

@@ -2,6 +2,7 @@ package gitsync
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -228,13 +229,121 @@ func (s *Syncer) moveTask(filename, from, to string) error {
 	return nil
 }
 
-func (s *Syncer) CompleteTask(taskID, result string) {
+func formatStructuredResult(result *queue.TaskResult) string {
+	if result == nil {
+		return ""
+	}
+
+	var b strings.Builder
+	b.WriteString("\n## Outcome\n\n")
+	b.WriteString(fmt.Sprintf("- Outcome: %s\n", result.Outcome))
+	b.WriteString(fmt.Sprintf("- Agent: %s\n", result.Agent))
+	if result.Model != "" {
+		b.WriteString(fmt.Sprintf("- Model: %s\n", result.Model))
+	}
+
+	if result.Summary != "" {
+		b.WriteString("\n## Summary\n\n")
+		b.WriteString(result.Summary)
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n## Usage\n\n")
+	b.WriteString(fmt.Sprintf("- Tokens in: %d\n", result.Usage.TokensIn))
+	b.WriteString(fmt.Sprintf("- Tokens out: %d\n", result.Usage.TokensOut))
+	b.WriteString(fmt.Sprintf("- Duration (s): %d\n", result.Usage.DurationSeconds))
+
+	b.WriteString("\n## Artifacts\n\n")
+	if len(result.Artifacts) == 0 {
+		b.WriteString("- None\n")
+	} else {
+		for _, artifact := range result.Artifacts {
+			var details []string
+			if artifact.Ref != "" {
+				details = append(details, fmt.Sprintf("ref=%s", artifact.Ref))
+			}
+			if artifact.URL != "" {
+				details = append(details, fmt.Sprintf("url=%s", artifact.URL))
+			}
+			if artifact.Path != "" {
+				details = append(details, fmt.Sprintf("path=%s", artifact.Path))
+			}
+			if len(details) > 0 {
+				b.WriteString(fmt.Sprintf("- %s (%s)\n", artifact.Type, strings.Join(details, ", ")))
+			} else {
+				b.WriteString(fmt.Sprintf("- %s\n", artifact.Type))
+			}
+		}
+	}
+
+	if result.Failure != nil {
+		b.WriteString("\n## Failure Details\n\n")
+		b.WriteString(fmt.Sprintf("- Reason: %s\n", result.Failure.Reason))
+		b.WriteString(fmt.Sprintf("- Retryable: %t\n", result.Failure.Retryable))
+		if result.Failure.Detail != "" {
+			b.WriteString(fmt.Sprintf("- Detail: %s\n", result.Failure.Detail))
+		}
+	}
+
+	if result.NextAction != nil {
+		b.WriteString("\n## Next Action\n\n")
+		b.WriteString(fmt.Sprintf("- Type: %s\n", result.NextAction.Type))
+		if result.NextAction.Awaiting != "" {
+			b.WriteString(fmt.Sprintf("- Awaiting: %s\n", result.NextAction.Awaiting))
+		}
+		if result.NextAction.ThreadID != "" {
+			b.WriteString(fmt.Sprintf("- Thread ID: %s\n", result.NextAction.ThreadID))
+		}
+		if len(result.NextAction.Tasks) > 0 {
+			b.WriteString("- Spawned tasks:\n")
+			for _, task := range result.NextAction.Tasks {
+				b.WriteString(fmt.Sprintf("  - %s (profile=%s, agent=%s)\n", task.ID, task.Profile, task.Agent))
+			}
+		}
+	}
+
+	return b.String()
+}
+
+func appendTaskResult(path, heading string, result *queue.TaskResult, logs string) error {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(fmt.Sprintf("\n## %s\n", heading)); err != nil {
+		return err
+	}
+
+	if result != nil {
+		if _, err := f.WriteString(formatStructuredResult(result)); err != nil {
+			return err
+		}
+		if rawJSON, err := json.MarshalIndent(result, "", "  "); err == nil {
+			if _, err := f.WriteString("\n## Structured Result (raw)\n\n```json\n" + string(rawJSON) + "\n```\n"); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(logs) > 10000 {
+		logs = logs[:10000] + "\n\n...(truncated)"
+	}
+	if _, err := f.WriteString("\n## Worker Logs\n\n" + logs + "\n"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Syncer) CompleteTask(taskID string, result *queue.TaskResult, logs string) {
 	filename := taskID + ".md"
 	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
 	if _, err := os.Stat(src); os.IsNotExist(err) {
 		// Task was created programmatically (e.g. workshop), not from a git file.
 		// Write results directly to completed/ instead.
-		s.writeResultsOnly(taskID, "completed", result)
+		s.writeResultsOnly(taskID, "completed", result, logs)
 		return
 	}
 	if err := s.moveTask(filename, "in-progress", "completed"); err != nil {
@@ -243,20 +352,11 @@ func (s *Syncer) CompleteTask(taskID, result string) {
 		return
 	}
 
-	// Append results to the completed task file
 	path := filepath.Join(s.localPath, "tasks", "completed", filename)
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
+	if err := appendTaskResult(path, "Results", result, logs); err != nil {
 		slog.Error("failed to open completed task for results", "task", taskID, "error", err)
 		return
 	}
-	defer f.Close()
-
-	// Truncate very long results
-	if len(result) > 10000 {
-		result = result[:10000] + "\n\n...(truncated)"
-	}
-	f.WriteString(fmt.Sprintf("\n## Results\n\n%s\n", result))
 
 	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: add results", taskID)); err != nil {
 		slog.Warn("failed to push task results", "task", taskID, "error", err)
@@ -265,15 +365,16 @@ func (s *Syncer) CompleteTask(taskID, result string) {
 	}
 }
 
-func (s *Syncer) writeResultsOnly(taskID, dir, content string) {
+func (s *Syncer) writeResultsOnly(taskID, dir string, result *queue.TaskResult, logs string) {
 	filename := taskID + ".md"
 	path := filepath.Join(s.localPath, "tasks", dir, filename)
-	if len(content) > 10000 {
-		content = content[:10000] + "\n\n...(truncated)"
-	}
-	header := fmt.Sprintf("---\nprofile: small\npriority: creative\nstatus: %s\n---\n\n# Workshop: %s\n\n## Results\n\n%s\n", dir, taskID, content)
+	header := fmt.Sprintf("---\nprofile: small\npriority: creative\nstatus: %s\n---\n\n# Workshop: %s\n", dir, taskID)
 	if err := os.WriteFile(path, []byte(header), 0644); err != nil {
 		slog.Error("failed to write results file", "task", taskID, "error", err)
+		return
+	}
+	if err := appendTaskResult(path, "Results", result, logs); err != nil {
+		slog.Error("failed to append structured results file", "task", taskID, "error", err)
 		return
 	}
 	if err := s.gitCommitAndPush(fmt.Sprintf("workshop %s: %s", taskID, dir)); err != nil {
@@ -306,11 +407,11 @@ func (s *Syncer) ListProcessedTaskIDs() map[string]bool {
 	return processed
 }
 
-func (s *Syncer) FailTask(taskID, reason string) {
+func (s *Syncer) FailTask(taskID string, result *queue.TaskResult, logs string) {
 	filename := taskID + ".md"
 	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
 	if _, err := os.Stat(src); os.IsNotExist(err) {
-		s.writeResultsOnly(taskID, "failed", reason)
+		s.writeResultsOnly(taskID, "failed", result, logs)
 		return
 	}
 	if err := s.moveTask(filename, "in-progress", "failed"); err != nil {
@@ -320,14 +421,15 @@ func (s *Syncer) FailTask(taskID, reason string) {
 	}
 
 	path := filepath.Join(s.localPath, "tasks", "failed", filename)
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
+	if err := appendTaskResult(path, "Failure", result, logs); err != nil {
 		slog.Error("failed to open failed task for reason", "task", taskID, "error", err)
 		return
 	}
-	defer f.Close()
-	f.WriteString(fmt.Sprintf("\n## Failure\n\n%s\n", reason))
 
+	reason := "job failed"
+	if result != nil && result.Failure != nil && result.Failure.Reason != "" {
+		reason = result.Failure.Reason
+	}
 	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: failed — %s", taskID, reason)); err != nil {
 		slog.Warn("failed to push task failure", "task", taskID, "error", err)
 	}

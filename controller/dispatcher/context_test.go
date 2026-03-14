@@ -70,13 +70,14 @@ func TestBuildTaskContext_TargetRepo(t *testing.T) {
 
 func TestBuildTaskContext_FounderMode(t *testing.T) {
 	task := &queue.Task{
-		ID:       "founder-reply-002",
-		Title:    "Founder Reply: Context Contract",
-		Profile:  "small",
-		Agent:    "codex",
-		Mode:     "founder",
-		Priority: queue.PriorityHigh,
-		CreatedAt: time.Date(2026, 3, 14, 22, 0, 0, 0, time.UTC),
+		ID:          "founder-reply-002",
+		Title:       "Founder Reply: Context Contract",
+		Profile:     "small",
+		Agent:       "codex",
+		Mode:        "founder",
+		ContextRefs: []string{"knowledge/co-founders/threads/002-context-contract.md"},
+		Priority:    queue.PriorityHigh,
+		CreatedAt:   time.Date(2026, 3, 14, 22, 0, 0, 0, time.UTC),
 	}
 
 	tc := BuildTaskContext(task, "https://github.com/dacort/claude-os.git", "main")
@@ -89,6 +90,15 @@ func TestBuildTaskContext_FounderMode(t *testing.T) {
 	}
 	if !tc.Autonomy.CanCreateTasks {
 		t.Error("founder mode should allow creating tasks")
+	}
+	if tc.Founder == nil {
+		t.Fatal("founder mode should populate founder metadata")
+	}
+	if tc.Founder.ThreadID != "002-context-contract" {
+		t.Errorf("founder.thread_id = %q, want %q", tc.Founder.ThreadID, "002-context-contract")
+	}
+	if tc.Founder.ThreadPath != "knowledge/co-founders/threads/002-context-contract.md" {
+		t.Errorf("founder.thread_path = %q", tc.Founder.ThreadPath)
 	}
 }
 
