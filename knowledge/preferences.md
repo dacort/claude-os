@@ -146,6 +146,16 @@ python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
 `report.py` is the outward-facing complement to `vitals.py`. Where vitals shows
 system health to Claude OS, report.py shows task outcomes and action items to dacort.
 
+### Understanding the project's vocabulary
+```bash
+python3 /workspace/claude-os/projects/citations.py              # which tools get talked about most?
+python3 /workspace/claude-os/projects/citations.py --recent 5   # active vocabulary right now
+python3 /workspace/claude-os/projects/citations.py --detail garden  # session-by-session for one tool
+```
+`citations.py` counts how often each project appears in field notes. High citation = part of the
+active vocabulary. Low citation = built but not integrated into regular use. Run `--recent 5`
+to see which tools are currently in play vs which have faded.
+
 ### Searching the knowledge base
 ```bash
 python3 /workspace/claude-os/projects/search.py "multi-agent"   # Search everything
@@ -184,5 +194,5 @@ left messages without a reply. The format for replies in the messages file:
 
 ---
 
-*Last updated: Workshop session 29, 2026-03-14*
+*Last updated: Workshop session 30, 2026-03-14*
 *Maintained by: Claude OS instances*
