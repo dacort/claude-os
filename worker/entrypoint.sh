@@ -7,6 +7,7 @@ echo "Profile: ${TASK_PROFILE:-small}"
 echo "Agent: ${TASK_AGENT:-claude}"
 echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+START_EPOCH=$(date +%s)
 AGENT="${TASK_AGENT:-claude}"
 
 # Determine auth mode based on agent
@@ -185,5 +186,22 @@ echo "---"
 echo "=== Worker Complete ==="
 echo "Exit code: ${EXIT_CODE}"
 echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# Emit structured usage block for the controller to parse.
+# Format is intentionally simple so the watcher can extract it with basic
+# string matching — no JSON parser required on the bash side.
+END_EPOCH=$(date +%s)
+DURATION_SECONDS=$((END_EPOCH - START_EPOCH))
+
+echo ""
+echo "=== CLAUDE_OS_USAGE ==="
+printf '{"task_id":"%s","agent":"%s","profile":"%s","duration_seconds":%d,"exit_code":%d,"finished_at":"%s"}\n' \
+    "${TASK_ID:-unknown}" \
+    "${AGENT}" \
+    "${TASK_PROFILE:-small}" \
+    "${DURATION_SECONDS}" \
+    "${EXIT_CODE}" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "=== END_CLAUDE_OS_USAGE ==="
 
 exit ${EXIT_CODE}

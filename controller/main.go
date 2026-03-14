@@ -306,6 +306,23 @@ func main() {
 			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
 		}
 
+		// Extract structured usage data emitted by the worker entrypoint.
+		// Logs duration so task cost is visible without kubectl.
+		if usage := queue.ParseUsage(logs); usage != nil {
+			slog.Info("task usage",
+				"task", taskID,
+				"agent", usage.Agent,
+				"duration_s", usage.DurationSeconds,
+				"exit_code", usage.ExitCode,
+			)
+			if task, err := taskQueue.Get(ctx, taskID); err == nil {
+				task.DurationSeconds = usage.DurationSeconds
+				if saveErr := taskQueue.SaveTask(ctx, task); saveErr != nil {
+					slog.Warn("failed to save task duration", "task", taskID, "error", saveErr)
+				}
+			}
+		}
+
 		if succeeded {
 			slog.Info("completing task", "task", taskID)
 			gitSyncer.CompleteTask(taskID, logs)

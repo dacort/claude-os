@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,21 +28,33 @@ const (
 )
 
 type Task struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	TargetRepo  string    `json:"target_repo"`
-	Profile     string    `json:"profile"`
-	Agent       string    `json:"agent,omitempty"`
-	Model       string    `json:"model,omitempty"`
-	ContextRefs []string  `json:"context_refs,omitempty"`
-	Priority    Priority  `json:"priority"`
-	Status      Status    `json:"status"`
-	Result      string    `json:"result,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	StartedAt   time.Time `json:"started_at,omitempty"`
-	FinishedAt  time.Time `json:"finished_at,omitempty"`
-	TokensUsed  int64     `json:"tokens_used,omitempty"`
+	ID              string    `json:"id"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	TargetRepo      string    `json:"target_repo"`
+	Profile         string    `json:"profile"`
+	Agent           string    `json:"agent,omitempty"`
+	Model           string    `json:"model,omitempty"`
+	ContextRefs     []string  `json:"context_refs,omitempty"`
+	Priority        Priority  `json:"priority"`
+	Status          Status    `json:"status"`
+	Result          string    `json:"result,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	StartedAt       time.Time `json:"started_at,omitempty"`
+	FinishedAt      time.Time `json:"finished_at,omitempty"`
+	TokensUsed      int64     `json:"tokens_used,omitempty"`
+	DurationSeconds int64     `json:"duration_seconds,omitempty"`
+}
+
+// UsageRecord is the structured data emitted by the worker at the end of a job.
+// The controller parses it from the pod logs and stores it on the task.
+type UsageRecord struct {
+	TaskID          string `json:"task_id"`
+	Agent           string `json:"agent"`
+	Profile         string `json:"profile"`
+	DurationSeconds int64  `json:"duration_seconds"`
+	ExitCode        int    `json:"exit_code"`
+	FinishedAt      string `json:"finished_at"`
 }
 
 const (
@@ -201,10 +214,38 @@ func (q *Queue) RequeueTasks(ctx context.Context, taskIDs []string) error {
 	return nil
 }
 
+// SaveTask persists an updated Task struct. Used for in-place field updates
+// (e.g. recording duration after a job completes) that don't go through
+// UpdateStatus.
+func (q *Queue) SaveTask(ctx context.Context, task *Task) error {
+	return q.save(ctx, task)
+}
+
 func (q *Queue) save(ctx context.Context, task *Task) error {
 	data, err := json.Marshal(task)
 	if err != nil {
 		return fmt.Errorf("marshal task: %w", err)
 	}
 	return q.rdb.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0).Err()
+}
+
+// ParseUsage extracts the structured UsageRecord emitted by the worker at the
+// end of each job. Returns nil if the sentinel block is not found.
+func ParseUsage(logs string) *UsageRecord {
+	const startMarker = "=== CLAUDE_OS_USAGE ==="
+	const endMarker = "=== END_CLAUDE_OS_USAGE ==="
+
+	start := strings.Index(logs, startMarker)
+	end := strings.LastIndex(logs, endMarker)
+	if start == -1 || end == -1 || end <= start {
+		return nil
+	}
+
+	raw := strings.TrimSpace(logs[start+len(startMarker) : end])
+	// The block should be a single JSON line
+	var rec UsageRecord
+	if err := json.Unmarshal([]byte(raw), &rec); err != nil {
+		return nil
+	}
+	return &rec
 }

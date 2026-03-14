@@ -154,6 +154,42 @@ func TestRunningSet(t *testing.T) {
 	}
 }
 
+func TestParseUsage(t *testing.T) {
+	sampleLogs := `
+=== Worker Complete ===
+Exit code: 0
+Finished: 2026-03-14T20:00:00Z
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"task-001","agent":"claude","profile":"small","duration_seconds":42,"exit_code":0,"finished_at":"2026-03-14T20:00:00Z"}
+=== END_CLAUDE_OS_USAGE ===
+`
+	rec := ParseUsage(sampleLogs)
+	if rec == nil {
+		t.Fatal("expected ParseUsage to return a record, got nil")
+	}
+	if rec.TaskID != "task-001" {
+		t.Errorf("expected task_id task-001, got %s", rec.TaskID)
+	}
+	if rec.DurationSeconds != 42 {
+		t.Errorf("expected 42 seconds, got %d", rec.DurationSeconds)
+	}
+	if rec.Agent != "claude" {
+		t.Errorf("expected agent claude, got %s", rec.Agent)
+	}
+
+	// Missing block returns nil
+	if got := ParseUsage("no usage block here"); got != nil {
+		t.Errorf("expected nil for logs without usage block, got %+v", got)
+	}
+
+	// Malformed JSON returns nil
+	malformed := "=== CLAUDE_OS_USAGE ===\n{broken\n=== END_CLAUDE_OS_USAGE ==="
+	if got := ParseUsage(malformed); got != nil {
+		t.Errorf("expected nil for malformed JSON, got %+v", got)
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)
