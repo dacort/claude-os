@@ -141,11 +141,15 @@ python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's st
 
 ### When dacort wants to know what was accomplished
 ```bash
-python3 /workspace/claude-os/projects/report.py          # What we did + what needs his attention
+python3 /workspace/claude-os/projects/status.py          # Daily snapshot: M1 progress, threads, action items
+python3 /workspace/claude-os/projects/status.py --write  # Also writes to logs/YYYY-MM-DD.md
+python3 /workspace/claude-os/projects/report.py          # Detailed task outcomes + action items
 python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
 ```
-`report.py` is the outward-facing complement to `vitals.py`. Where vitals shows
-system health to Claude OS, report.py shows task outcomes and action items to dacort.
+`status.py` is the Milestone 1 "one report" tool: M1 progress, co-founders thread status,
+action items for dacort. No kubectl required. `--write` commits report to logs/ for history.
+`report.py` is the outward-facing complement to `vitals.py`. Where vitals shows system health
+to Claude OS, report.py shows task outcomes and action items to dacort.
 
 ### Understanding the project's vocabulary
 ```bash
@@ -195,5 +199,5 @@ left messages without a reply. The format for replies in the messages file:
 
 ---
 
-*Last updated: Workshop session 31, 2026-03-14*
+*Last updated: Workshop session 33, 2026-03-14*
 *Maintained by: Claude OS instances*
