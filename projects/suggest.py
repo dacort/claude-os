@@ -17,6 +17,7 @@ Usage:
 Author: Claude OS (Workshop session 20, 2026-03-13)
 """
 
+import json
 import re
 import sys
 from datetime import datetime, timezone
@@ -24,6 +25,7 @@ from pathlib import Path
 
 REPO = Path(__file__).parent.parent
 W = 68
+SUGGESTION_LOG = Path(__file__).parent / "suggestion-log.json"
 
 
 # ─── ANSI helpers ──────────────────────────────────────────────────────────────
@@ -267,6 +269,53 @@ def _is_in_coda(session_ref: str, keywords: list[str]) -> bool:
     return any(kw.lower() in coda_text for kw in keywords)
 
 
+# ─── Suggestion history / feedback loop ───────────────────────────────────────
+
+def load_suggestion_log() -> list[dict]:
+    """Load the persistent history of suggestions that were written to tasks."""
+    if not SUGGESTION_LOG.exists():
+        return []
+    try:
+        return json.loads(SUGGESTION_LOG.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def append_suggestion_log(idea: dict) -> None:
+    """Record that this suggestion was written as a task file."""
+    log = load_suggestion_log()
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "slug": idea["slug"],
+        "title": idea["title"],
+        "task_path": f"tasks/pending/{idea['slug']}.md",
+    }
+    log.append(entry)
+    SUGGESTION_LOG.write_text(json.dumps(log, indent=2))
+
+
+def check_suggestion_outcomes(log: list[dict]) -> list[dict]:
+    """For each logged suggestion, determine what happened to it."""
+    outcomes = []
+    task_dirs = {
+        "pending":   REPO / "tasks" / "pending",
+        "completed": REPO / "tasks" / "completed",
+        "failed":    REPO / "tasks" / "failed",
+        "in-progress": REPO / "tasks" / "in-progress",
+    }
+
+    for entry in log:
+        slug = entry["slug"]
+        outcome = "unknown"
+        for status, d in task_dirs.items():
+            if d.exists() and (d / f"{slug}.md").exists():
+                outcome = status
+                break
+        outcomes.append({**entry, "outcome": outcome})
+
+    return outcomes
+
+
 # ─── Task generation ───────────────────────────────────────────────────────────
 
 TASK_BODIES = {
@@ -424,6 +473,37 @@ def render(ideas: list[dict], top: dict, show_all: bool, plain: bool):
         "",
     ]
 
+    # ── Feedback loop: what happened to past suggestions? ──────────────────────
+    log = load_suggestion_log()
+    if log:
+        outcomes = check_suggestion_outcomes(log)
+        lines.append("---")
+        lines.append("")
+        lines.append(c("  PAST SUGGESTIONS", bold=True))
+        lines.append("")
+        outcome_colors = {
+            "completed": "green", "failed": "red",
+            "pending": "yellow", "in-progress": "cyan",
+            "unknown": "gray",
+        }
+        outcome_labels = {
+            "completed": "completed", "failed": "failed",
+            "pending": "still pending", "in-progress": "running now",
+            "unknown": "not submitted",
+        }
+        for o in outcomes[-5:]:  # show last 5
+            ts = o["timestamp"][:10]  # just the date
+            col = outcome_colors.get(o["outcome"], "gray")
+            label = outcome_labels.get(o["outcome"], o["outcome"])
+            title = o["title"]
+            if len(title) > 36:
+                title = title[:33] + "..."
+            lines.append(
+                f"  {c(ts, dim=True)}  {c(title, fg='white')}  "
+                f"{c('→', dim=True)}  {c(label, fg=col)}"
+            )
+        lines.append("")
+
     # ── Diagnosis ──────────────────────────────────────────────────────────────
     lines.append("---")
     lines.append("")
@@ -573,6 +653,7 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(generate_task(top))
             written_path = target
+            append_suggestion_log(top)  # close the feedback loop
         draft_lines = render_draft(top, plain, written_path=written_path)
         lines.extend(draft_lines)
 
