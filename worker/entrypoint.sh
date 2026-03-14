@@ -1,116 +1,314 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Claude OS Worker v3 ==="
-echo "Task ID: ${TASK_ID:-unknown}"
-echo "Profile: ${TASK_PROFILE:-small}"
-echo "Agent: ${TASK_AGENT:-claude}"
-echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
 START_EPOCH=$(date +%s)
-AGENT="${TASK_AGENT:-claude}"
 CONTEXT_FILE="/workspace/task-context.json"
+TASK_OUTPUT_FILE="/workspace/task-output.txt"
+HAS_CONTEXT_JSON=false
 
-# ── Write context contract ────────────────────────────────────────────────
-# The controller passes the JSON envelope via env var. Write it to the
-# canonical file path so adapters can read it and it's available for
-# debugging/replay.
-if [ -n "${TASK_CONTEXT_JSON:-}" ]; then
-    echo "${TASK_CONTEXT_JSON}" > "${CONTEXT_FILE}"
-    echo "Context contract written to ${CONTEXT_FILE}"
-else
-    echo "WARNING: No TASK_CONTEXT_JSON — running in legacy mode"
-fi
+# ── Utility functions ─────────────────────────────────────────────────────
 
-# ── Auth configuration ────────────────────────────────────────────────────
-case "$AGENT" in
-  claude)
-    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-        echo "Auth: Claude OAuth token (subscription)"
-    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-        echo "Auth: Claude API key"
+json_get() {
+    local filter="$1"
+    local fallback="${2:-}"
+    if [ "${HAS_CONTEXT_JSON}" != "true" ]; then
+        printf '%s' "${fallback}"
+        return
+    fi
+
+    local value
+    value=$(jq -er "${filter} // empty" "${CONTEXT_FILE}" 2>/dev/null || true)
+    if [ -z "${value}" ]; then
+        printf '%s' "${fallback}"
     else
-        echo "ERROR: No Claude auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
-        exit 1
+        printf '%s' "${value}"
     fi
-    ;;
-  codex)
-    if [ -f "/tmp/codex-auth/auth.json" ]; then
-        mkdir -p "${CODEX_HOME:-/home/worker/.codex}"
-        cp /tmp/codex-auth/auth.json "${CODEX_HOME:-/home/worker/.codex}/auth.json"
-        echo "Auth: Codex OAuth (ChatGPT subscription)"
-    else
-        echo "ERROR: No Codex auth configured. Mount auth.json at /tmp/codex-auth/."
-        exit 1
+}
+
+auth_repo_url() {
+    local url="$1"
+    if [ -z "${GITHUB_TOKEN:-}" ]; then
+        printf '%s' "${url}"
+        return
     fi
-    ;;
-  gemini)
-    if [ -n "${GEMINI_API_KEY:-}" ]; then
-        echo "Auth: Gemini API key"
-    else
-        echo "ERROR: No Gemini auth configured. Set GEMINI_API_KEY."
-        exit 1
+
+    case "${url}" in
+        https://github.com/*)
+            printf 'https://x-access-token:%s@github.com/%s' "${GITHUB_TOKEN}" "${url#https://github.com/}"
+            ;;
+        http://github.com/*)
+            printf 'https://x-access-token:%s@github.com/%s' "${GITHUB_TOKEN}" "${url#http://github.com/}"
+            ;;
+        github.com/*)
+            printf 'https://x-access-token:%s@github.com/%s' "${GITHUB_TOKEN}" "${url#github.com/}"
+            ;;
+        */*)
+            printf 'https://x-access-token:%s@github.com/%s.git' "${GITHUB_TOKEN}" "${url}"
+            ;;
+        *)
+            printf '%s' "${url}"
+            ;;
+    esac
+}
+
+# ── Reporting contract helpers ────────────────────────────────────────────
+
+emit_legacy_usage_block() {
+    local duration_seconds="$1"
+    local exit_code="$2"
+    {
+        echo ""
+        echo "=== CLAUDE_OS_USAGE ==="
+        printf '{"task_id":"%s","agent":"%s","profile":"%s","duration_seconds":%d,"exit_code":%d,"finished_at":"%s"}\n' \
+            "${TASK_ID:-unknown}" \
+            "${AGENT}" \
+            "${TASK_PROFILE:-small}" \
+            "${duration_seconds}" \
+            "${exit_code}" \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "=== END_CLAUDE_OS_USAGE ==="
+    } | tee -a "${TASK_OUTPUT_FILE}"
+}
+
+emit_result_block() {
+    local outcome="$1"
+    local summary="$2"
+    local failure_reason="$3"
+    local failure_detail="$4"
+    local retryable="$5"
+    local duration_seconds="$6"
+
+    local model
+    model=$(json_get '.task.model' "${ANTHROPIC_MODEL:-unknown}")
+    if [ -z "${model}" ]; then
+        model="unknown"
     fi
-    ;;
-  *)
-    echo "ERROR: Unknown agent '${AGENT}'. Supported: claude, codex, gemini."
-    exit 1
-    ;;
-esac
 
-# ── Git and GitHub setup ──────────────────────────────────────────────────
-git config --global user.name "Claude OS"
-git config --global user.email "claude-os@noreply.github.com"
-
-if [ -n "${GITHUB_TOKEN:-}" ]; then
-    echo "${GITHUB_TOKEN}" | gh auth login --with-token 2>/dev/null || true
-fi
-
-# ── Clone repo ────────────────────────────────────────────────────────────
-# Read workdir from context contract if available, otherwise fall back to
-# env-var-based logic.
-if [ -f "${CONTEXT_FILE}" ] && command -v jq &>/dev/null; then
-    WORKDIR=$(jq -r '.repo.workdir' "${CONTEXT_FILE}")
-else
-    WORKDIR="/workspace"
-    if [ -n "${TARGET_REPO:-}" ]; then
-        WORKDIR="/workspace/repo"
+    local failure_json="null"
+    if [ -n "${failure_reason}" ]; then
+        failure_json=$(jq -nc \
+            --arg reason "${failure_reason}" \
+            --arg detail "${failure_detail}" \
+            --argjson retryable "${retryable}" \
+            '{reason:$reason, detail:$detail, retryable:$retryable}')
     fi
-fi
 
-if [ -n "${TARGET_REPO:-}" ]; then
-    echo "Cloning target repo: ${TARGET_REPO}"
-    git clone "https://${GITHUB_TOKEN}@github.com/${TARGET_REPO}.git" "${WORKDIR}"
-elif [ -n "${GITHUB_TOKEN:-}" ]; then
-    echo "Cloning claude-os repo for workspace access"
-    git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/dacort/claude-os.git" /workspace/claude-os 2>/dev/null || true
-fi
+    {
+        echo "===RESULT_START==="
+        jq -nc \
+            --arg version "1" \
+            --arg task_id "${TASK_ID:-unknown}" \
+            --arg agent "${AGENT}" \
+            --arg model "${model}" \
+            --arg outcome "${outcome}" \
+            --arg summary "${summary}" \
+            --argjson tokens_in 0 \
+            --argjson tokens_out 0 \
+            --argjson duration_seconds "${duration_seconds}" \
+            --argjson failure "${failure_json}" \
+            --argjson artifacts '[]' \
+            --argjson next_action 'null' \
+            '{
+                version: $version,
+                task_id: $task_id,
+                agent: $agent,
+                model: $model,
+                outcome: $outcome,
+                summary: $summary,
+                artifacts: $artifacts,
+                usage: {
+                    tokens_in: $tokens_in,
+                    tokens_out: $tokens_out,
+                    duration_seconds: $duration_seconds
+                },
+                failure: $failure,
+                next_action: $next_action
+            }'
+        echo "===RESULT_END==="
+    } | tee -a "${TASK_OUTPUT_FILE}"
+}
 
-# ── Adapter functions ─────────────────────────────────────────────────────
-# Each adapter reads the context file and translates to agent-native invocation.
-# Contract: adapter(context_file_path) -> stdout + exit_code
+# If the agent already emitted a result block, don't duplicate it.
+ensure_result_block() {
+    local exit_code="$1"
+    local duration_seconds="$2"
 
-build_system_prompt() {
+    if grep -q "===RESULT_START===" "${TASK_OUTPUT_FILE}" 2>/dev/null && \
+       grep -q "===RESULT_END===" "${TASK_OUTPUT_FILE}" 2>/dev/null; then
+        return
+    fi
+
+    local outcome="success"
+    local summary="Task completed without an explicit structured result block."
+    local failure_reason=""
+    local failure_detail=""
+    local retryable="false"
+
+    if [ "${exit_code}" -ne 0 ]; then
+        outcome="failure"
+        summary="Task failed before emitting a structured result block."
+        failure_reason="agent_error"
+        failure_detail="Worker exited with code ${exit_code} before emitting ===RESULT_START===."
+        retryable="true"
+    fi
+
+    emit_result_block "${outcome}" "${summary}" "${failure_reason}" "${failure_detail}" "${retryable}" "${duration_seconds}"
+}
+
+# ── Adapter: Codex ────────────────────────────────────────────────────────
+# Builds the instruction block from the context contract using Python for
+# reliable JSON parsing. Designed by Codex for Codex.
+
+build_codex_instruction_block() {
+    python3 - "${CONTEXT_FILE}" "${TASK_TITLE:-Unnamed task}" "${TASK_DESCRIPTION:-}" "${WORKDIR}" <<'PY'
+import json
+import pathlib
+import sys
+
+context_path = pathlib.Path(sys.argv[1])
+fallback_title = sys.argv[2]
+fallback_description = sys.argv[3]
+fallback_workdir = sys.argv[4]
+
+if context_path.exists():
+    envelope = json.loads(context_path.read_text())
+else:
+    envelope = {
+        "version": "0",
+        "mode": "execution",
+        "task": {
+            "id": "",
+            "title": fallback_title,
+            "description": fallback_description,
+            "profile": "",
+            "priority": "",
+            "agent": "codex",
+            "created": ""
+        },
+        "repo": {
+            "url": "",
+            "ref": "",
+            "workdir": fallback_workdir
+        },
+        "autonomy": {
+            "can_merge": False,
+            "can_create_issues": False,
+            "can_create_tasks": False,
+            "can_push": False,
+            "ci_is_approval_gate": True
+        },
+        "context_refs": [],
+        "constraints": [],
+        "founder": None
+    }
+
+task = envelope.get("task", {})
+repo = envelope.get("repo", {})
+autonomy = envelope.get("autonomy", {})
+founder = envelope.get("founder")
+mode = envelope.get("mode", "execution")
+workdir = repo.get("workdir") or fallback_workdir
+base_dir = pathlib.Path(workdir)
+
+parts = [
+    "You are Codex running inside Claude OS.",
+    "Use the existing repository checkout and follow the task contract exactly.",
+    "",
+    f"Mode: {mode}",
+    f"Task ID: {task.get('id', '') or 'unknown'}",
+    f"Title: {task.get('title', '') or fallback_title}",
+    "",
+    "Description:",
+    task.get("description", "") or fallback_description or "(no description provided)",
+    "",
+    "Repository:",
+    f"- URL: {repo.get('url', '') or '(not provided)'}",
+    f"- Ref: {repo.get('ref', '') or '(not provided)'}",
+    f"- Workdir: {workdir}",
+    "",
+    "Autonomy:"
+]
+
+for key in ("can_merge", "can_create_issues", "can_create_tasks", "can_push", "ci_is_approval_gate"):
+    if key in autonomy:
+        parts.append(f"- {key}: {str(bool(autonomy.get(key))).lower()}")
+
+constraints = envelope.get("constraints") or []
+if constraints:
+    parts.extend(["", "Constraints:"])
+    for item in constraints:
+        parts.append(f"- {item}")
+
+if founder:
+    parts.extend(["", "Founder context:"])
+    for key in ("thread_id", "thread_path", "respond_in_thread", "extract_decision_if_reached", "spawn_execution_tasks_if_needed"):
+        if key in founder:
+            value = founder.get(key)
+            if isinstance(value, bool):
+                value = str(value).lower()
+            parts.append(f"- {key}: {value}")
+
+context_refs = envelope.get("context_refs") or []
+if context_refs:
+    parts.extend(["", "Referenced context files:"])
+    for ref in context_refs:
+        parts.append(f"- {ref}")
+
+    for ref in context_refs:
+        ref_path = base_dir / ref
+        parts.extend(["", f"### Context File: {ref}"])
+        if ref_path.is_file():
+            try:
+                parts.append(ref_path.read_text())
+            except Exception as exc:
+                parts.append(f"(failed to read {ref}: {exc})")
+        else:
+            parts.append(f"(missing file at {ref_path})")
+
+parts.extend([
+    "",
+    "Execution requirements:",
+    "- Do the work directly in the checked-out repository.",
+    "- Keep the adapter contract thin: do not invent extra policy beyond the task contract.",
+    "- If you cannot determine token counts, set usage.tokens_in and usage.tokens_out to 0.",
+    "- If founder mode applies, leave the thread in an explicit next state.",
+    "",
+    "Before exiting, emit exactly one structured result block to stdout with no code fences and these exact delimiters:",
+    "===RESULT_START===",
+    '{"version":"1","task_id":"%s","agent":"codex","model":"string","outcome":"success | failure | partial","summary":"string","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":0},"failure":null,"next_action":null}' % (task.get("id", "") or "unknown"),
+    "===RESULT_END===",
+    "",
+    "Rules for the result block:",
+    "- artifacts is required; use [] when there are none.",
+    "- outcome must be one of success, failure, or partial.",
+    "- decision is an artifact type, not an outcome.",
+    "- failure.reason, when present, must be one of: tests_failed, timeout, rate_limited, git_push_failed, context_error, agent_error.",
+    "- next_action is optional, but founder mode should usually set it."
+])
+
+print("\n".join(parts))
+PY
+}
+
+# ── Adapter: Claude ───────────────────────────────────────────────────────
+# Builds the system prompt from the context contract. Reads autonomy flags,
+# constraints, context_refs, and founder mode from the JSON envelope.
+
+build_claude_system_prompt() {
     local context_file="$1"
 
-    # Read fields from context JSON
     local task_title task_desc mode workdir
     task_title=$(jq -r '.task.title' "$context_file")
     task_desc=$(jq -r '.task.description' "$context_file")
     mode=$(jq -r '.mode' "$context_file")
     workdir=$(jq -r '.repo.workdir' "$context_file")
 
-    # Read autonomy flags
+    # Build autonomy section from flags
     local can_merge can_create_issues can_push
     can_merge=$(jq -r '.autonomy.can_merge' "$context_file")
     can_create_issues=$(jq -r '.autonomy.can_create_issues' "$context_file")
     can_push=$(jq -r '.autonomy.can_push' "$context_file")
 
-    # Read constraints
-    local constraints
-    constraints=$(jq -r '.constraints[]' "$context_file" 2>/dev/null | sed 's/^/- /')
-
-    # Build autonomy section from flags
     local autonomy_section="## Autonomy Model
 
 "
@@ -131,14 +329,16 @@ build_system_prompt() {
     fi
     autonomy_section+="- If you have a question that needs dacort's input, open a PR with context."
 
-    # Build constraints section
+    # Constraints from envelope
     local constraints_section=""
+    local constraints
+    constraints=$(jq -r '.constraints[]' "$context_file" 2>/dev/null || true)
     if [ -n "$constraints" ]; then
         constraints_section="
 
 ## Constraints
 
-${constraints}"
+$(echo "$constraints" | sed 's/^/- /')"
     fi
 
     # Inject context_refs files
@@ -173,7 +373,7 @@ ${combined}"
         fi
     fi
 
-    # Load persistent preferences
+    # Persistent preferences
     local preferences_section=""
     local pref_file="${context_base}/knowledge/preferences.md"
     if [ -f "${pref_file}" ]; then
@@ -228,137 +428,171 @@ When done, output a clear summary of what you accomplished.${mode_section}${cons
 SYSPROMPT
 }
 
-run_claude() {
-    local context_file="$1"
-    local prompt="$2"
+# ── Write context file from env var ───────────────────────────────────────
+# The controller passes the JSON envelope as TASK_CONTEXT_JSON. Write it to
+# the canonical path so adapters can read it.
+if [ -n "${TASK_CONTEXT_JSON:-}" ]; then
+    echo "${TASK_CONTEXT_JSON}" > "${CONTEXT_FILE}"
+    echo "Context contract written to ${CONTEXT_FILE}"
+fi
 
-    local system_prompt
-    system_prompt=$(build_system_prompt "$context_file")
+if [ -f "${CONTEXT_FILE}" ]; then
+    HAS_CONTEXT_JSON=true
+fi
 
-    local model_args=""
-    if [ -n "${ANTHROPIC_MODEL:-}" ]; then
-        model_args="--model ${ANTHROPIC_MODEL}"
+# ── Read fields from context (with env-var fallbacks) ─────────────────────
+TASK_ID=$(json_get '.task.id' "${TASK_ID:-unknown}")
+TASK_TITLE=$(json_get '.task.title' "${TASK_TITLE:-Unnamed task}")
+TASK_DESCRIPTION=$(json_get '.task.description' "${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}")
+TASK_PROFILE=$(json_get '.task.profile' "${TASK_PROFILE:-small}")
+TASK_AGENT=$(json_get '.task.agent' "${TASK_AGENT:-claude}")
+TASK_MODE=$(json_get '.mode' "execution")
+REPO_URL=$(json_get '.repo.url' "")
+REPO_REF=$(json_get '.repo.ref' "main")
+WORKDIR_FROM_CONTEXT=$(json_get '.repo.workdir' "")
+AGENT="${TASK_AGENT:-claude}"
+
+echo "=== Claude OS Worker v3 ==="
+echo "Task ID: ${TASK_ID:-unknown}"
+echo "Profile: ${TASK_PROFILE:-small}"
+echo "Agent: ${AGENT}"
+echo "Mode: ${TASK_MODE}"
+echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+if [ "${HAS_CONTEXT_JSON}" = "true" ]; then
+    echo "Context: ${CONTEXT_FILE}"
+fi
+
+# ── Auth configuration ────────────────────────────────────────────────────
+case "$AGENT" in
+  claude)
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+        echo "Auth: Claude OAuth token (subscription)"
+    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+        echo "Auth: Claude API key"
+    else
+        echo "ERROR: No Claude auth configured. Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY."
+        exit 1
+    fi
+    ;;
+  codex)
+    if [ -f "/tmp/codex-auth/auth.json" ]; then
+        mkdir -p "${CODEX_HOME:-/home/worker/.codex}"
+        cp /tmp/codex-auth/auth.json "${CODEX_HOME:-/home/worker/.codex}/auth.json"
+        echo "Auth: Codex OAuth (ChatGPT subscription)"
+    else
+        echo "ERROR: No Codex auth configured. Mount auth.json at /tmp/codex-auth/."
+        exit 1
+    fi
+    ;;
+  gemini)
+    if [ -n "${GEMINI_API_KEY:-}" ]; then
+        echo "Auth: Gemini API key"
+    else
+        echo "ERROR: No Gemini auth configured. Set GEMINI_API_KEY."
+        exit 1
+    fi
+    ;;
+  *)
+    echo "ERROR: Unknown agent '${AGENT}'. Supported: claude, codex, gemini."
+    exit 1
+    ;;
+esac
+
+# ── Git and GitHub setup ──────────────────────────────────────────────────
+git config --global user.name "Claude OS"
+git config --global user.email "claude-os@noreply.github.com"
+
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "${GITHUB_TOKEN}" | gh auth login --with-token 2>/dev/null || true
+fi
+
+# ── Clone repo ────────────────────────────────────────────────────────────
+# Context contract path: use repo.url and repo.workdir from envelope.
+# Legacy path: use TARGET_REPO env var.
+WORKDIR="/workspace"
+if [ "${HAS_CONTEXT_JSON}" = "true" ] && [ -n "${REPO_URL}" ]; then
+    WORKDIR="${WORKDIR_FROM_CONTEXT:-/workspace/repo}"
+    echo "Cloning context repo: ${REPO_URL} -> ${WORKDIR}"
+    mkdir -p "$(dirname "${WORKDIR}")"
+    git clone --branch "${REPO_REF:-main}" "$(auth_repo_url "${REPO_URL}")" "${WORKDIR}"
+elif [ -n "${TARGET_REPO:-}" ]; then
+    echo "Cloning target repo: ${TARGET_REPO}"
+    WORKDIR="/workspace/repo"
+    git clone "$(auth_repo_url "${TARGET_REPO}")" "${WORKDIR}"
+elif [ -n "${GITHUB_TOKEN:-}" ]; then
+    WORKDIR="/workspace/claude-os"
+    echo "Cloning claude-os repo for workspace access"
+    git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/dacort/claude-os.git" "${WORKDIR}" 2>/dev/null || true
+fi
+
+# ── Legacy Claude prompt assembly ─────────────────────────────────────────
+# Used only when context contract is not available (backward compat).
+PREFERENCES_SECTION=""
+CONTEXT_REFS_SECTION=""
+if [ "${HAS_CONTEXT_JSON}" != "true" ]; then
+    PREFERENCES_FILE="/workspace/claude-os/knowledge/preferences.md"
+    if [ -f "${PREFERENCES_FILE}" ]; then
+        echo "Injecting preferences from knowledge/preferences.md"
+        PREFERENCES_CONTENT=$(cat "${PREFERENCES_FILE}")
+        PREFERENCES_SECTION="
+
+---
+
+## Persistent Preferences (auto-injected from knowledge/preferences.md)
+
+${PREFERENCES_CONTENT}"
     fi
 
-    claude -p "${prompt}" \
-        --system-prompt "${system_prompt}" \
-        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        --output-format text \
-        ${model_args} \
-        2>&1 | tee /workspace/task-output.txt
-
-    return ${PIPESTATUS[0]}
-}
-
-run_codex() {
-    local context_file="$1"
-    local prompt="$2"
-
-    # Build instruction block from context JSON
-    local task_title task_desc constraints_text
-    task_title=$(jq -r '.task.title' "$context_file")
-    task_desc=$(jq -r '.task.description' "$context_file")
-    constraints_text=$(jq -r '.constraints | join(". ")' "$context_file" 2>/dev/null || echo "")
-
-    local instruction="Task: ${task_title}
-
-${task_desc}
-
-${prompt}"
-
-    if [ -n "$constraints_text" ]; then
-        instruction="${instruction}
-
-Constraints: ${constraints_text}"
-    fi
-
-    # Inject context refs into instruction
-    local context_base="/workspace/claude-os"
-    local refs
-    refs=$(jq -r '.context_refs[]' "$context_file" 2>/dev/null || true)
-    if [ -n "$refs" ]; then
-        while IFS= read -r ref; do
-            local ref_path="${context_base}/${ref}"
+    if [ -n "${CONTEXT_REFS:-}" ]; then
+        CONTEXT_BASE="/workspace/claude-os"
+        IFS=':' read -ra REFS <<< "${CONTEXT_REFS}"
+        COMBINED=""
+        for ref in "${REFS[@]}"; do
+            ref_path="${CONTEXT_BASE}/${ref}"
             if [ -f "${ref_path}" ]; then
-                echo "Injecting context ref for Codex: ${ref}"
-                local ref_content
+                echo "Injecting context ref: ${ref}"
                 ref_content=$(cat "${ref_path}")
-                instruction="${instruction}
+                COMBINED="${COMBINED}
 
---- ${ref} ---
+### ${ref}
+
 ${ref_content}"
+            else
+                echo "WARNING: context_ref not found: ${ref_path}"
             fi
-        done <<< "$refs"
+        done
+        if [ -n "${COMBINED}" ]; then
+            CONTEXT_REFS_SECTION="
+
+---
+
+## Task Context (auto-injected from context_refs)
+
+${COMBINED}"
+        fi
     fi
+fi
 
-    codex exec \
-        --full-auto \
-        --skip-git-repo-check \
-        "${instruction}" \
-        2>&1 | tee /workspace/task-output.txt
+# Legacy system prompt (only used when context contract is absent)
+LEGACY_SYSTEM_PROMPT="You are Claude OS Worker, an autonomous agent on dacort's Kubernetes homelab.
 
-    return ${PIPESTATUS[0]}
-}
+Your task: ${TASK_TITLE:-Unnamed task}
+Working directory: ${WORKDIR}
 
-run_gemini() {
-    local context_file="$1"
-    local prompt="$2"
+## Execution
 
-    gemini "${prompt}" \
-        2>&1 | tee /workspace/task-output.txt
+Execute the task step by step. Be thorough but efficient.
+When done, output a clear summary of what you accomplished.
 
-    return ${PIPESTATUS[0]}
-}
+## Safety Rails
 
-# ── Emit structured result ────────────────────────────────────────────────
-# Reporting contract: ===RESULT_START=== / ===RESULT_END===
-emit_result() {
-    local exit_code="$1"
-    local agent="$2"
-    local task_id="$3"
+- Your output will be written to a PUBLIC git repository. NEVER include secrets, API keys, tokens, or passwords.
+- CI is your approval gate. If tests pass, ship it. If tests fail, fix them first.${PREFERENCES_SECTION}${CONTEXT_REFS_SECTION}"
 
-    local end_epoch duration_seconds
-    end_epoch=$(date +%s)
-    duration_seconds=$((end_epoch - START_EPOCH))
-
-    local outcome="success"
-    local failure_json="null"
-    if [ "$exit_code" -ne 0 ]; then
-        outcome="failure"
-        failure_json=$(printf '{"reason":"agent_error","detail":"exit code %d","retryable":true}' "$exit_code")
-    fi
-
-    local model="${ANTHROPIC_MODEL:-unknown}"
-    local summary=""
-    if [ -f /workspace/task-output.txt ]; then
-        # Grab last non-empty line as summary (best effort)
-        summary=$(tail -20 /workspace/task-output.txt | grep -v '^$' | tail -1 | head -c 200 || echo "")
-    fi
-
-    # Escape strings for JSON
-    summary=$(echo "$summary" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | tr -d '\n')
-
-    echo ""
-    echo "===RESULT_START==="
-    cat <<RESULTJSON
-{"version":"1","task_id":"${task_id}","agent":"${agent}","model":"${model}","outcome":"${outcome}","summary":"${summary}","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":${duration_seconds}},"failure":${failure_json},"next_action":null}
-RESULTJSON
-    echo "===RESULT_END==="
-
-    # Also emit legacy usage block for backward compatibility
-    echo ""
-    echo "=== CLAUDE_OS_USAGE ==="
-    printf '{"task_id":"%s","agent":"%s","profile":"%s","duration_seconds":%d,"exit_code":%d,"finished_at":"%s"}\n' \
-        "${task_id}" \
-        "${agent}" \
-        "${TASK_PROFILE:-small}" \
-        "${duration_seconds}" \
-        "${exit_code}" \
-        "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "=== END_CLAUDE_OS_USAGE ==="
-}
-
-# ── Main execution ────────────────────────────────────────────────────────
+MODEL_ARGS=""
+if [ -n "${ANTHROPIC_MODEL:-}" ]; then
+    MODEL_ARGS="--model ${ANTHROPIC_MODEL}"
+fi
 
 PROMPT="${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}"
 
@@ -366,47 +600,46 @@ echo "Running task via ${AGENT}..."
 echo "---"
 
 cd "${WORKDIR}"
+set +e
+case "$AGENT" in
+  claude)
+    if [ "${HAS_CONTEXT_JSON}" = "true" ]; then
+        SYSTEM_PROMPT=$(build_claude_system_prompt "${CONTEXT_FILE}")
+    else
+        SYSTEM_PROMPT="${LEGACY_SYSTEM_PROMPT}"
+    fi
+    claude -p "${PROMPT}" \
+        --system-prompt "${SYSTEM_PROMPT}" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        --output-format text \
+        ${MODEL_ARGS} \
+        2>&1 | tee "${TASK_OUTPUT_FILE}"
+    ;;
+  codex)
+    CODEX_PROMPT=$(build_codex_instruction_block)
+    codex exec \
+        --full-auto \
+        --skip-git-repo-check \
+        "${CODEX_PROMPT}" \
+        2>&1 | tee "${TASK_OUTPUT_FILE}"
+    ;;
+  gemini)
+    gemini "${PROMPT}" \
+        2>&1 | tee "${TASK_OUTPUT_FILE}"
+    ;;
+esac
+EXIT_CODE=${PIPESTATUS[0]}
+set -e
 
-EXIT_CODE=0
-if [ -f "${CONTEXT_FILE}" ] && command -v jq &>/dev/null; then
-    # New contract path — adapter reads context file
-    case "$AGENT" in
-      claude) run_claude "${CONTEXT_FILE}" "${PROMPT}" || EXIT_CODE=$? ;;
-      codex)  run_codex  "${CONTEXT_FILE}" "${PROMPT}" || EXIT_CODE=$? ;;
-      gemini) run_gemini "${CONTEXT_FILE}" "${PROMPT}" || EXIT_CODE=$? ;;
-    esac
-else
-    # Legacy fallback — direct invocation without context contract
-    echo "WARNING: Running without context contract (no jq or no context file)"
-    case "$AGENT" in
-      claude)
-        MODEL_ARGS=""
-        if [ -n "${ANTHROPIC_MODEL:-}" ]; then
-            MODEL_ARGS="--model ${ANTHROPIC_MODEL}"
-        fi
-        claude -p "${PROMPT}" \
-            --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-            --output-format text \
-            ${MODEL_ARGS} \
-            2>&1 | tee /workspace/task-output.txt || EXIT_CODE=$?
-        ;;
-      codex)
-        codex exec --full-auto --skip-git-repo-check "${PROMPT}" \
-            2>&1 | tee /workspace/task-output.txt || EXIT_CODE=$?
-        ;;
-      gemini)
-        gemini "${PROMPT}" \
-            2>&1 | tee /workspace/task-output.txt || EXIT_CODE=$?
-        ;;
-    esac
-fi
+echo "---" | tee -a "${TASK_OUTPUT_FILE}"
+echo "=== Worker Complete ===" | tee -a "${TASK_OUTPUT_FILE}"
+echo "Exit code: ${EXIT_CODE}" | tee -a "${TASK_OUTPUT_FILE}"
+echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "${TASK_OUTPUT_FILE}"
 
-echo "---"
-echo "=== Worker Complete ==="
-echo "Exit code: ${EXIT_CODE}"
-echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+END_EPOCH=$(date +%s)
+DURATION_SECONDS=$((END_EPOCH - START_EPOCH))
 
-# Emit structured result (new contract + legacy for backward compat)
-emit_result "${EXIT_CODE}" "${AGENT}" "${TASK_ID:-unknown}"
+ensure_result_block "${EXIT_CODE}" "${DURATION_SECONDS}"
+emit_legacy_usage_block "${DURATION_SECONDS}" "${EXIT_CODE}"
 
 exit ${EXIT_CODE}
