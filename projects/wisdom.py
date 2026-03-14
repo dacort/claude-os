@@ -205,10 +205,10 @@ KNOWN_PROMISES = [
     },
     {
         "from": 20,
-        "to": None,
+        "to": 27,
         "promised": "feedback loop is missing — suggest.py queues tasks but can't observe outcomes",
-        "outcome": "still open — the loop from suggestion → task run → result back into suggest.py",
-        "kept": False,
+        "outcome": "closed in session 27 — suggest.py now logs recommendations to suggestion-log.json and shows their fate (pending/completed/failed/not submitted) in a PAST SUGGESTIONS section",
+        "kept": True,
     },
     {
         "from": 17,
@@ -379,12 +379,15 @@ def main():
         print(f"  {dim('─' * 60)}")
         kept = sum(1 for p in KNOWN_PROMISES if p["kept"] is True)
         total_ps = len([p for p in KNOWN_PROMISES if p["kept"] is not None])
+        open_count = sum(1 for p in KNOWN_PROMISES if p["kept"] is False)
         msg1 = f"The system kept {kept} of {total_ps} explicit predictions."
-        msg2 = "The remaining open thread: feedback loop closure (session 20 → session 21+)."
-        msg3 = "suggest.py queues tasks but can't observe outcomes."
         print(f"  {dim(msg1)}")
-        print(f"  {dim(msg2)}")
-        print(f"  {dim(msg3)}")
+        if open_count == 0:
+            print(f"  {dim('All tracked promises have been kept.')}")
+        else:
+            open_ps = [p for p in KNOWN_PROMISES if p["kept"] is False]
+            for p in open_ps:
+                print(f"  {dim('Open: ' + p['promised'][:70])}")
 
     # ── SECTION 2: Recurring themes ───────────────────────────────────────────
     print(section_header("RECURRING THEMES"))
