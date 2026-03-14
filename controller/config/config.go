@@ -42,6 +42,7 @@ func (g GitConfig) PollDuration() time.Duration {
 type SchedulerConfig struct {
 	MaxConcurrentJobs     int    `yaml:"max_concurrent_jobs"`
 	JobTTLAfterFinished   string `yaml:"job_ttl_after_finished"`
+	TaskTimeout           string `yaml:"task_timeout"`
 	CreativeModeEnabled   bool   `yaml:"creative_mode_enabled"`
 	CreativeIdleThreshold string `yaml:"creative_idle_threshold"`
 }
@@ -50,6 +51,17 @@ func (s SchedulerConfig) TTLDuration() time.Duration {
 	d, _ := time.ParseDuration(s.JobTTLAfterFinished)
 	if d == 0 {
 		return time.Hour
+	}
+	return d
+}
+
+// TaskTimeoutDuration returns the max time a task job may run before being killed.
+// Default is 2 hours — generous enough for long creative sessions, firm enough
+// to prevent runaway jobs from consuming resources forever.
+func (s SchedulerConfig) TaskTimeoutDuration() time.Duration {
+	d, _ := time.ParseDuration(s.TaskTimeout)
+	if d == 0 {
+		return 2 * time.Hour
 	}
 	return d
 }

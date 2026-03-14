@@ -88,6 +88,63 @@ func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []core
 	}
 }
 
+// CountActiveJobs returns the number of claude-os worker jobs currently running
+// (not yet finished) in the namespace. Used for concurrency enforcement.
+func (d *Dispatcher) CountActiveJobs(ctx context.Context) (int, error) {
+	jobs, err := d.client.BatchV1().Jobs(d.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		return 0, fmt.Errorf("list jobs: %w", err)
+	}
+	active := 0
+	for _, job := range jobs.Items {
+		if !isJobFinished(&job) {
+			active++
+		}
+	}
+	return active, nil
+}
+
+// JobExists returns true if an active (non-finished) K8s Job exists for the given task ID.
+func (d *Dispatcher) JobExists(ctx context.Context, taskID string) (bool, error) {
+	jobs, err := d.client.BatchV1().Jobs(d.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=claude-os-worker,task-id=%s", taskID),
+	})
+	if err != nil {
+		return false, fmt.Errorf("list jobs for task %s: %w", taskID, err)
+	}
+	for _, job := range jobs.Items {
+		if !isJobFinished(&job) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// AnyJobExists returns true if any K8s Job (running or finished) exists for the
+// given task ID. Used by the reconciler to distinguish "job never created" from
+// "job finished but watcher hasn't processed it yet."
+func (d *Dispatcher) AnyJobExists(ctx context.Context, taskID string) (bool, error) {
+	jobs, err := d.client.BatchV1().Jobs(d.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=claude-os-worker,task-id=%s", taskID),
+	})
+	if err != nil {
+		return false, fmt.Errorf("list jobs for task %s: %w", taskID, err)
+	}
+	return len(jobs.Items) > 0, nil
+}
+
+func isJobFinished(job *batchv1.Job) bool {
+	for _, c := range job.Status.Conditions {
+		if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) &&
+			c.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
 func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.Job, error) {
 	profile, err := GetProfile(task.Profile)
 	if err != nil {

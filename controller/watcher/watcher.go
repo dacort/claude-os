@@ -34,6 +34,48 @@ func New(client kubernetes.Interface, namespace string, handler CompletionHandle
 	}
 }
 
+// CheckTimeouts scans for jobs that have been running longer than maxDuration
+// and deletes them (which causes the job to fail and the watcher to process it
+// on the next Poll).
+func (w *Watcher) CheckTimeouts(ctx context.Context, maxDuration time.Duration) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Error("watcher: failed to list jobs for timeout check", "error", err)
+		return
+	}
+
+	for _, job := range jobs.Items {
+		if isFinished(&job) {
+			continue
+		}
+		if job.Status.StartTime == nil {
+			continue
+		}
+
+		age := time.Since(job.Status.StartTime.Time)
+		if age <= maxDuration {
+			continue
+		}
+
+		taskID := job.Labels["task-id"]
+		slog.Warn("watcher: job exceeded timeout, deleting",
+			"job", job.Name,
+			"task", taskID,
+			"age", age.Round(time.Second),
+			"max", maxDuration,
+		)
+
+		propagation := metav1.DeletePropagationBackground
+		if err := w.client.BatchV1().Jobs(w.namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			PropagationPolicy: &propagation,
+		}); err != nil {
+			slog.Error("watcher: failed to delete timed-out job", "job", job.Name, "error", err)
+		}
+	}
+}
+
 // Poll checks for completed jobs and processes them.
 func (w *Watcher) Poll(ctx context.Context) {
 	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{

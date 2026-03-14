@@ -100,3 +100,86 @@ func TestUpdateStatus(t *testing.T) {
 		t.Errorf("expected result 'PR opened: #42', got %s", task.Result)
 	}
 }
+
+func TestRunningSet(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	// Queue two tasks
+	for _, id := range []string{"t1", "t2"} {
+		q.Enqueue(ctx, &Task{ID: id, Priority: PriorityNormal})
+	}
+
+	// Nothing running yet
+	count, err := q.RunningCount(ctx)
+	if err != nil {
+		t.Fatalf("RunningCount: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 running, got %d", count)
+	}
+
+	// Dequeue first task — should appear in running set
+	q.Dequeue(ctx)
+	count, _ = q.RunningCount(ctx)
+	if count != 1 {
+		t.Errorf("expected 1 running after dequeue, got %d", count)
+	}
+
+	running, _ := q.ListRunning(ctx)
+	if len(running) != 1 || running[0] != "t1" {
+		t.Errorf("expected [t1] in running set, got %v", running)
+	}
+
+	// Dequeue second task
+	q.Dequeue(ctx)
+	count, _ = q.RunningCount(ctx)
+	if count != 2 {
+		t.Errorf("expected 2 running, got %d", count)
+	}
+
+	// Complete first task — should be removed from running set
+	q.UpdateStatus(ctx, "t1", StatusCompleted, "done")
+	count, _ = q.RunningCount(ctx)
+	if count != 1 {
+		t.Errorf("expected 1 running after completion, got %d", count)
+	}
+
+	// Fail second task — should also be removed
+	q.UpdateStatus(ctx, "t2", StatusFailed, "oops")
+	count, _ = q.RunningCount(ctx)
+	if count != 0 {
+		t.Errorf("expected 0 running after failure, got %d", count)
+	}
+}
+
+func TestRequeueTasks(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	q.Enqueue(ctx, &Task{ID: "orphan", Priority: PriorityNormal})
+	q.Dequeue(ctx) // now in running set
+
+	// Simulate controller restart: requeue the orphaned task
+	err := q.RequeueTasks(ctx, []string{"orphan"})
+	if err != nil {
+		t.Fatalf("RequeueTasks: %v", err)
+	}
+
+	// Should no longer be in running set
+	count, _ := q.RunningCount(ctx)
+	if count != 0 {
+		t.Errorf("expected 0 running after requeue, got %d", count)
+	}
+
+	// Should be dequeue-able again
+	task, err := q.Dequeue(ctx)
+	if err != nil {
+		t.Fatalf("Dequeue after requeue: %v", err)
+	}
+	if task == nil || task.ID != "orphan" {
+		t.Errorf("expected orphan task back in queue, got %v", task)
+	}
+}

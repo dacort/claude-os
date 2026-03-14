@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/dacort/claude-os/controller/queue"
 )
@@ -146,20 +147,57 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 }
 
 func (s *Syncer) gitCommitAndPush(message string) error {
-	cmds := [][]string{
+	// Stage and commit first — these don't need retry.
+	stageCmds := [][]string{
 		{"git", "add", "-A"},
 		{"git", "-c", "user.name=Claude OS", "-c", "user.email=claude-os@noreply.github.com",
 			"commit", "-m", message},
-		{"git", "push", "origin", s.branch},
 	}
-	for _, args := range cmds {
+	for _, args := range stageCmds {
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Dir = s.localPath
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("%s: %s: %w", args[0], string(output), err)
 		}
 	}
-	return nil
+
+	// Push with retry + rebase on conflict.
+	// Races are rare but real: another controller instance or a manual push
+	// can cause a non-fast-forward rejection. We pull --rebase then retry.
+	const maxAttempts = 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		pushCmd := exec.Command("git", "push", "origin", s.branch)
+		pushCmd.Dir = s.localPath
+		out, err := pushCmd.CombinedOutput()
+		if err == nil {
+			return nil
+		}
+
+		slog.Warn("git push failed, will retry",
+			"attempt", attempt,
+			"max", maxAttempts,
+			"output", strings.TrimSpace(string(out)),
+		)
+
+		if attempt == maxAttempts {
+			return fmt.Errorf("git push failed after %d attempts: %s", maxAttempts, string(out))
+		}
+
+		// Pull --rebase to incorporate remote changes before retrying.
+		rebaseCmd := exec.Command("git",
+			"-c", "user.name=Claude OS",
+			"-c", "user.email=claude-os@noreply.github.com",
+			"pull", "--rebase", "origin", s.branch)
+		rebaseCmd.Dir = s.localPath
+		if rbOut, rbErr := rebaseCmd.CombinedOutput(); rbErr != nil {
+			return fmt.Errorf("git pull --rebase before push retry: %s: %w", string(rbOut), rbErr)
+		}
+
+		// Brief back-off so concurrent pushes don't all retry at once.
+		time.Sleep(time.Duration(attempt) * 2 * time.Second)
+	}
+
+	return nil // unreachable
 }
 
 func (s *Syncer) moveTask(filename, from, to string) {

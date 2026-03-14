@@ -138,6 +138,40 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	// ── Startup Reconciler ─────────────────────────────────────────────────
+	// If the controller crashed while tasks were running, their Redis state
+	// will still be StatusRunning but no K8s Job will exist. Find and
+	// re-queue them so they aren't silently lost.
+	reconcileCtx, reconcileCancel := context.WithTimeout(ctx, 30*time.Second)
+	runningIDs, err := taskQueue.ListRunning(reconcileCtx)
+	if err != nil {
+		slog.Warn("reconciler: failed to list running tasks", "error", err)
+	} else if len(runningIDs) > 0 {
+		slog.Info("reconciler: checking running tasks for orphaned state", "count", len(runningIDs))
+		var orphans []string
+		for _, id := range runningIDs {
+			// Use AnyJobExists (not JobExists) so we don't requeue tasks whose
+			// job finished but the watcher hasn't processed it yet.
+			exists, err := jobDispatcher.AnyJobExists(reconcileCtx, id)
+			if err != nil {
+				slog.Warn("reconciler: failed to check job existence", "task", id, "error", err)
+				continue
+			}
+			if !exists {
+				slog.Info("reconciler: orphaned task found — no K8s job, will requeue", "task", id)
+				orphans = append(orphans, id)
+			}
+		}
+		if len(orphans) > 0 {
+			if err := taskQueue.RequeueTasks(reconcileCtx, orphans); err != nil {
+				slog.Error("reconciler: failed to requeue orphaned tasks", "error", err)
+			} else {
+				slog.Info("reconciler: requeued orphaned tasks", "count", len(orphans))
+			}
+		}
+	}
+	reconcileCancel()
+
 	go func() {
 		slog.Info("starting HTTP server", "port", cfg.Server.Port)
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
@@ -165,6 +199,17 @@ func main() {
 		}
 	}()
 
+	// Concurrency config — default 3 if not set.
+	maxJobs := cfg.Scheduler.MaxConcurrentJobs
+	if maxJobs <= 0 {
+		maxJobs = 3
+	}
+	taskTimeout := cfg.Scheduler.TaskTimeoutDuration()
+	slog.Info("scheduler configured",
+		"max_concurrent_jobs", maxJobs,
+		"task_timeout", taskTimeout,
+	)
+
 	// Main dispatch loop
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -183,6 +228,19 @@ func main() {
 
 				if err != nil {
 					slog.Warn("Redis unavailable, skipping dispatch", "error", err)
+					continue
+				}
+
+				// ── Concurrency check ──────────────────────────────────────
+				// Count active K8s jobs. If we're at the limit, skip this tick.
+				// This prevents the dispatcher from launching more jobs than the
+				// cluster can handle and makes backpressure explicit.
+				activeJobs, err := jobDispatcher.CountActiveJobs(ctx)
+				if err != nil {
+					slog.Warn("failed to count active jobs", "error", err)
+				} else if activeJobs >= maxJobs {
+					slog.Debug("concurrency limit reached, skipping dispatch",
+						"active", activeJobs, "max", maxJobs)
 					continue
 				}
 
@@ -251,13 +309,20 @@ func main() {
 	})
 	go func() {
 		ticker := time.NewTicker(15 * time.Second)
+		timeoutTicker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
+		defer timeoutTicker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
 				jobWatcher.Poll(ctx)
+			case <-timeoutTicker.C:
+				// ── Task timeout enforcement ───────────────────────────────
+				// Kill jobs that have been running past the configured limit.
+				// The watcher will pick up the resulting failure on the next Poll.
+				jobWatcher.CheckTimeouts(ctx, taskTimeout)
 			}
 		}
 	}()

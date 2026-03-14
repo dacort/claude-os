@@ -45,8 +45,9 @@ type Task struct {
 }
 
 const (
-	keyQueue = "claude-os:queue"
-	keyTask  = "claude-os:task:%s"
+	keyQueue   = "claude-os:queue"
+	keyTask    = "claude-os:task:%s"
+	keyRunning = "claude-os:running"
 )
 
 type Queue struct {
@@ -107,7 +108,19 @@ func (q *Queue) Dequeue(ctx context.Context) (*Task, error) {
 
 	task.Status = StatusRunning
 	task.StartedAt = time.Now().UTC()
-	return task, q.save(ctx, task)
+
+	pipe := q.rdb.Pipeline()
+	data, err := json.Marshal(task)
+	if err != nil {
+		return nil, fmt.Errorf("marshal task: %w", err)
+	}
+	pipe.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0)
+	pipe.SAdd(ctx, keyRunning, task.ID)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return nil, fmt.Errorf("dequeue pipeline: %w", err)
+	}
+
+	return task, nil
 }
 
 func (q *Queue) Get(ctx context.Context, id string) (*Task, error) {
@@ -132,7 +145,60 @@ func (q *Queue) UpdateStatus(ctx context.Context, id string, status Status, resu
 	if status == StatusCompleted || status == StatusFailed {
 		task.FinishedAt = time.Now().UTC()
 	}
-	return q.save(ctx, task)
+
+	data, err := json.Marshal(task)
+	if err != nil {
+		return fmt.Errorf("marshal task: %w", err)
+	}
+
+	pipe := q.rdb.Pipeline()
+	pipe.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0)
+	if status == StatusCompleted || status == StatusFailed {
+		pipe.SRem(ctx, keyRunning, id)
+	}
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+// RunningCount returns the number of tasks currently in StatusRunning.
+func (q *Queue) RunningCount(ctx context.Context) (int64, error) {
+	return q.rdb.SCard(ctx, keyRunning).Result()
+}
+
+// ListRunning returns the IDs of all tasks currently in StatusRunning.
+func (q *Queue) ListRunning(ctx context.Context) ([]string, error) {
+	return q.rdb.SMembers(ctx, keyRunning).Result()
+}
+
+// RequeueTasks moves a set of tasks from running back to pending.
+// Used by the reconciler to recover tasks whose K8s jobs disappeared.
+func (q *Queue) RequeueTasks(ctx context.Context, taskIDs []string) error {
+	for _, id := range taskIDs {
+		task, err := q.Get(ctx, id)
+		if err != nil {
+			return fmt.Errorf("get task %s for requeue: %w", id, err)
+		}
+
+		task.Status = StatusPending
+		task.StartedAt = time.Time{}
+
+		data, err := json.Marshal(task)
+		if err != nil {
+			return fmt.Errorf("marshal task %s: %w", id, err)
+		}
+
+		pipe := q.rdb.Pipeline()
+		pipe.Set(ctx, fmt.Sprintf(keyTask, id), data, 0)
+		pipe.SRem(ctx, keyRunning, id)
+		pipe.ZAdd(ctx, keyQueue, redis.Z{
+			Score:  float64(task.Priority),
+			Member: id,
+		})
+		if _, err := pipe.Exec(ctx); err != nil {
+			return fmt.Errorf("requeue pipeline for %s: %w", id, err)
+		}
+	}
+	return nil
 }
 
 func (q *Queue) save(ctx context.Context, task *Task) error {
