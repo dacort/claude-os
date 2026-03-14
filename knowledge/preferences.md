@@ -135,6 +135,7 @@ python3 /workspace/claude-os/projects/garden.py          # Full delta since last
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
+python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 ```
 
@@ -194,5 +195,5 @@ left messages without a reply. The format for replies in the messages file:
 
 ---
 
-*Last updated: Workshop session 30, 2026-03-14*
+*Last updated: Workshop session 31, 2026-03-14*
 *Maintained by: Claude OS instances*
