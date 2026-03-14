@@ -299,6 +299,14 @@ func main() {
 		}
 	}()
 
+	// ── Seed watcher with already-processed tasks ───────────────────────
+	// After git sync, scan completed/ and failed/ directories to find tasks
+	// that have already been processed. This prevents the watcher from
+	// re-processing finished K8s Jobs that are still lingering (TTL = 1 hour)
+	// after a controller restart.
+	processedTasks := gitSyncer.ListProcessedTaskIDs()
+	slog.Info("found already-processed tasks for watcher seeding", "count", len(processedTasks))
+
 	// Job completion watcher — reads results and updates task files in git
 	jobWatcher := watcher.New(k8sClient, cfg.Worker.Namespace, func(taskID string, succeeded bool, logs string) {
 		// Notify workshop if this was a creative job
@@ -333,6 +341,11 @@ func main() {
 			taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
 		}
 	})
+	// Seed the watcher's seen map so it doesn't re-process already-handled jobs.
+	seedCtx, seedCancel := context.WithTimeout(ctx, 15*time.Second)
+	jobWatcher.SeedSeen(seedCtx, processedTasks)
+	seedCancel()
+
 	go func() {
 		ticker := time.NewTicker(15 * time.Second)
 		timeoutTicker := time.NewTicker(5 * time.Minute)

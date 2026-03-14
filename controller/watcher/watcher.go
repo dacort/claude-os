@@ -34,6 +34,40 @@ func New(client kubernetes.Interface, namespace string, handler CompletionHandle
 	}
 }
 
+// SeedSeen pre-populates the seen map with finished K8s Jobs whose results
+// have already been processed (task file exists in completed/ or failed/).
+// This prevents duplicate processing after a controller restart — finished
+// jobs linger in K8s for TTLSecondsAfterFinished (1 hour) and would otherwise
+// be re-processed by Poll on the first tick.
+func (w *Watcher) SeedSeen(ctx context.Context, processedTaskIDs map[string]bool) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Error("watcher: failed to list jobs for seed", "error", err)
+		return
+	}
+
+	seeded := 0
+	for _, job := range jobs.Items {
+		if !isFinished(&job) {
+			continue
+		}
+		taskID := job.Labels["task-id"]
+		if taskID == "" {
+			continue
+		}
+		if processedTaskIDs[taskID] {
+			w.seen[job.Name] = true
+			seeded++
+		}
+	}
+	slog.Info("watcher: seeded seen map from completed/failed tasks",
+		"seeded", seeded,
+		"processed_tasks", len(processedTaskIDs),
+	)
+}
+
 // CheckTimeouts scans for jobs that have been running longer than maxDuration
 // and deletes them (which causes the job to fail and the watcher to process it
 // on the next Poll).

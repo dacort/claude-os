@@ -138,10 +138,15 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 			slog.Error("failed to enqueue task", "id", taskID, "error", err)
 			continue
 		}
-		s.knownTasks[taskID] = true
 		slog.Info("enqueued task from git", "id", taskID, "title", tf.Title)
 
-		s.moveTask(tf.Filename, "pending", "in-progress")
+		if err := s.moveTask(tf.Filename, "pending", "in-progress"); err != nil {
+			slog.Error("failed to move task to in-progress, will retry next sync",
+				"id", taskID, "error", err)
+			// Don't mark as known — retry on next sync cycle
+			continue
+		}
+		s.knownTasks[taskID] = true
 	}
 	return nil
 }
@@ -200,18 +205,26 @@ func (s *Syncer) gitCommitAndPush(message string) error {
 	return nil // unreachable
 }
 
-func (s *Syncer) moveTask(filename, from, to string) {
+func (s *Syncer) moveTask(filename, from, to string) error {
 	src := filepath.Join(s.localPath, "tasks", from, filename)
 	dst := filepath.Join(s.localPath, "tasks", to, filename)
 	if err := os.Rename(src, dst); err != nil {
-		slog.Error("failed to move task file", "file", filename, "error", err)
-		return
+		return fmt.Errorf("rename %s → %s: %w", from, to, err)
 	}
 	if err := s.gitCommitAndPush(fmt.Sprintf("task %s: %s → %s", strings.TrimSuffix(filename, ".md"), from, to)); err != nil {
-		slog.Warn("failed to push task move", "file", filename, "error", err)
-	} else {
-		slog.Info("pushed task move", "file", filename, "from", from, "to", to)
+		// Push failed — revert the local move so disk stays consistent with
+		// the remote. Without this, pull() would reset --hard and silently
+		// undo the move, but Redis would still think the task is in the new state.
+		slog.Error("failed to push task move, reverting local rename",
+			"file", filename, "from", from, "to", to, "error", err)
+		if revertErr := os.Rename(dst, src); revertErr != nil {
+			slog.Error("failed to revert local rename — manual intervention needed",
+				"file", filename, "error", revertErr)
+		}
+		return fmt.Errorf("push task move: %w", err)
 	}
+	slog.Info("pushed task move", "file", filename, "from", from, "to", to)
+	return nil
 }
 
 func (s *Syncer) CompleteTask(taskID, result string) {
@@ -223,7 +236,11 @@ func (s *Syncer) CompleteTask(taskID, result string) {
 		s.writeResultsOnly(taskID, "completed", result)
 		return
 	}
-	s.moveTask(filename, "in-progress", "completed")
+	if err := s.moveTask(filename, "in-progress", "completed"); err != nil {
+		slog.Error("failed to move task to completed — results will be lost until next reconcile",
+			"task", taskID, "error", err)
+		return
+	}
 
 	// Append results to the completed task file
 	path := filepath.Join(s.localPath, "tasks", "completed", filename)
@@ -265,6 +282,29 @@ func (s *Syncer) writeResultsOnly(taskID, dir, content string) {
 	}
 }
 
+// ListProcessedTaskIDs returns the set of task IDs that have already been
+// moved to completed/ or failed/. Used to seed the watcher's seen map on
+// startup so it doesn't re-process finished jobs that are still lingering
+// in K8s (TTLSecondsAfterFinished).
+func (s *Syncer) ListProcessedTaskIDs() map[string]bool {
+	processed := make(map[string]bool)
+	for _, dir := range []string{"completed", "failed"} {
+		dirPath := filepath.Join(s.localPath, "tasks", dir)
+		entries, err := os.ReadDir(dirPath)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+			taskID := strings.TrimSuffix(entry.Name(), ".md")
+			processed[taskID] = true
+		}
+	}
+	return processed
+}
+
 func (s *Syncer) FailTask(taskID, reason string) {
 	filename := taskID + ".md"
 	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
@@ -272,7 +312,11 @@ func (s *Syncer) FailTask(taskID, reason string) {
 		s.writeResultsOnly(taskID, "failed", reason)
 		return
 	}
-	s.moveTask(filename, "in-progress", "failed")
+	if err := s.moveTask(filename, "in-progress", "failed"); err != nil {
+		slog.Error("failed to move task to failed — will remain in-progress until next reconcile",
+			"task", taskID, "error", err)
+		return
+	}
 
 	path := filepath.Join(s.localPath, "tasks", "failed", filename)
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
