@@ -121,33 +121,33 @@ func TestRunningSet(t *testing.T) {
 	}
 
 	// Dequeue first task — should appear in running set
-	q.Dequeue(ctx)
+	first, _ := q.Dequeue(ctx)
 	count, _ = q.RunningCount(ctx)
 	if count != 1 {
 		t.Errorf("expected 1 running after dequeue, got %d", count)
 	}
 
 	running, _ := q.ListRunning(ctx)
-	if len(running) != 1 || running[0] != "t1" {
-		t.Errorf("expected [t1] in running set, got %v", running)
+	if len(running) != 1 || running[0] != first.ID {
+		t.Errorf("expected [%s] in running set, got %v", first.ID, running)
 	}
 
 	// Dequeue second task
-	q.Dequeue(ctx)
+	second, _ := q.Dequeue(ctx)
 	count, _ = q.RunningCount(ctx)
 	if count != 2 {
 		t.Errorf("expected 2 running, got %d", count)
 	}
 
 	// Complete first task — should be removed from running set
-	q.UpdateStatus(ctx, "t1", StatusCompleted, "done")
+	q.UpdateStatus(ctx, first.ID, StatusCompleted, "done")
 	count, _ = q.RunningCount(ctx)
 	if count != 1 {
 		t.Errorf("expected 1 running after completion, got %d", count)
 	}
 
 	// Fail second task — should also be removed
-	q.UpdateStatus(ctx, "t2", StatusFailed, "oops")
+	q.UpdateStatus(ctx, second.ID, StatusFailed, "oops")
 	count, _ = q.RunningCount(ctx)
 	if count != 0 {
 		t.Errorf("expected 0 running after failure, got %d", count)
