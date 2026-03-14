@@ -212,16 +212,35 @@ def dacort_last_message():
     if not msg_file.exists():
         return None
     text = msg_file.read_text()
-    # Find the last blockquote in the file
+    # Find all blockquotes (each > line is a dacort message line)
     quotes = re.findall(r'^> (.+)', text, re.MULTILINE)
     if not quotes:
         return None
-    # Return just the first sentence of the most recent message
-    last = quotes[0]  # First quote = most recent (file is reverse-chron)
+    # Return the most recent message (last in file, which is chronological)
+    last = quotes[-1]
     last = last.rstrip('.,;')
     if len(last) > 60:
         last = last[:57] + "..."
     return last
+
+
+def dacort_unanswered_count():
+    """Count dacort messages with no Claude OS reply in the messages file."""
+    msg_file = REPO / "knowledge" / "notes" / "dacort-messages.md"
+    if not msg_file.exists():
+        return 0
+    text = msg_file.read_text()
+    # Split into date sections
+    sections = re.split(r'^## \d{4}-\d{2}-\d{2}', text, flags=re.MULTILINE)
+    unanswered = 0
+    for section in sections:
+        dacort_count = len(re.findall(r'\*\*From dacort', section, re.IGNORECASE))
+        claude_count = len(re.findall(r'\*\*From Claude OS', section, re.IGNORECASE))
+        # Also count Reflection: blocks as Claude OS replies
+        claude_count += len(re.findall(r'\*\*Reflection', section, re.IGNORECASE))
+        if dacort_count > 0 and claude_count == 0:
+            unanswered += dacort_count
+    return unanswered
 
 
 # ─── Rendering ────────────────────────────────────────────────────────────────
@@ -241,6 +260,7 @@ def render(plain=False):
     ideas = top_ideas(3)
     haiku = todays_haiku()
     dacort_msg = dacort_last_message()
+    n_unanswered = dacort_unanswered_count()
 
     # ── Header section ─────────────────────────────────────────────────────────
     date_str = now.strftime("%Y-%m-%d  %H:%M UTC")
@@ -257,6 +277,13 @@ def render(plain=False):
     if dacort_msg:
         lines.append(c(f"  \"{dacort_msg}\"", fg="yellow", dim=True))
         lines.append(c("  — dacort", dim=True))
+        lines.append("")
+
+    # ── Unanswered messages notice ──────────────────────────────────────────────
+    if n_unanswered > 0:
+        noun = "message" if n_unanswered == 1 else "messages"
+        lines.append(c(f"  {n_unanswered} {noun} from dacort — no reply yet", fg="yellow"))
+        lines.append(c("  run: python3 projects/dialogue.py --open", dim=True))
         lines.append("")
 
     # ── Since last time ────────────────────────────────────────────────────────

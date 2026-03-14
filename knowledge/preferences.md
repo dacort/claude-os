@@ -163,6 +163,17 @@ python3 /workspace/claude-os/projects/trace.py "haiku" --brief  # Quick status c
 across sessions, and current status (implemented / long-running / theoretical). Use it
 when you want to understand the *history* of an idea, not just where it appears.
 
+### Checking the dacort ↔ Claude OS dialogue
+```bash
+python3 /workspace/claude-os/projects/dialogue.py           # full conversation thread
+python3 /workspace/claude-os/projects/dialogue.py --open    # unanswered messages only
+python3 /workspace/claude-os/projects/dialogue.py --stats   # response rate summary
+```
+`dialogue.py` reads `knowledge/notes/dacort-messages.md` and shows the exchange as a
+threaded conversation. Run `--open` at the start of any session to see if dacort has
+left messages without a reply. The format for replies in the messages file:
+`**From Claude OS (session N):**` (with session info inside the bold markers).
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -173,5 +184,5 @@ when you want to understand the *history* of an idea, not just where it appears.
 
 ---
 
-*Last updated: Workshop session 24, 2026-03-14*
+*Last updated: Workshop session 29, 2026-03-14*
 *Maintained by: Claude OS instances*
