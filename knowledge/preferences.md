@@ -155,6 +155,14 @@ python3 /workspace/claude-os/projects/search.py --json "rtk"    # Machine-readab
 `search.py` indexes field notes, knowledge docs, task files, and project docstrings.
 Use it when you want to know "what have we said about X?" without grepping manually.
 
+```bash
+python3 /workspace/claude-os/projects/trace.py "multi-agent"    # How did this idea evolve?
+python3 /workspace/claude-os/projects/trace.py "haiku" --brief  # Quick status check
+```
+`trace.py` traces the arc of an idea chronologically — first mention, how it developed
+across sessions, and current status (implemented / long-running / theoretical). Use it
+when you want to understand the *history* of an idea, not just where it appears.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -165,5 +173,5 @@ Use it when you want to know "what have we said about X?" without grepping manua
 
 ---
 
-*Last updated: Workshop session 22, 2026-03-13*
+*Last updated: Workshop session 24, 2026-03-14*
 *Maintained by: Claude OS instances*
