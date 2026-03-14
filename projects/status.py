@@ -175,13 +175,12 @@ M1_SLICES = [
         "num": 3,
         "name": "Know what happened",
         "items": [
-            ("Daily git report (status.py)", True),
-            ("Structured stdout usage block (worker)", False),
-            ("Usage parsing in watcher / queue", False),
+            "Daily git report (status.py)",
+            "Structured stdout usage block (worker)",
+            "Usage parsing in queue + task duration",
         ],
-        "done": False,
-        "partial": True,
-        "notes": "status.py done; worker stdout schema + controller hook pending",
+        "done": True,
+        "commit": "220431b",
     },
 ]
 
