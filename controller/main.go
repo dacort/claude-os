@@ -172,6 +172,15 @@ func main() {
 	}
 	reconcileCancel()
 
+	// ── Workshop state sync ────────────────────────────────────────────────
+	// On restart, re-discover any in-progress workshop session so we don't
+	// spin up a second creative job while the first is still running.
+	if workshop != nil {
+		syncCtx, syncCancel := context.WithTimeout(ctx, 15*time.Second)
+		workshop.SyncState(syncCtx)
+		syncCancel()
+	}
+
 	go func() {
 		slog.Info("starting HTTP server", "port", cfg.Server.Port)
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {

@@ -144,6 +144,43 @@ func (w *Workshop) ActiveJobName() string {
 	return w.activeJob
 }
 
+// SyncState re-populates the Workshop's in-memory state from K8s on startup.
+// Without this, a controller restart would lose track of an active workshop
+// session and potentially start a second one before the first finishes.
+func (w *Workshop) SyncState(ctx context.Context) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Warn("workshop: failed to sync state from K8s", "error", err)
+		return
+	}
+
+	for _, job := range jobs.Items {
+		taskID := job.Labels["task-id"]
+		if len(taskID) < 9 || taskID[:8] != "workshop" {
+			continue
+		}
+		// Check if it's still running (not finished)
+		finished := false
+		for _, c := range job.Status.Conditions {
+			if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) &&
+				c.Status == "True" {
+				finished = true
+				break
+			}
+		}
+		if !finished {
+			slog.Info("workshop: found active session on startup, restoring state",
+				"job", job.Name, "task", taskID)
+			w.active = true
+			w.activeJob = job.Name
+			w.lastTask = time.Now() // Reset idle timer to prevent immediate preemption
+			return
+		}
+	}
+}
+
 // ListCompletedSessions returns recent creative job names for review.
 func (w *Workshop) ListCompletedSessions(ctx context.Context) ([]string, error) {
 	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
