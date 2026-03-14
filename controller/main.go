@@ -83,7 +83,7 @@ func main() {
 
 	// Initialize components
 	taskQueue := queue.New(rdb)
-	jobDispatcher := dispatcher.New(k8sClient, cfg.Worker.Namespace, cfg.Worker.Image)
+	jobDispatcher := dispatcher.New(k8sClient, cfg.Worker.Namespace, cfg.Worker.Image, cfg.Git.Repo, cfg.Git.Branch)
 
 	// Governance — default limits if config not available
 	governor := governance.New(rdb, governance.Limits{
@@ -314,10 +314,28 @@ func main() {
 			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
 		}
 
-		// Extract structured usage data emitted by the worker entrypoint.
-		// Logs duration so task cost is visible without kubectl.
-		if usage := queue.ParseUsage(logs); usage != nil {
-			slog.Info("task usage",
+		// Try new reporting contract first (decision 002), fall back to legacy.
+		if result := queue.ParseResult(logs); result != nil {
+			slog.Info("task result (v1 contract)",
+				"task", taskID,
+				"agent", result.Agent,
+				"model", result.Model,
+				"outcome", result.Outcome,
+				"summary", result.Summary,
+				"tokens_in", result.Usage.TokensIn,
+				"tokens_out", result.Usage.TokensOut,
+				"duration_s", result.Usage.DurationSeconds,
+			)
+			if task, err := taskQueue.Get(ctx, taskID); err == nil {
+				task.DurationSeconds = result.Usage.DurationSeconds
+				task.TokensUsed = result.Usage.TokensIn + result.Usage.TokensOut
+				if saveErr := taskQueue.SaveTask(ctx, task); saveErr != nil {
+					slog.Warn("failed to save task result", "task", taskID, "error", saveErr)
+				}
+			}
+		} else if usage := queue.ParseUsage(logs); usage != nil {
+			// Legacy usage block — backward compatible during transition.
+			slog.Info("task usage (legacy)",
 				"task", taskID,
 				"agent", usage.Agent,
 				"duration_s", usage.DurationSeconds,

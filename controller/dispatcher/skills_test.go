@@ -115,7 +115,7 @@ inject: knowledge/skills/pr-review/context.md
 	})
 
 	client := fake.NewSimpleClientset()
-	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 	t.Run("skill ref auto-injected when pattern matches", func(t *testing.T) {
 		task := &queue.Task{

@@ -130,6 +130,7 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 			Profile:     tf.Profile,
 			Agent:       tf.Agent,
 			Model:       tf.Model,
+			Mode:        tf.Mode,
 			ContextRefs: tf.ContextRefs,
 			Priority:    priority,
 		}

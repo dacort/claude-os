@@ -190,6 +190,80 @@ Finished: 2026-03-14T20:00:00Z
 	}
 }
 
+func TestParseResult(t *testing.T) {
+	sampleLogs := `
+=== Worker Complete ===
+
+===RESULT_START===
+{"version":"1","task_id":"fix-logging","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Fixed pull() logging.","artifacts":[{"type":"commit","ref":"abc1234"}],"usage":{"tokens_in":12500,"tokens_out":3400,"duration_seconds":45},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"fix-logging","agent":"claude","profile":"small","duration_seconds":45,"exit_code":0,"finished_at":"2026-03-14T22:00:00Z"}
+=== END_CLAUDE_OS_USAGE ===
+`
+	result := ParseResult(sampleLogs)
+	if result == nil {
+		t.Fatal("expected ParseResult to return a result, got nil")
+	}
+	if result.Version != "1" {
+		t.Errorf("version = %q, want %q", result.Version, "1")
+	}
+	if result.TaskID != "fix-logging" {
+		t.Errorf("task_id = %q, want %q", result.TaskID, "fix-logging")
+	}
+	if result.Outcome != "success" {
+		t.Errorf("outcome = %q, want %q", result.Outcome, "success")
+	}
+	if result.Usage.TokensIn != 12500 {
+		t.Errorf("tokens_in = %d, want 12500", result.Usage.TokensIn)
+	}
+	if result.Usage.TokensOut != 3400 {
+		t.Errorf("tokens_out = %d, want 3400", result.Usage.TokensOut)
+	}
+	if result.Usage.DurationSeconds != 45 {
+		t.Errorf("duration_seconds = %d, want 45", result.Usage.DurationSeconds)
+	}
+	if len(result.Artifacts) != 1 || result.Artifacts[0].Type != "commit" {
+		t.Errorf("artifacts = %v, want [{type:commit, ref:abc1234}]", result.Artifacts)
+	}
+
+	// Missing block returns nil
+	if got := ParseResult("no result block here"); got != nil {
+		t.Errorf("expected nil for logs without result block, got %+v", got)
+	}
+
+	// Malformed JSON returns nil
+	malformed := "===RESULT_START===\n{broken\n===RESULT_END==="
+	if got := ParseResult(malformed); got != nil {
+		t.Errorf("expected nil for malformed JSON, got %+v", got)
+	}
+}
+
+func TestParseResultFailure(t *testing.T) {
+	logs := `
+===RESULT_START===
+{"version":"1","task_id":"broken-task","agent":"codex","model":"o4-mini","outcome":"failure","summary":"","artifacts":[],"usage":{"tokens_in":500,"tokens_out":100,"duration_seconds":10},"failure":{"reason":"tests_failed","detail":"TestFoo failed","retryable":true},"next_action":null}
+===RESULT_END===
+`
+	result := ParseResult(logs)
+	if result == nil {
+		t.Fatal("expected ParseResult to return a result")
+	}
+	if result.Outcome != "failure" {
+		t.Errorf("outcome = %q, want failure", result.Outcome)
+	}
+	if result.Failure == nil {
+		t.Fatal("expected failure to be non-nil")
+	}
+	if result.Failure.Reason != "tests_failed" {
+		t.Errorf("failure.reason = %q, want tests_failed", result.Failure.Reason)
+	}
+	if !result.Failure.Retryable {
+		t.Error("expected failure to be retryable")
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)

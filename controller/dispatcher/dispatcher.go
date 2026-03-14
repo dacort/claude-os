@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -20,10 +21,18 @@ type Dispatcher struct {
 	client    kubernetes.Interface
 	namespace string
 	image     string
+	repoURL   string
+	branch    string
 }
 
-func New(client kubernetes.Interface, namespace, image string) *Dispatcher {
-	return &Dispatcher{client: client, namespace: namespace, image: image}
+func New(client kubernetes.Interface, namespace, image, repoURL, branch string) *Dispatcher {
+	return &Dispatcher{
+		client:    client,
+		namespace: namespace,
+		image:     image,
+		repoURL:   repoURL,
+		branch:    branch,
+	}
 }
 
 var nonAlphanumDash = regexp.MustCompile(`[^a-z0-9-]`)
@@ -177,16 +186,6 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 		model = task.Model
 	}
 
-	env := []corev1.EnvVar{
-		{Name: "HOME", Value: "/home/worker"},
-		{Name: "TASK_ID", Value: task.ID},
-		{Name: "TASK_TITLE", Value: task.Title},
-		{Name: "TASK_DESCRIPTION", Value: task.Description},
-		{Name: "TARGET_REPO", Value: task.TargetRepo},
-		{Name: "TASK_PROFILE", Value: task.Profile},
-		{Name: "TASK_AGENT", Value: agent},
-		{Name: "ANTHROPIC_MODEL", Value: model},
-	}
 	// Merge explicit context_refs with any auto-matched skill refs.
 	allRefs := append([]string{}, task.ContextRefs...)
 	if matched := MatchSkills(task.Title + " " + task.Description); len(matched) > 0 {
@@ -200,6 +199,28 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 				seen[r] = true
 			}
 		}
+	}
+	// Update task refs so BuildTaskContext sees the full set.
+	task.ContextRefs = allRefs
+
+	// Build the context contract JSON envelope (decision 002).
+	taskCtx := BuildTaskContext(task, d.repoURL, d.branch)
+	contextJSON, err := MarshalTaskContext(taskCtx)
+	if err != nil {
+		return nil, fmt.Errorf("build task context: %w", err)
+	}
+	slog.Info("task context envelope built", "task", task.ID, "mode", taskCtx.Mode)
+
+	env := []corev1.EnvVar{
+		{Name: "HOME", Value: "/home/worker"},
+		{Name: "TASK_ID", Value: task.ID},
+		{Name: "TASK_TITLE", Value: task.Title},
+		{Name: "TASK_DESCRIPTION", Value: task.Description},
+		{Name: "TARGET_REPO", Value: task.TargetRepo},
+		{Name: "TASK_PROFILE", Value: task.Profile},
+		{Name: "TASK_AGENT", Value: agent},
+		{Name: "ANTHROPIC_MODEL", Value: model},
+		{Name: "TASK_CONTEXT_JSON", Value: contextJSON},
 	}
 	if len(allRefs) > 0 {
 		env = append(env, corev1.EnvVar{

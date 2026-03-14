@@ -47,7 +47,7 @@ func writeTestProfiles(t *testing.T) {
 func TestCreateJob(t *testing.T) {
 	writeTestProfiles(t)
 	client := fake.NewSimpleClientset()
-	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 	task := &queue.Task{
 		ID:          "test-001",
@@ -147,7 +147,7 @@ func TestCreateJobWithAgent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := fake.NewSimpleClientset()
-			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 			task := &queue.Task{
 				ID:      "agent-test",
@@ -238,7 +238,7 @@ func TestModelOverride(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := fake.NewSimpleClientset()
-			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+			d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 			task := &queue.Task{
 				ID:      "model-test",
@@ -264,7 +264,7 @@ func TestModelOverride(t *testing.T) {
 func TestContextRefsEnvVar(t *testing.T) {
 	writeTestProfiles(t)
 	client := fake.NewSimpleClientset()
-	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 	t.Run("no context_refs means no CONTEXT_REFS env var", func(t *testing.T) {
 		task := &queue.Task{ID: "ctx-test-none", Profile: "small"}
@@ -303,7 +303,7 @@ func TestContextRefsEnvVar(t *testing.T) {
 func TestBurstJobHasTolerations(t *testing.T) {
 	writeTestProfiles(t)
 	client := fake.NewSimpleClientset()
-	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest")
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
 
 	task := &queue.Task{
 		ID:      "burst-001",

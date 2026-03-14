@@ -17,6 +17,7 @@ type TaskFrontmatter struct {
 	Profile     string   `yaml:"profile"`
 	Agent       string   `yaml:"agent"`
 	Model       string   `yaml:"model"`
+	Mode        string   `yaml:"mode"`
 	Priority    string   `yaml:"priority"`
 	Status      string   `yaml:"status"`
 	Created     string   `yaml:"created"`
@@ -29,6 +30,7 @@ type TaskFile struct {
 	Profile     string
 	Agent       string
 	Model       string
+	Mode        string
 	Priority    string
 	Title       string
 	Description string
@@ -87,6 +89,7 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		Profile:     fm.Profile,
 		Agent:       fm.Agent,
 		Model:       fm.Model,
+		Mode:        fm.Mode,
 		Priority:    fm.Priority,
 		Title:       title,
 		Description: description,

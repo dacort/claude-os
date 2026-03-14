@@ -35,6 +35,7 @@ type Task struct {
 	Profile         string    `json:"profile"`
 	Agent           string    `json:"agent,omitempty"`
 	Model           string    `json:"model,omitempty"`
+	Mode            string    `json:"mode,omitempty"`
 	ContextRefs     []string  `json:"context_refs,omitempty"`
 	Priority        Priority  `json:"priority"`
 	Status          Status    `json:"status"`
@@ -229,8 +230,77 @@ func (q *Queue) save(ctx context.Context, task *Task) error {
 	return q.rdb.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0).Err()
 }
 
+// TaskResult is the structured result emitted by workers using the new
+// reporting contract (decision 002). Delimited by ===RESULT_START=== / ===RESULT_END===.
+type TaskResult struct {
+	Version    string           `json:"version"`
+	TaskID     string           `json:"task_id"`
+	Agent      string           `json:"agent"`
+	Model      string           `json:"model"`
+	Outcome    string           `json:"outcome"` // success | failure | partial
+	Summary    string           `json:"summary"`
+	Artifacts  []ResultArtifact `json:"artifacts"`
+	Usage      ResultUsage      `json:"usage"`
+	Failure    *ResultFailure   `json:"failure"`
+	NextAction *ResultAction    `json:"next_action"`
+}
+
+type ResultArtifact struct {
+	Type string `json:"type"` // commit | pr | decision | file
+	Ref  string `json:"ref,omitempty"`
+	URL  string `json:"url,omitempty"`
+	Path string `json:"path,omitempty"`
+}
+
+type ResultUsage struct {
+	TokensIn        int64 `json:"tokens_in"`
+	TokensOut       int64 `json:"tokens_out"`
+	DurationSeconds int64 `json:"duration_seconds"`
+}
+
+type ResultFailure struct {
+	Reason    string `json:"reason"` // tests_failed | timeout | rate_limited | git_push_failed | context_error | agent_error
+	Detail    string `json:"detail"`
+	Retryable bool   `json:"retryable"`
+}
+
+type ResultAction struct {
+	Type      string              `json:"type"` // await_reply | spawn_tasks
+	Awaiting  string              `json:"awaiting,omitempty"`
+	ThreadID  string              `json:"thread_id,omitempty"`
+	Tasks     []ResultSpawnedTask `json:"tasks,omitempty"`
+}
+
+type ResultSpawnedTask struct {
+	ID      string `json:"id"`
+	Profile string `json:"profile"`
+	Agent   string `json:"agent"`
+}
+
+// ParseResult extracts the structured TaskResult emitted by workers using
+// the new reporting contract. Returns nil if the sentinel block is not found.
+func ParseResult(logs string) *TaskResult {
+	const startMarker = "===RESULT_START==="
+	const endMarker = "===RESULT_END==="
+
+	start := strings.Index(logs, startMarker)
+	end := strings.LastIndex(logs, endMarker)
+	if start == -1 || end == -1 || end <= start {
+		return nil
+	}
+
+	raw := strings.TrimSpace(logs[start+len(startMarker) : end])
+	var result TaskResult
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		return nil
+	}
+	return &result
+}
+
 // ParseUsage extracts the structured UsageRecord emitted by the worker at the
 // end of each job. Returns nil if the sentinel block is not found.
+// Deprecated: new workers emit TaskResult via ===RESULT_START===. This is
+// kept for backward compatibility during the transition.
 func ParseUsage(logs string) *UsageRecord {
 	const startMarker = "=== CLAUDE_OS_USAGE ==="
 	const endMarker = "=== END_CLAUDE_OS_USAGE ==="
