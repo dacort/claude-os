@@ -264,6 +264,51 @@ func TestParseResultFailure(t *testing.T) {
 	}
 }
 
+func TestTaskWithPlanFields(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	task := &Task{
+		ID:          "subtask-001",
+		Title:       "Implement API endpoint",
+		Description: "Build the /chat endpoint",
+		Profile:     "medium",
+		Agent:       "codex",
+		Model:       "claude-sonnet-4-6",
+		Priority:    PriorityNormal,
+		PlanID:      "cos-cli-build",
+		TaskType:    TaskTypeSubtask,
+		DependsOn:   []string{"subtask-design"},
+		ContextRefs: []string{"knowledge/plans/cos-cli/design.md"},
+		RetryCount:  0,
+		MaxRetries:  2,
+	}
+
+	err := q.Enqueue(ctx, task)
+	if err != nil {
+		t.Fatalf("Enqueue failed: %v", err)
+	}
+
+	got, err := q.Dequeue(ctx)
+	if err != nil {
+		t.Fatalf("Dequeue failed: %v", err)
+	}
+
+	if got.PlanID != "cos-cli-build" {
+		t.Errorf("expected PlanID cos-cli-build, got %s", got.PlanID)
+	}
+	if got.TaskType != TaskTypeSubtask {
+		t.Errorf("expected TaskType subtask, got %s", got.TaskType)
+	}
+	if len(got.DependsOn) != 1 || got.DependsOn[0] != "subtask-design" {
+		t.Errorf("expected DependsOn [subtask-design], got %v", got.DependsOn)
+	}
+	if got.MaxRetries != 2 {
+		t.Errorf("expected MaxRetries 2, got %d", got.MaxRetries)
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)

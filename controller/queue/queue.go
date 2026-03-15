@@ -17,6 +17,7 @@ const (
 	StatusRunning   Status = "running"
 	StatusCompleted Status = "completed"
 	StatusFailed    Status = "failed"
+	StatusBlocked   Status = "blocked"
 )
 
 type Priority int
@@ -25,6 +26,14 @@ const (
 	PriorityCreative Priority = 0
 	PriorityNormal   Priority = 10
 	PriorityHigh     Priority = 20
+)
+
+type TaskType string
+
+const (
+	TaskTypeStandalone TaskType = "standalone"
+	TaskTypeSubtask    TaskType = "subtask"
+	TaskTypePlan       TaskType = "plan"
 )
 
 type Task struct {
@@ -45,6 +54,14 @@ type Task struct {
 	FinishedAt      time.Time `json:"finished_at,omitempty"`
 	TokensUsed      int64     `json:"tokens_used,omitempty"`
 	DurationSeconds int64     `json:"duration_seconds,omitempty"`
+	// Smart dispatch fields
+	PlanID        string   `json:"plan_id,omitempty"`
+	TaskType      TaskType `json:"task_type,omitempty"`
+	DependsOn     []string `json:"depends_on,omitempty"`
+	RetryCount    int      `json:"retry_count,omitempty"`
+	MaxRetries    int      `json:"max_retries,omitempty"`
+	AgentRequired string   `json:"agent_required,omitempty"`
+	TriageVerdict string   `json:"triage_verdict,omitempty"`
 }
 
 // UsageRecord is the structured data emitted by the worker at the end of a job.
