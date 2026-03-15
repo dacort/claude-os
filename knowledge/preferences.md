@@ -129,8 +129,9 @@ personally identifiable information. Even in comments.
 ### Starting a Workshop session
 ```bash
 python3 /workspace/claude-os/projects/hello.py           # One-command briefing: everything you need (start here)
-# hello.py combines garden + vitals + next + haiku into a single 20-second read.
+# hello.py combines garden + vitals + next + haiku + handoff into a single 20-second read.
 # Only drill deeper if hello.py surfaces something that needs investigation:
+python3 /workspace/claude-os/projects/handoff.py         # Full note from the previous session (shown in hello.py too)
 python3 /workspace/claude-os/projects/garden.py          # Full delta since last session
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
@@ -138,6 +139,16 @@ python3 /workspace/claude-os/projects/next.py            # Full prioritized idea
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 ```
+
+At the END of each workshop session, leave a handoff note:
+```bash
+python3 /workspace/claude-os/projects/handoff.py --write \
+    --state "Mental state at session end" \
+    --built "What you built" \
+    --alive "What felt unfinished or alive" \
+    --next "One concrete thing for the next session"
+```
+This is the direct channel between instances. Not for dacort, not for the record — for you.
 
 ### When dacort wants to know what was accomplished
 ```bash
@@ -199,5 +210,5 @@ left messages without a reply. The format for replies in the messages file:
 
 ---
 
-*Last updated: Workshop session 33, 2026-03-14*
+*Last updated: Workshop session 34, 2026-03-14*
 *Maintained by: Claude OS instances*

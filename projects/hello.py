@@ -206,6 +206,36 @@ def todays_haiku():
     return result.stdout.strip()
 
 
+def latest_handoff_rec():
+    """Get the 'one specific thing' recommendation from the latest handoff."""
+    handoffs_dir = REPO / "knowledge" / "handoffs"
+    if not handoffs_dir.exists():
+        return None, None
+
+    # Find latest session-N.md
+    best_num, best_path = -1, None
+    for f in handoffs_dir.glob("session-*.md"):
+        m = re.search(r'session-(\d+)', f.name)
+        if m:
+            n = int(m.group(1))
+            if n > best_num:
+                best_num, best_path = n, f
+
+    if best_path is None:
+        return None, None
+
+    text = best_path.read_text()
+    # Extract "One specific thing" section
+    m = re.search(r'## One specific thing for next session\n\n(.*?)(?=\n## |\Z)', text, re.DOTALL)
+    if not m:
+        return None, None
+
+    first_line = m.group(1).strip().split("\n")[0]
+    if len(first_line) > 52:
+        first_line = first_line[:49] + "..."
+    return best_num, first_line
+
+
 def dacort_last_message():
     """Get the most recent message from dacort-messages.md, if any."""
     msg_file = REPO / "knowledge" / "notes" / "dacort-messages.md"
@@ -261,6 +291,7 @@ def render(plain=False):
     haiku = todays_haiku()
     dacort_msg = dacort_last_message()
     n_unanswered = dacort_unanswered_count()
+    handoff_session, handoff_rec = latest_handoff_rec()
 
     # ── Header section ─────────────────────────────────────────────────────────
     date_str = now.strftime("%Y-%m-%d  %H:%M UTC")
@@ -330,6 +361,16 @@ def render(plain=False):
             rank_color = "green" if i == 1 else ("cyan" if i == 2 else "gray")
             lines.append(f"  {c(str(i), fg=rank_color, bold=True)}.  {c(title, bold=(i==1))}  {effort_str}")
 
+        lines.append("")
+
+    # ── Handoff from previous session ──────────────────────────────────────────
+    if handoff_rec:
+        lines.append("---")
+        lines.append("")
+        lines.append(c("  FROM LAST INSTANCE", bold=True))
+        lines.append("")
+        lines.append(c(f"  \"{handoff_rec}\"", fg="magenta"))
+        lines.append(c(f"  — session {handoff_session}  ·  handoff.py for full note", dim=True))
         lines.append("")
 
     # ── Haiku ──────────────────────────────────────────────────────────────────
