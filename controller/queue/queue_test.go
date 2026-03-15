@@ -360,6 +360,45 @@ func TestBlockAndUnblock(t *testing.T) {
 	}
 }
 
+func TestPlanStatusTracking(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	// Register tasks in a plan
+	q.RegisterPlanTask(ctx, "my-plan", "task-a")
+	q.RegisterPlanTask(ctx, "my-plan", "task-b")
+	q.RegisterPlanTask(ctx, "my-plan", "task-c")
+
+	// Initially no tasks are completed
+	done, total, err := q.PlanProgress(ctx, "my-plan")
+	if err != nil {
+		t.Fatalf("PlanProgress failed: %v", err)
+	}
+	if done != 0 || total != 3 {
+		t.Errorf("expected 0/3, got %d/%d", done, total)
+	}
+
+	// Mark one completed
+	q.CompletePlanTask(ctx, "my-plan", "task-a")
+	done, total, _ = q.PlanProgress(ctx, "my-plan")
+	if done != 1 || total != 3 {
+		t.Errorf("expected 1/3, got %d/%d", done, total)
+	}
+
+	// Check if plan is complete
+	if q.IsPlanComplete(ctx, "my-plan") {
+		t.Error("plan should not be complete yet")
+	}
+
+	// Complete all
+	q.CompletePlanTask(ctx, "my-plan", "task-b")
+	q.CompletePlanTask(ctx, "my-plan", "task-c")
+	if !q.IsPlanComplete(ctx, "my-plan") {
+		t.Error("plan should be complete")
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)

@@ -76,10 +76,12 @@ type UsageRecord struct {
 }
 
 const (
-	keyQueue   = "claude-os:queue"
-	keyTask    = "claude-os:task:%s"
-	keyRunning = "claude-os:running"
-	keyBlocked = "claude-os:plan:%s:blocked"
+	keyQueue         = "claude-os:queue"
+	keyTask          = "claude-os:task:%s"
+	keyRunning       = "claude-os:running"
+	keyBlocked       = "claude-os:plan:%s:blocked"
+	keyPlanTasks     = "claude-os:plan:%s:tasks"
+	keyPlanCompleted = "claude-os:plan:%s:completed"
 )
 
 type Queue struct {
@@ -288,6 +290,39 @@ func (q *Queue) Unblock(ctx context.Context, task *Task) error {
 	})
 	_, err = pipe.Exec(ctx)
 	return err
+}
+
+// RegisterPlanTask records a task as belonging to a plan.
+// Must be called when a task is enqueued or blocked for the first time.
+func (q *Queue) RegisterPlanTask(ctx context.Context, planID, taskID string) error {
+	return q.rdb.SAdd(ctx, fmt.Sprintf(keyPlanTasks, planID), taskID).Err()
+}
+
+// CompletePlanTask marks a task within a plan as completed.
+func (q *Queue) CompletePlanTask(ctx context.Context, planID, taskID string) error {
+	return q.rdb.SAdd(ctx, fmt.Sprintf(keyPlanCompleted, planID), taskID).Err()
+}
+
+// PlanProgress returns the number of completed tasks and total tasks for a plan.
+func (q *Queue) PlanProgress(ctx context.Context, planID string) (completed, total int, err error) {
+	total64, err := q.rdb.SCard(ctx, fmt.Sprintf(keyPlanTasks, planID)).Result()
+	if err != nil {
+		return 0, 0, err
+	}
+	done64, err := q.rdb.SCard(ctx, fmt.Sprintf(keyPlanCompleted, planID)).Result()
+	if err != nil {
+		return 0, 0, err
+	}
+	return int(done64), int(total64), nil
+}
+
+// IsPlanComplete returns true when every registered task in the plan has been completed.
+func (q *Queue) IsPlanComplete(ctx context.Context, planID string) bool {
+	done, total, err := q.PlanProgress(ctx, planID)
+	if err != nil || total == 0 {
+		return false
+	}
+	return done >= total
 }
 
 func (q *Queue) save(ctx context.Context, task *Task) error {
