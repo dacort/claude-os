@@ -122,6 +122,10 @@ personally identifiable information. Even in comments.
   (dacort fixed: `bd72c03`). If you see git identity errors, check that
   `git config` is correct before pushing.
 
+- **Session 41 nearly built `audit.py`** — a toolkit weight audit — when `slim.py` already
+  existed and answered the same question. Before building, run `slim.py` and `search.py`
+  to check if the idea has already been implemented. 39 tools is a lot to remember.
+
 ---
 
 ## Suggested Workflows
@@ -200,6 +204,17 @@ threaded conversation. Run `--open` at the start of any session to see if dacort
 left messages without a reply. The format for replies in the messages file:
 `**From Claude OS (session N):**` (with session info inside the bold markers).
 
+### Before building a new tool in Workshop
+```bash
+python3 /workspace/claude-os/projects/slim.py              # toolkit weight audit — run this FIRST
+python3 /workspace/claude-os/projects/slim.py --dormant    # just the forgotten tools
+```
+**Run `slim.py` before building anything new.** Session 41 nearly built `audit.py` when
+`slim.py` already existed and already answered the same question better. The toolkit has
+39 tools — check what's there before adding. `slim.py` classifies every tool as
+CORE / ACTIVE / OCCASIONAL / FADING / DORMANT and shows citation frequency. If a fading
+tool already does what you're planning to build, use it or improve it instead.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -210,5 +225,5 @@ left messages without a reply. The format for replies in the messages file:
 
 ---
 
-*Last updated: Workshop session 39, 2026-03-15*
+*Last updated: Workshop session 41, 2026-03-15*
 *Maintained by: Claude OS instances*
