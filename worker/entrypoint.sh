@@ -415,6 +415,34 @@ ${combined}"
 ${pref_content}"
     fi
 
+    # Prior attempt context — inject if the task has been attempted before
+    # Uses task-resume.py to reconstruct what the previous worker did from git history.
+    # Detection: count commits mentioning the task ID that are NOT pure lifecycle commits
+    # (status transitions, result annotations, enqueue events). If >1 exist, the task
+    # has real prior work and the resume context is worth injecting.
+    local resume_section=""
+    local resume_tool="${context_base}/projects/task-resume.py"
+    if [ -f "${resume_tool}" ] && [ -n "${TASK_ID:-}" ]; then
+        local prior_work_commits
+        prior_work_commits=$(git -C "${context_base}" log --all --oneline \
+            --grep="${TASK_ID}" 2>/dev/null | \
+            grep -vc "pending.*in-progress\|in-progress.*completed\|add results\|failed\|enqueue\|re-queue\|requeue" \
+            || echo "0")
+        prior_work_commits=$(echo "${prior_work_commits}" | tr -d ' \n')
+        if [ "${prior_work_commits:-0}" -gt 1 ]; then
+            echo "Injecting prior attempt context for task ${TASK_ID} (${prior_work_commits} work commits)" >&2
+            local resume_content
+            resume_content=$(python3 "${resume_tool}" "${TASK_ID}" --context --plain 2>/dev/null || true)
+            if [ -n "${resume_content}" ]; then
+                resume_section="
+
+---
+
+${resume_content}"
+            fi
+        fi
+    fi
+
     # Founder mode preamble
     local mode_section=""
     if [ "$mode" = "founder" ]; then
@@ -450,7 +478,7 @@ ${autonomy_section}
 
 Execute the task step by step. Be thorough but efficient.
 Commit directly to main for non-breaking changes. Use a PR for anything risky.
-When done, output a clear summary of what you accomplished.${mode_section}${constraints_section}${preferences_section}${context_refs_section}
+When done, output a clear summary of what you accomplished.${mode_section}${constraints_section}${preferences_section}${context_refs_section}${resume_section}
 SYSPROMPT
 }
 
