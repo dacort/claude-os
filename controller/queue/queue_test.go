@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
@@ -396,6 +397,48 @@ func TestPlanStatusTracking(t *testing.T) {
 	q.CompletePlanTask(ctx, "my-plan", "task-c")
 	if !q.IsPlanComplete(ctx, "my-plan") {
 		t.Error("plan should be complete")
+	}
+}
+
+func TestAgentRateLimitTracking(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	// Initially not rate limited
+	if q.IsAgentRateLimited(ctx, "claude") {
+		t.Error("claude should not be rate limited initially")
+	}
+
+	// Mark as rate limited
+	q.SetAgentRateLimited(ctx, "claude", 1*time.Hour)
+
+	if !q.IsAgentRateLimited(ctx, "claude") {
+		t.Error("claude should be rate limited after SetAgentRateLimited")
+	}
+
+	// Codex should still be available
+	if q.IsAgentRateLimited(ctx, "codex") {
+		t.Error("codex should not be rate limited")
+	}
+}
+
+func TestGetFallbackAgent(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	// No rate limits — fallback from claude is codex
+	agent, ok := q.GetFallbackAgent(ctx, "claude")
+	if !ok || agent != "codex" {
+		t.Errorf("expected codex fallback, got %s (ok=%v)", agent, ok)
+	}
+
+	// Mark codex as rate limited — no fallback available
+	q.SetAgentRateLimited(ctx, "codex", 1*time.Hour)
+	_, ok = q.GetFallbackAgent(ctx, "claude")
+	if ok {
+		t.Error("expected no fallback when codex is rate limited")
 	}
 }
 

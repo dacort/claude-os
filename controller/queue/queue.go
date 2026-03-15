@@ -325,6 +325,39 @@ func (q *Queue) IsPlanComplete(ctx context.Context, planID string) bool {
 	return done >= total
 }
 
+const keyAgentRateLimited = "claude-os:agent:%s:rate_limited"
+
+var fallbackChain = map[string][]string{
+	"claude": {"codex"},
+	"codex":  {"claude"},
+}
+
+// SetAgentRateLimited marks an agent as rate-limited for the given duration.
+func (q *Queue) SetAgentRateLimited(ctx context.Context, agent string, ttl time.Duration) error {
+	return q.rdb.Set(ctx, fmt.Sprintf(keyAgentRateLimited, agent), "1", ttl).Err()
+}
+
+// IsAgentRateLimited returns true if the agent is currently rate-limited.
+func (q *Queue) IsAgentRateLimited(ctx context.Context, agent string) bool {
+	val, err := q.rdb.Get(ctx, fmt.Sprintf(keyAgentRateLimited, agent)).Result()
+	return err == nil && val == "1"
+}
+
+// GetFallbackAgent returns the next available agent in the fallback chain.
+// Returns ("", false) if all fallback agents are also rate-limited.
+func (q *Queue) GetFallbackAgent(ctx context.Context, currentAgent string) (string, bool) {
+	chain, ok := fallbackChain[currentAgent]
+	if !ok {
+		return "", false
+	}
+	for _, agent := range chain {
+		if !q.IsAgentRateLimited(ctx, agent) {
+			return agent, true
+		}
+	}
+	return "", false
+}
+
 func (q *Queue) save(ctx context.Context, task *Task) error {
 	data, err := json.Marshal(task)
 	if err != nil {
