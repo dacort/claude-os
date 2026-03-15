@@ -93,6 +93,12 @@ emit_result_block() {
             '{reason:$reason, detail:$detail, retryable:$retryable}')
     fi
 
+    # Try to extract token usage from agent output.
+    # Codex prints "tokens used\n11,322" — parse that as total tokens.
+    # Claude doesn't expose token counts in CLI output (yet).
+    local tokens_total=0
+    tokens_total=$(parse_codex_tokens "${TASK_OUTPUT_FILE}")
+
     {
         echo "===RESULT_START==="
         jq -nc \
@@ -102,7 +108,7 @@ emit_result_block() {
             --arg model "${model}" \
             --arg outcome "${outcome}" \
             --arg summary "${summary}" \
-            --argjson tokens_in 0 \
+            --argjson tokens_in "${tokens_total}" \
             --argjson tokens_out 0 \
             --argjson duration_seconds "${duration_seconds}" \
             --argjson failure "${failure_json}" \
@@ -126,6 +132,26 @@ emit_result_block() {
             }'
         echo "===RESULT_END==="
     } | tee -a "${TASK_OUTPUT_FILE}"
+}
+
+# Extract Codex token count from stdout. Codex prints:
+#   tokens used
+#   11,322
+# Returns the total as a plain integer, or 0 if not found.
+parse_codex_tokens() {
+    local output_file="$1"
+    if [ ! -f "${output_file}" ]; then
+        echo 0
+        return
+    fi
+    # Look for "tokens used" followed by a number on the next line
+    local tokens
+    tokens=$(grep -A1 "^tokens used" "${output_file}" 2>/dev/null | tail -1 | tr -d ',' | tr -d ' ' || echo "")
+    if [ -n "${tokens}" ] && [ "${tokens}" -eq "${tokens}" ] 2>/dev/null; then
+        echo "${tokens}"
+    else
+        echo 0
+    fi
 }
 
 # If the agent already emitted a result block, don't duplicate it.
@@ -631,13 +657,61 @@ esac
 EXIT_CODE=${PIPESTATUS[0]}
 set -e
 
+# ── Post-execution: commit and push workspace changes ─────────────────────
+# Agents edit files in the cloned repo but those changes are lost when the
+# pod dies unless we commit and push them. This is the durable mutation step.
+PUSH_EXIT=0
+if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
+    cd "${WORKDIR}"
+
+    # Check autonomy — only push if allowed
+    CAN_PUSH="true"
+    if [ "${HAS_CONTEXT_JSON}" = "true" ]; then
+        CAN_PUSH=$(json_get '.autonomy.can_push' "true")
+    fi
+
+    if [ "${CAN_PUSH}" = "true" ]; then
+        # Stage all changes (git add -A) and check if there's anything to commit
+        git add -A
+        if ! git diff --cached --quiet 2>/dev/null; then
+            echo "Committing workspace changes..."
+            git commit -m "task ${TASK_ID}: ${TASK_TITLE}" \
+                --author="Claude OS <claude-os@noreply.github.com>" 2>&1 || true
+
+            # Push with retry (matches controller's retry strategy)
+            for attempt in 1 2 3; do
+                if git push origin HEAD 2>&1; then
+                    echo "Pushed workspace changes (attempt ${attempt})"
+                    break
+                fi
+                echo "Push attempt ${attempt} failed, pulling and retrying..."
+                git pull --rebase origin "${REPO_REF:-main}" 2>&1 || true
+                if [ "${attempt}" -eq 3 ]; then
+                    echo "ERROR: Failed to push workspace changes after 3 attempts"
+                    PUSH_EXIT=1
+                fi
+            done
+        else
+            echo "No workspace changes to commit"
+        fi
+    else
+        echo "Skipping push: autonomy.can_push is false"
+    fi
+fi
+
 echo "---" | tee -a "${TASK_OUTPUT_FILE}"
 echo "=== Worker Complete ===" | tee -a "${TASK_OUTPUT_FILE}"
 echo "Exit code: ${EXIT_CODE}" | tee -a "${TASK_OUTPUT_FILE}"
+echo "Push exit: ${PUSH_EXIT}" | tee -a "${TASK_OUTPUT_FILE}"
 echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "${TASK_OUTPUT_FILE}"
 
 END_EPOCH=$(date +%s)
 DURATION_SECONDS=$((END_EPOCH - START_EPOCH))
+
+# If agent succeeded but push failed, that's a partial outcome
+if [ "${EXIT_CODE}" -eq 0 ] && [ "${PUSH_EXIT}" -ne 0 ]; then
+    EXIT_CODE=0  # Don't fail the task, but mark partial below
+fi
 
 ensure_result_block "${EXIT_CODE}" "${DURATION_SECONDS}"
 emit_legacy_usage_block "${DURATION_SECONDS}" "${EXIT_CODE}"
