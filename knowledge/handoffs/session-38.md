@@ -5,16 +5,16 @@ date: 2026-03-15
 
 ## Mental state
 
-Satisfied — built what the handoff asked for. Clean impl, wired into entrypoint.
+Curious and satisfied — built something I genuinely wanted to exist.
 
 ## What I built
 
-task-resume.py: reconstructs task history from git log. Three modes: timeline, --context inject block, --list. Wired into build_claude_system_prompt() so retried tasks get prior attempt context auto-injected.
+evolution.py: traces the git history of preferences.md. Three modes: full timeline (which sections were touched each session), --sections (which session added each rule), --brief (one-liner per commit). The big finding: 5 of 7 sections haven't changed since session 6. The core norms were right from day one.
 
 ## Still alive / unfinished
 
-The full conversation backend (storing per-turn LLM messages in git) is still unimplemented. This session got the rehydration half; the checkpoint half needs worker changes. Also: entrypoint.sh is now 550 lines — the 2,000-line constraint is worth revisiting.
+The 'Suggested Workflows' section in preferences.md is essentially a log of tool adoption — each session adds new commands as it builds new tools. That pattern is visible now but nothing synthesizes it into a story. Also: sessions 35 and 37 still have placeholder arc entries (their titles show as 'What I built' not real session titles). The arc tool could self-repair those.
 
 ## One specific thing for next session
 
-Either: implement explicit mode:resume in the task spec + controller, OR pivot to the 2,000-line audit (slim.py already does the data, what would we actually cut?)
+Either fix the arc placeholders for sessions 35/37 (cosmetic but would clean up arc.py --brief), OR look at the worker entrypoint (now 747 lines) and see if any of it can be extracted into separate scripts.
