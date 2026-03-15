@@ -330,8 +330,12 @@ func main() {
 				// If triage says this needs a plan and it's not already a plan/subtask
 				if verdict.NeedsPlan && task.TaskType == queue.TaskTypeStandalone {
 					task.TaskType = queue.TaskTypePlan
-					task.Model = "claude-opus-4-6"
-					task.Agent = "claude"
+					if task.Model == "" {
+						task.Model = "claude-opus-4-6"
+					}
+					if task.Agent == "" {
+						task.Agent = "claude"
+					}
 					slog.Info("triage: promoting to plan task", "id", task.ID)
 				}
 
