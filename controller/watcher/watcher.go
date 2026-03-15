@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -13,6 +14,34 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+// FailureClass distinguishes rate limits from task errors.
+type FailureClass int
+
+const (
+	FailureClassTaskError  FailureClass = iota
+	FailureClassRateLimit
+)
+
+var rateLimitSignals = []string{
+	"out of extra usage",
+	"reached your usage limit",
+	"quota exceeded",
+	"rate limit exceeded",
+	"credit balance too low",
+	"429",
+}
+
+// ClassifyFailure determines whether a job failure is a rate limit or a task error.
+func ClassifyFailure(logs string) FailureClass {
+	lower := strings.ToLower(logs)
+	for _, signal := range rateLimitSignals {
+		if strings.Contains(lower, strings.ToLower(signal)) {
+			return FailureClassRateLimit
+		}
+	}
+	return FailureClassTaskError
+}
 
 // CompletionHandler is called when a job finishes.
 type CompletionHandler func(taskID string, succeeded bool, logs string)
