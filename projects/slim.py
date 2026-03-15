@@ -157,15 +157,50 @@ def get_always_on_tools() -> set[str]:
     return always_on
 
 
+def get_workflow_tools() -> set[str]:
+    """
+    Tools listed in preferences.md 'Suggested Workflows' section.
+
+    These are tools that every Claude OS instance is explicitly told to run.
+    Field notes rarely mention them because they're just part of starting up —
+    but their citation count undersells their actual usage. Any tool appearing
+    as a `python3 projects/<name>.py` command in the preferences workflows
+    should not be classified as dormant.
+    """
+    workflow_tools = set()
+    pref_file = REPO / "knowledge" / "preferences.md"
+    if not pref_file.exists():
+        return workflow_tools
+
+    try:
+        text = pref_file.read_text()
+    except Exception:
+        return workflow_tools
+
+    # Find all `python3 projects/<name>.py` patterns in the file
+    for m in re.finditer(r'python3[^\n]*projects/([\w-]+)\.py', text):
+        stem = m.group(1)
+        # Only count if the tool actually exists
+        if (PROJECTS_DIR / f"{stem}.py").exists():
+            workflow_tools.add(stem)
+
+    return workflow_tools
+
+
 # ─── classification ────────────────────────────────────────────────────────────
 
 TOTAL_SESSIONS = None  # set dynamically
 
 
-def classify(proj: str, cdata: dict, line_count: int, always_on: set) -> dict:
+def classify(proj: str, cdata: dict, line_count: int, always_on: set,
+             workflow: set) -> dict:
     """
     Assign a status to a tool based on citation frequency and recency.
     Returns a dict with: status, score, note
+
+    always_on = called programmatically by other tools
+    workflow = listed as a recommended command in preferences.md
+    Either marker protects from DORMANT classification.
     """
     count = cdata.get("count", 0)
     last = cdata.get("last") or 0
@@ -175,20 +210,25 @@ def classify(proj: str, cdata: dict, line_count: int, always_on: set) -> dict:
     sessions_since_last = total - last if last else total
     age = total - first + 1 if first else 0
     is_always_on = proj in always_on
+    is_workflow = proj in workflow
+    is_protected = is_always_on or is_workflow
 
     # classify — recency gates apply first before session-count thresholds
-    if sessions_since_last > 12 and not is_always_on:
-        # anything not cited in 12+ sessions and not actively called = DORMANT
+    if sessions_since_last > 12 and not is_protected:
+        # anything not cited in 12+ sessions and not actively used = DORMANT
         # regardless of how many sessions cited it historically
         status = "DORMANT"
-    elif sessions_since_last > 7 and count <= 3 and not is_always_on:
+    elif sessions_since_last > 7 and count <= 3 and not is_protected:
         # low citation + not recently active = FADING
         status = "FADING"
-    elif sessions_since_last > 7 and count <= 5 and not is_always_on:
+    elif sessions_since_last > 7 and count <= 5 and not is_protected:
         # was used, but gone quiet
         status = "FADING"
     elif count >= 8 or is_always_on:
         status = "CORE"
+    elif is_workflow:
+        # explicitly in recommended workflows = at minimum ACTIVE
+        status = "ACTIVE"
     elif count >= 5 or (count >= 3 and sessions_since_last <= 4):
         status = "ACTIVE"
     elif count >= 3 and sessions_since_last <= 8:
@@ -212,6 +252,7 @@ def classify(proj: str, cdata: dict, line_count: int, always_on: set) -> dict:
         "weight_score": weight_score,
         "sessions_since_last": sessions_since_last,
         "always_on": is_always_on,
+        "workflow": is_workflow,
     }
 
 
@@ -273,7 +314,7 @@ def fmt_sessions(count: int, last: int | None, total: int) -> str:
 
 
 def print_group(label: str, tools: list, cdata: dict, line_counts: dict,
-                always_on: set, total: int, plain: bool = False):
+                always_on: set, workflow: set, total: int, plain: bool = False):
     if not tools:
         return
 
@@ -290,13 +331,19 @@ def print_group(label: str, tools: list, cdata: dict, line_counts: dict,
         count = cd.get("count", 0)
         last = cd.get("last")
         ao = proj in always_on
+        wf = proj in workflow
 
         lines_str = fmt_lines(lc)
         sessions_str = fmt_sessions(count, last, total)
-        ao_marker = cyan(" ⊕") if ao else "  "
+        if ao:
+            marker = cyan(" ⊕")
+        elif wf:
+            marker = green(" ✦")
+        else:
+            marker = "  "
 
         name = f"{proj}.py"
-        print(f"    {name:<22}{ao_marker} {lines_str} lines  {sessions_str}")
+        print(f"    {name:<22}{marker} {lines_str} lines  {sessions_str}")
 
     print()
 
@@ -408,12 +455,13 @@ def main():
 
     cdata = count_citations(projects, notes)
     always_on = get_always_on_tools()
+    workflow = get_workflow_tools()
 
     # classify each tool
     classified = {}
     for proj in projects:
         classified[proj] = classify(proj, cdata.get(proj, {}),
-                                    line_counts.get(proj, 0), always_on)
+                                    line_counts.get(proj, 0), always_on, workflow)
 
     # group by status
     groups = defaultdict(list)
@@ -432,18 +480,18 @@ def main():
         # only show DORMANT and FADING
         for status in ["DORMANT", "FADING"]:
             print_group(status, groups.get(status, []), cdata, line_counts,
-                        always_on, TOTAL_SESSIONS, args.plain)
+                        always_on, workflow, TOTAL_SESSIONS, args.plain)
     else:
         for status in STATUS_ORDER:
             print_group(status, groups.get(status, []), cdata, line_counts,
-                        always_on, TOTAL_SESSIONS, args.plain)
+                        always_on, workflow, TOTAL_SESSIONS, args.plain)
 
         print_exoclaw_section(groups, line_counts, TOTAL_SESSIONS)
 
     print(rule())
     print()
-    notes_line = f"  ⊕ = called programmatically (higher actual usage than citations suggest)"
-    print(dim(notes_line))
+    print(dim("  ⊕ = called programmatically (higher actual usage than citations suggest)"))
+    print(dim("  ✦ = listed in preferences.md recommended workflows"))
     print()
 
 

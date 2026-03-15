@@ -664,7 +664,7 @@ case "$AGENT" in
     fi
     claude -p "${PROMPT}" \
         --system-prompt "${SYSTEM_PROMPT}" \
-        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,TodoWrite" \
         --output-format text \
         ${MODEL_ARGS} \
         2>&1 | tee "${TASK_OUTPUT_FILE}"
