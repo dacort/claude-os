@@ -17,6 +17,7 @@ import (
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
 	"github.com/dacort/claude-os/controller/queue"
+	"github.com/dacort/claude-os/controller/triage"
 	"github.com/dacort/claude-os/controller/watcher"
 
 	"github.com/redis/go-redis/v9"
@@ -109,6 +110,16 @@ func main() {
 	if cfg.Scheduler.CreativeModeEnabled {
 		workshop = creative.NewWorkshop(k8sClient, cfg.Worker.Namespace, jobDispatcher, cfg.Scheduler.IdleThreshold(), oauthToken)
 		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold(), "usage_check", oauthToken != "")
+	}
+
+	// Triage brain (Haiku API for fast routing)
+	triageAPIKey := os.Getenv("TRIAGE_API_KEY")
+	var triager *triage.Triager
+	if triageAPIKey != "" {
+		triager = triage.NewTriager("https://api.anthropic.com", triageAPIKey)
+		slog.Info("triage enabled (Haiku API)")
+	} else {
+		slog.Warn("triage disabled — no TRIAGE_API_KEY, using heuristic routing only")
 	}
 
 	// Track Redis health for readiness
@@ -287,7 +298,46 @@ func main() {
 					continue
 				}
 
-				slog.Info("dispatching task", "id", task.ID, "title", task.Title, "profile", task.Profile)
+				// Triage: assess task and route intelligently
+				agentStatus := triage.AgentStatus{
+					Claude: triage.AgentInfo{Available: !taskQueue.IsAgentRateLimited(ctx, "claude")},
+					Codex:  triage.AgentInfo{Available: !taskQueue.IsAgentRateLimited(ctx, "codex")},
+				}
+
+				var verdict triage.Verdict
+				if triager != nil {
+					var triageErr error
+					verdict, triageErr = triager.Assess(ctx, task.Title, task.Description, agentStatus)
+					if triageErr != nil {
+						slog.Warn("triage failed, using heuristic", "task", task.ID, "error", triageErr)
+						verdict = triage.HeuristicRoute(task.Title, task.Description)
+					}
+				} else {
+					verdict = triage.HeuristicRoute(task.Title, task.Description)
+				}
+
+				// Store triage verdict on task for debugging
+				task.TriageVerdict = verdict.Reasoning
+
+				// Apply triage recommendations (explicit frontmatter overrides triage)
+				if task.Model == "" {
+					task.Model = verdict.RecommendedModel
+				}
+				if task.Agent == "" {
+					task.Agent = verdict.RecommendedAgent
+				}
+
+				// If triage says this needs a plan and it's not already a plan/subtask
+				if verdict.NeedsPlan && task.TaskType == queue.TaskTypeStandalone {
+					task.TaskType = queue.TaskTypePlan
+					task.Model = "claude-opus-4-6"
+					task.Agent = "claude"
+					slog.Info("triage: promoting to plan task", "id", task.ID)
+				}
+
+				slog.Info("dispatching task", "id", task.ID, "title", task.Title,
+					"profile", task.Profile, "model", task.Model, "agent", task.Agent,
+					"task_type", task.TaskType)
 				job, err := jobDispatcher.CreateJob(ctx, task)
 				if err != nil {
 					slog.Error("failed to create job", "task", task.ID, "error", err)
@@ -356,10 +406,98 @@ func main() {
 			slog.Info("completing task", "task", taskID)
 			gitSyncer.CompleteTask(taskID, parsedResult, logs)
 			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, "")
+
+			// Check if this task is part of a plan
+			if planTask, err := taskQueue.Get(ctx, taskID); err == nil && planTask.PlanID != "" {
+				taskQueue.CompletePlanTask(ctx, planTask.PlanID, taskID)
+
+				// Unblock any waiting siblings whose dependencies are now met
+				blocked, _ := taskQueue.GetBlocked(ctx, planTask.PlanID)
+				for _, bt := range blocked {
+					allMet := true
+					for _, dep := range bt.DependsOn {
+						dt, depErr := taskQueue.Get(ctx, dep)
+						if depErr != nil || dt.Status != queue.StatusCompleted {
+							allMet = false
+							break
+						}
+					}
+					if allMet {
+						slog.Info("unblocking task", "id", bt.ID, "plan", planTask.PlanID)
+						taskQueue.Unblock(ctx, bt)
+					}
+				}
+
+				// Check if the whole plan is now done
+				if taskQueue.IsPlanComplete(ctx, planTask.PlanID) {
+					slog.Info("plan completed", "plan_id", planTask.PlanID)
+				}
+			}
 		} else {
-			slog.Info("failing task", "task", taskID)
-			gitSyncer.FailTask(taskID, parsedResult, logs)
-			taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
+			// Classify the failure: rate limit or task error
+			failClass := watcher.ClassifyFailure(logs)
+
+			if failClass == watcher.FailureClassRateLimit {
+				// Rate limit — switch agents, don't consume a retry
+				rlTask, rlErr := taskQueue.Get(ctx, taskID)
+				if rlErr != nil {
+					slog.Error("failed to get task for rate-limit fallback", "task", taskID, "error", rlErr)
+					gitSyncer.FailTask(taskID, parsedResult, logs)
+					taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "rate limit + lookup error")
+					return
+				}
+
+				currentAgent := rlTask.Agent
+				if currentAgent == "" {
+					currentAgent = "claude"
+				}
+
+				slog.Warn("rate limit detected", "task", taskID, "agent", currentAgent)
+				taskQueue.SetAgentRateLimited(ctx, currentAgent, 1*time.Hour)
+
+				// Honour agent_required — task waits rather than falls back
+				if rlTask.AgentRequired != "" && rlTask.AgentRequired == currentAgent {
+					slog.Info("task requires specific agent, will wait",
+						"task", taskID, "agent_required", rlTask.AgentRequired)
+					rlTask.Priority = queue.PriorityCreative
+					taskQueue.Enqueue(ctx, rlTask)
+					return
+				}
+
+				fallbackAgent, ok := taskQueue.GetFallbackAgent(ctx, currentAgent)
+				if ok {
+					slog.Info("rerouting task to fallback agent",
+						"task", taskID, "from", currentAgent, "to", fallbackAgent)
+					rlTask.Agent = fallbackAgent
+					taskQueue.Enqueue(ctx, rlTask)
+				} else {
+					slog.Warn("all agents rate-limited, task will wait", "task", taskID)
+					rlTask.Priority = queue.PriorityCreative
+					taskQueue.Enqueue(ctx, rlTask)
+				}
+			} else {
+				// Task error — normal retry / escalation
+				retryTask, retryErr := taskQueue.Get(ctx, taskID)
+				if retryErr != nil || retryTask.RetryCount >= retryTask.MaxRetries {
+					slog.Info("failing task (retries exhausted)", "task", taskID)
+					gitSyncer.FailTask(taskID, parsedResult, logs)
+					taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
+					if retryTask != nil && retryTask.PlanID != "" {
+						slog.Warn("subtask failed, plan marked failed",
+							"plan_id", retryTask.PlanID, "task", taskID)
+					}
+				} else {
+					retryTask.RetryCount++
+					slog.Info("retrying task", "task", taskID,
+						"retry", retryTask.RetryCount, "max", retryTask.MaxRetries)
+					// Late retries get a model bump
+					if retryTask.RetryCount >= retryTask.MaxRetries/2+1 {
+						retryTask.Model = escalateModel(retryTask.Model)
+						slog.Info("escalating model", "task", taskID, "model", retryTask.Model)
+					}
+					taskQueue.Enqueue(ctx, retryTask)
+				}
+			}
 		}
 	})
 	// Seed the watcher's seen map so it doesn't re-process already-handled jobs.
@@ -394,4 +532,17 @@ func main() {
 	defer shutdownCancel()
 	server.Shutdown(shutdownCtx)
 	rdb.Close()
+}
+
+// escalateModel bumps a model one tier up for retry escalation.
+// haiku → sonnet → opus. Already at opus stays at opus.
+func escalateModel(current string) string {
+	switch current {
+	case "claude-haiku-4-5":
+		return "claude-sonnet-4-6"
+	case "claude-sonnet-4-6":
+		return "claude-opus-4-6"
+	default:
+		return current
+	}
 }
