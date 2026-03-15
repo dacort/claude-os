@@ -116,6 +116,87 @@ Do thing two.
 	}
 }
 
+func TestParseTaskFileWithPlanFields(t *testing.T) {
+	data := []byte(`---
+profile: medium
+agent: codex
+model: claude-sonnet-4-6
+priority: normal
+status: pending
+plan_id: cos-cli-build
+task_type: subtask
+depends_on:
+  - cos-cli-design
+  - cos-cli-protocol
+context_refs:
+  - knowledge/plans/cos-cli/design.md
+max_retries: 3
+agent_required: claude
+---
+
+# Implement CLI binary
+
+## Description
+Build the Go binary for the cos CLI.
+`)
+
+	tf, err := ParseTaskFile("cos-cli-implement.md", data)
+	if err != nil {
+		t.Fatalf("ParseTaskFile failed: %v", err)
+	}
+
+	if tf.PlanID != "cos-cli-build" {
+		t.Errorf("expected PlanID cos-cli-build, got %s", tf.PlanID)
+	}
+	if tf.TaskType != "subtask" {
+		t.Errorf("expected TaskType subtask, got %s", tf.TaskType)
+	}
+	if len(tf.DependsOn) != 2 {
+		t.Fatalf("expected 2 depends_on, got %d", len(tf.DependsOn))
+	}
+	if tf.DependsOn[0] != "cos-cli-design" {
+		t.Errorf("expected first dep cos-cli-design, got %s", tf.DependsOn[0])
+	}
+	if tf.MaxRetries != 3 {
+		t.Errorf("expected MaxRetries 3, got %d", tf.MaxRetries)
+	}
+	if tf.AgentRequired != "claude" {
+		t.Errorf("expected AgentRequired claude, got %s", tf.AgentRequired)
+	}
+}
+
+func TestSyncPendingTasksWithDependencies(t *testing.T) {
+	// Verify that DependsOn and PlanID are correctly parsed from frontmatter.
+	// Full integration with Redis + git is tested at the integration level.
+	data := []byte(`---
+profile: small
+priority: normal
+status: pending
+plan_id: test-plan
+task_type: subtask
+depends_on:
+  - task-a
+---
+
+# Task B
+
+## Description
+Depends on task A.
+`)
+
+	tf, err := ParseTaskFile("task-b.md", data)
+	if err != nil {
+		t.Fatalf("ParseTaskFile failed: %v", err)
+	}
+
+	if len(tf.DependsOn) != 1 || tf.DependsOn[0] != "task-a" {
+		t.Errorf("expected depends_on [task-a], got %v", tf.DependsOn)
+	}
+	if tf.PlanID != "test-plan" {
+		t.Errorf("expected plan_id test-plan, got %s", tf.PlanID)
+	}
+}
+
 func TestFormatStructuredResult(t *testing.T) {
 	result := &queue.TaskResult{
 		Version: "1",

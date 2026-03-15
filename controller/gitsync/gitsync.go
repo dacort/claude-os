@@ -13,29 +13,39 @@ import (
 )
 
 type TaskFrontmatter struct {
-	TargetRepo  string   `yaml:"target_repo"`
-	Profile     string   `yaml:"profile"`
-	Agent       string   `yaml:"agent"`
-	Model       string   `yaml:"model"`
-	Mode        string   `yaml:"mode"`
-	Priority    string   `yaml:"priority"`
-	Status      string   `yaml:"status"`
-	Created     string   `yaml:"created"`
-	ContextRefs []string `yaml:"context_refs"`
+	TargetRepo    string   `yaml:"target_repo"`
+	Profile       string   `yaml:"profile"`
+	Agent         string   `yaml:"agent"`
+	Model         string   `yaml:"model"`
+	Mode          string   `yaml:"mode"`
+	Priority      string   `yaml:"priority"`
+	Status        string   `yaml:"status"`
+	Created       string   `yaml:"created"`
+	ContextRefs   []string `yaml:"context_refs"`
+	PlanID        string   `yaml:"plan_id"`
+	TaskType      string   `yaml:"task_type"`
+	DependsOn     []string `yaml:"depends_on"`
+	MaxRetries    int      `yaml:"max_retries"`
+	AgentRequired string   `yaml:"agent_required"`
 }
 
 type TaskFile struct {
-	Filename    string
-	TargetRepo  string
-	Profile     string
-	Agent       string
-	Model       string
-	Mode        string
-	Priority    string
-	Title       string
-	Description string
-	CreatedAt   time.Time
-	ContextRefs []string
+	Filename      string
+	TargetRepo    string
+	Profile       string
+	Agent         string
+	Model         string
+	Mode          string
+	Priority      string
+	Title         string
+	Description   string
+	CreatedAt     time.Time
+	ContextRefs   []string
+	PlanID        string
+	TaskType      string
+	DependsOn     []string
+	MaxRetries    int
+	AgentRequired string
 }
 
 func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
@@ -84,17 +94,22 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 	}
 
 	return &TaskFile{
-		Filename:    filename,
-		TargetRepo:  fm.TargetRepo,
-		Profile:     fm.Profile,
-		Agent:       fm.Agent,
-		Model:       fm.Model,
-		Mode:        fm.Mode,
-		Priority:    fm.Priority,
-		Title:       title,
-		Description: description,
-		CreatedAt:   createdAt,
-		ContextRefs: fm.ContextRefs,
+		Filename:      filename,
+		TargetRepo:    fm.TargetRepo,
+		Profile:       fm.Profile,
+		Agent:         fm.Agent,
+		Model:         fm.Model,
+		Mode:          fm.Mode,
+		Priority:      fm.Priority,
+		Title:         title,
+		Description:   description,
+		CreatedAt:     createdAt,
+		ContextRefs:   fm.ContextRefs,
+		PlanID:        fm.PlanID,
+		TaskType:      fm.TaskType,
+		DependsOn:     fm.DependsOn,
+		MaxRetries:    fm.MaxRetries,
+		AgentRequired: fm.AgentRequired,
 	}, nil
 }
 
