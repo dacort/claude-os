@@ -37,6 +37,7 @@ RUN groupadd -r worker && useradd -r -g worker -d /home/worker -s /bin/bash work
     && chown -R worker:worker /home/worker /workspace /tmp
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY agent/codex-prompt.py /usr/local/bin/codex-prompt.py
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER worker
