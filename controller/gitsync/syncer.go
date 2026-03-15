@@ -124,21 +124,78 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 		}
 
 		task := &queue.Task{
-			ID:          taskID,
-			Title:       tf.Title,
-			Description: tf.Description,
-			TargetRepo:  tf.TargetRepo,
-			Profile:     tf.Profile,
-			Agent:       tf.Agent,
-			Model:       tf.Model,
-			Mode:        tf.Mode,
-			ContextRefs: tf.ContextRefs,
-			Priority:    priority,
+			ID:            taskID,
+			Title:         tf.Title,
+			Description:   tf.Description,
+			TargetRepo:    tf.TargetRepo,
+			Profile:       tf.Profile,
+			Agent:         tf.Agent,
+			Model:         tf.Model,
+			Mode:          tf.Mode,
+			ContextRefs:   tf.ContextRefs,
+			Priority:      priority,
+			PlanID:        tf.PlanID,
+			TaskType:      queue.TaskType(tf.TaskType),
+			DependsOn:     tf.DependsOn,
+			MaxRetries:    tf.MaxRetries,
+			AgentRequired: tf.AgentRequired,
+		}
+		if task.MaxRetries == 0 {
+			task.MaxRetries = 2 // default
+		}
+		if task.TaskType == "" {
+			task.TaskType = queue.TaskTypeStandalone
+		}
+
+		// For plan subtasks, validate the DAG before enqueuing any of them.
+		if task.PlanID != "" && task.TaskType == queue.TaskTypeSubtask {
+			planTasks := s.collectPlanSubtasks(task.PlanID, tasksPath)
+			// Include the current task in the DAG map.
+			planTasks[taskID] = task.DependsOn
+
+			if err := queue.ValidateSubtaskCount(planTasks, 10); err != nil {
+				slog.Error("plan subtask count exceeded, skipping task",
+					"plan", task.PlanID, "task", taskID, "error", err)
+				continue
+			}
+			if err := queue.ValidateDAG(planTasks); err != nil {
+				slog.Error("plan DAG invalid, skipping task",
+					"plan", task.PlanID, "task", taskID, "error", err)
+				continue
+			}
+		}
+
+		// If any dependency is not yet completed, block this task instead of
+		// enqueuing it. The watcher will unblock it when deps complete.
+		if len(task.DependsOn) > 0 {
+			allMet := true
+			for _, dep := range task.DependsOn {
+				depTask, err := s.queue.Get(ctx, dep)
+				if err != nil || depTask.Status != queue.StatusCompleted {
+					allMet = false
+					break
+				}
+			}
+			if !allMet {
+				if err := s.queue.Block(ctx, task); err != nil {
+					slog.Error("failed to block task", "id", taskID, "error", err)
+					continue
+				}
+				if task.PlanID != "" {
+					s.queue.RegisterPlanTask(ctx, task.PlanID, taskID)
+				}
+				s.knownTasks[taskID] = true
+				slog.Info("blocked task (unmet dependencies)", "id", taskID, "depends_on", task.DependsOn)
+				continue
+			}
 		}
 
 		if err := s.queue.Enqueue(ctx, task); err != nil {
 			slog.Error("failed to enqueue task", "id", taskID, "error", err)
 			continue
+		}
+		if task.PlanID != "" {
+			s.queue.RegisterPlanTask(ctx, task.PlanID, taskID)
 		}
 		slog.Info("enqueued task from git", "id", taskID, "title", tf.Title)
 
@@ -151,6 +208,23 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 		s.knownTasks[taskID] = true
 	}
 	return nil
+}
+
+// collectPlanSubtasks returns a map of taskID -> depends_on for all pending
+// subtasks belonging to planID. Used for DAG validation at ingestion time.
+func (s *Syncer) collectPlanSubtasks(planID, tasksPath string) map[string][]string {
+	result := make(map[string][]string)
+	tasks, err := ScanPendingTasks(tasksPath)
+	if err != nil {
+		return result
+	}
+	for _, tf := range tasks {
+		if tf.PlanID == planID {
+			taskID := strings.TrimSuffix(tf.Filename, ".md")
+			result[taskID] = tf.DependsOn
+		}
+	}
+	return result
 }
 
 func (s *Syncer) gitCommitAndPush(message string) error {
