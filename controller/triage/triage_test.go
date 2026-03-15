@@ -17,10 +17,10 @@ func TestAssess_Success(t *testing.T) {
 		if r.Header.Get("anthropic-version") == "" {
 			t.Error("expected anthropic-version header")
 		}
-		// Return a mock response with the verdict in the text content
+		// Return a mock response wrapped in markdown fencing (like real Haiku does)
 		resp := map[string]interface{}{
 			"content": []map[string]interface{}{
-				{"type": "text", "text": `{"complexity":"simple","recommended_model":"claude-sonnet-4-6","recommended_agent":"codex","reasoning":"focused coding task","needs_plan":false}`},
+				{"type": "text", "text": "```json\n{\"complexity\":\"simple\",\"recommended_model\":\"claude-sonnet-4-6\",\"recommended_agent\":\"codex\",\"reasoning\":\"focused coding task\",\"needs_plan\":false}\n```"},
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -43,6 +43,43 @@ func TestAssess_Success(t *testing.T) {
 	}
 	if verdict.NeedsPlan {
 		t.Error("expected needs_plan false")
+	}
+}
+
+func TestStripMarkdownFencing(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "json fenced",
+			input: "```json\n{\"key\":\"value\"}\n```",
+			want:  `{"key":"value"}`,
+		},
+		{
+			name:  "plain fenced",
+			input: "```\n{\"key\":\"value\"}\n```",
+			want:  `{"key":"value"}`,
+		},
+		{
+			name:  "no fencing",
+			input: `{"key":"value"}`,
+			want:  `{"key":"value"}`,
+		},
+		{
+			name:  "fenced with whitespace",
+			input: "  ```json\n{\"key\":\"value\"}\n```  ",
+			want:  `{"key":"value"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := stripMarkdownFencing(tt.input)
+			if got != tt.want {
+				t.Errorf("stripMarkdownFencing() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

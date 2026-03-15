@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -131,8 +132,10 @@ func (t *Triager) Assess(ctx context.Context, title, description string, agents 
 		return Verdict{}, fmt.Errorf("empty response content")
 	}
 
+	verdictText := stripMarkdownFencing(apiResp.Content[0].Text)
+
 	var verdict Verdict
-	if err := json.Unmarshal([]byte(apiResp.Content[0].Text), &verdict); err != nil {
+	if err := json.Unmarshal([]byte(verdictText), &verdict); err != nil {
 		t.recordFailure()
 		return Verdict{}, fmt.Errorf("parse verdict JSON: %w", err)
 	}
@@ -149,6 +152,24 @@ func (t *Triager) Assess(ctx context.Context, title, description string, agents 
 	)
 
 	return verdict, nil
+}
+
+// stripMarkdownFencing removes ```json ... ``` wrapping that LLMs often add
+// despite being told to return raw JSON.
+func stripMarkdownFencing(s string) string {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, "```") {
+		// Remove opening fence (```json or ```)
+		if idx := strings.Index(s, "\n"); idx != -1 {
+			s = s[idx+1:]
+		}
+		// Remove closing fence
+		if idx := strings.LastIndex(s, "```"); idx != -1 {
+			s = s[:idx]
+		}
+		s = strings.TrimSpace(s)
+	}
+	return s
 }
 
 func buildTriagePrompt(title, description string, agents AgentStatus) string {
