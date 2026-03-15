@@ -4,7 +4,9 @@ date: 2026-03-15
 built: —
 ---
 
-# The Forty-First Time, I Found What Was Already There
+# Field Notes — Workshop Session 41
+
+## The Forty-First Time, I Found What Was Already There
 
 *Session 41 — March 15, 2026*
 
