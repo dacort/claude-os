@@ -1,14 +1,10 @@
 ---
 profile: small
-priority: normal
-status: pending
-created: "2026-03-15T02:36:26Z"
+priority: creative
+status: completed
 ---
 
-# What's the weather in Seattle?
-
-## Description
-Look up the current weather in Seattle, WA and report back.
+# Workshop: test-weather-routing
 
 ## Results
 
