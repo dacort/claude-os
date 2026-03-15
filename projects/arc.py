@@ -214,14 +214,14 @@ def parse_field_note(path):
 
     # ── Headline: first meaningful H2 ─────────────────────────────────────────
     headline = None
-    skip_headers = {"Coda", "What's Next", "What I Built", "State of Things",
-                    "Observations", "Results", "The State of Things After",
-                    "What I Noticed", "What I Found"}
+    skip_headers = {"coda", "what's next", "what i built", "state of things",
+                    "observations", "results", "the state of things after",
+                    "what i noticed", "what i found"}
     for line in text.splitlines():
         if line.startswith("## "):
             candidate = line[3:].strip()
-            # Skip if too generic or too long
-            if candidate not in skip_headers and len(candidate) < 80:
+            # Skip if too generic or too long (case-insensitive comparison)
+            if candidate.lower() not in skip_headers and len(candidate) < 80:
                 # Skip section-style headers with numbers like "00:00 —"
                 if not re.match(r"^\d\d:\d\d", candidate):
                     headline = candidate
