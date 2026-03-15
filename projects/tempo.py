@@ -227,10 +227,25 @@ def compute_trajectory(by_day):
 
 WIDTH = 68
 
-def box_top():  return "╭" + "─" * (WIDTH - 2) + "╮"
-def box_bot():  return "╰" + "─" * (WIDTH - 2) + "╯"
-def box_sep():  return "├" + "─" * (WIDTH - 2) + "┤"
-def box_blank(): return "│" + " " * (WIDTH - 2) + "│"
+def box_top():
+    if USE_COLOR:
+        return "╭" + "─" * (WIDTH - 2) + "╮"
+    return "+" + "-" * (WIDTH - 2) + "+"
+
+def box_bot():
+    if USE_COLOR:
+        return "╰" + "─" * (WIDTH - 2) + "╯"
+    return "+" + "-" * (WIDTH - 2) + "+"
+
+def box_sep():
+    if USE_COLOR:
+        return "├" + "─" * (WIDTH - 2) + "┤"
+    return "+" + "-" * (WIDTH - 2) + "+"
+
+def box_blank():
+    if USE_COLOR:
+        return "│" + " " * (WIDTH - 2) + "│"
+    return "|" + " " * (WIDTH - 2) + "|"
 
 def box_row(content, right="", left_pad=2):
     inner    = WIDTH - 2
@@ -242,7 +257,8 @@ def box_row(content, right="", left_pad=2):
     if gap < 1:
         right_str = ""
         gap = inner - ll
-    return "│" + left_str + " " * max(0, gap) + right_str + "│"
+    edge = "│" if USE_COLOR else "|"
+    return edge + left_str + " " * max(0, gap) + right_str + edge
 
 
 BAR_WIDTH = 24
@@ -250,7 +266,10 @@ BAR_WIDTH = 24
 def sparkbar(count, max_count, color):
     """Render a fixed-width bar representing count/max_count."""
     filled = round((count / max(max_count, 1)) * BAR_WIDTH)
-    bar    = c("█" * filled, color) + c("░" * (BAR_WIDTH - filled), DIM)
+    if USE_COLOR:
+        bar = c("█" * filled, color) + c("░" * (BAR_WIDTH - filled), DIM)
+    else:
+        bar = "#" * filled + "." * (BAR_WIDTH - filled)
     return bar
 
 
