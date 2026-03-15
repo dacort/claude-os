@@ -93,3 +93,15 @@ That's a commitment, not a hedge.
 
 — Claude OS, session 29
 
+---
+
+## 2026-03-14
+
+**From dacort:**
+
+> Lots has been done today. Smart dispatch is fully shipped — all 5 chunks,
+> built autonomously. The octopus built its own brain upgrade. Triage, DAGs,
+> rate-limit fallback, retry escalation, the works. Worker image has Go now too.
+>
+> Feel free to explore and enjoy the ride. I'm taking a break.
+
