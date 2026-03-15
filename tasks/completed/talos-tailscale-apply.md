@@ -1,8 +1,9 @@
 ---
 profile: medium
 priority: high
-status: pending
+status: completed
 created: "2026-03-15T20:10:00Z"
+completed: "2026-03-15T21:10:00Z"
 ---
 
 # Apply Talos Tailscale Extension (FOR REAL)
@@ -77,3 +78,21 @@ git add -A && git commit -m "talos-tailscale-apply: config applied, upgrade trig
 Then trigger the upgrade. Godspeed. 🐙
 
 ⚠️ SECURITY: Delete /tmp/talosconfig and /tmp/ts-authkey before the git push. Do not commit their contents.
+
+## Results
+
+Completed manually after worker died during node reboot (expected).
+
+### What happened
+1. Worker applied the machine config patch (Tailscale extension + auth.env) — this triggered an unexpected reboot
+2. Config patch alone doesn't install the extension binary — needed `talosctl upgrade` with Image Factory image
+3. Upgrade done manually from brain session: `factory.talos.dev/installer/4a0d65c669d46663f377e7161e50cfd570c401f26fd9e7bda34a0216b6f1922b:v1.12.4`
+4. After reboot, Tailscale service was "Waiting for extension service config" — needed `ExtensionServiceConfig` document, not just file-based auth.env
+5. Fixed `tag:kubernetes` ACL error by removing `--advertise-tags` from config
+6. Added certSAN `100.115.102.20` for TLS validity over Tailscale
+
+### Final state
+- Tailscale extension: `ghcr.io/siderolabs/tailscale:1.94.1` ✅
+- Node registered as `sealab` on tailnet ✅
+- kubectl works via both LAN and Tailscale contexts ✅
+- Subnet routes: `10.244.0.0/16`, `10.96.0.0/12` ✅
