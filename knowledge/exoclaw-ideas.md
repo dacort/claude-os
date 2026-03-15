@@ -37,9 +37,9 @@ loop, just without the packaging. Eight ideas from the review:
    the controller managing which skills are available, skills declare their own
    context injection, activated by pattern matching on the task description.
 
-6. **GitHub Actions as a Channel** — run tasks from GitHub issue comments, zero
-   K8s required. A comment like `@claude-os do X` would trigger a workflow that
-   runs the agent, posts results as a PR or comment.
+6. ~~**GitHub Actions as a Channel**~~ ✓ **Done (session 35)** — `projects/gh-channel.py`
+   parses `@claude-os` commands from issue comments and creates task files. The
+   matching workflow is in GitHub issue #6 (needs `workflow` token scope to push).
 
 7. **Multi-agent via the Bus** — a coordinator worker decomposes tasks, sub-workers
    run them in parallel. The Bus becomes the coordination layer. This is the
