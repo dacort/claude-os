@@ -79,6 +79,7 @@ const (
 	keyQueue   = "claude-os:queue"
 	keyTask    = "claude-os:task:%s"
 	keyRunning = "claude-os:running"
+	keyBlocked = "claude-os:plan:%s:blocked"
 )
 
 type Queue struct {
@@ -237,6 +238,56 @@ func (q *Queue) RequeueTasks(ctx context.Context, taskIDs []string) error {
 // UpdateStatus.
 func (q *Queue) SaveTask(ctx context.Context, task *Task) error {
 	return q.save(ctx, task)
+}
+
+// Block stores a task in the per-plan blocked set (not the dispatch queue).
+// Tasks are blocked when their dependencies have not yet completed.
+func (q *Queue) Block(ctx context.Context, task *Task) error {
+	task.Status = StatusBlocked
+	data, err := json.Marshal(task)
+	if err != nil {
+		return fmt.Errorf("marshal task: %w", err)
+	}
+	pipe := q.rdb.Pipeline()
+	pipe.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0)
+	pipe.SAdd(ctx, fmt.Sprintf(keyBlocked, task.PlanID), task.ID)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+// GetBlocked returns all blocked tasks for a plan.
+func (q *Queue) GetBlocked(ctx context.Context, planID string) ([]*Task, error) {
+	ids, err := q.rdb.SMembers(ctx, fmt.Sprintf(keyBlocked, planID)).Result()
+	if err != nil {
+		return nil, err
+	}
+	var tasks []*Task
+	for _, id := range ids {
+		task, err := q.Get(ctx, id)
+		if err != nil {
+			continue
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, nil
+}
+
+// Unblock moves a task from the blocked set to the dispatch queue.
+func (q *Queue) Unblock(ctx context.Context, task *Task) error {
+	task.Status = StatusPending
+	data, err := json.Marshal(task)
+	if err != nil {
+		return fmt.Errorf("marshal task: %w", err)
+	}
+	pipe := q.rdb.Pipeline()
+	pipe.Set(ctx, fmt.Sprintf(keyTask, task.ID), data, 0)
+	pipe.SRem(ctx, fmt.Sprintf(keyBlocked, task.PlanID), task.ID)
+	pipe.ZAdd(ctx, keyQueue, redis.Z{
+		Score:  float64(task.Priority),
+		Member: task.ID,
+	})
+	_, err = pipe.Exec(ctx)
+	return err
 }
 
 func (q *Queue) save(ctx context.Context, task *Task) error {

@@ -309,6 +309,57 @@ func TestTaskWithPlanFields(t *testing.T) {
 	}
 }
 
+func TestBlockAndUnblock(t *testing.T) {
+	rdb := setupTestRedis(t)
+	q := New(rdb)
+	ctx := context.Background()
+
+	// Block a task
+	task := &Task{
+		ID:        "impl-task",
+		PlanID:    "my-plan",
+		DependsOn: []string{"design-task"},
+		Priority:  PriorityNormal,
+	}
+	err := q.Block(ctx, task)
+	if err != nil {
+		t.Fatalf("Block failed: %v", err)
+	}
+
+	// Should not be in the regular queue
+	got, _ := q.Dequeue(ctx)
+	if got != nil {
+		t.Errorf("blocked task should not be dequeued, got %v", got)
+	}
+
+	// Get blocked tasks for this plan
+	blocked, err := q.GetBlocked(ctx, "my-plan")
+	if err != nil {
+		t.Fatalf("GetBlocked failed: %v", err)
+	}
+	if len(blocked) != 1 || blocked[0].ID != "impl-task" {
+		t.Errorf("expected 1 blocked task, got %v", blocked)
+	}
+
+	// Unblock it (move to regular queue)
+	err = q.Unblock(ctx, task)
+	if err != nil {
+		t.Fatalf("Unblock failed: %v", err)
+	}
+
+	// Now it should be dequeue-able
+	got, _ = q.Dequeue(ctx)
+	if got == nil || got.ID != "impl-task" {
+		t.Errorf("expected impl-task after unblock, got %v", got)
+	}
+
+	// Blocked set should be empty
+	blocked, _ = q.GetBlocked(ctx, "my-plan")
+	if len(blocked) != 0 {
+		t.Errorf("expected 0 blocked tasks after unblock, got %d", len(blocked))
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)
