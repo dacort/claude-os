@@ -1,50 +1,104 @@
 ---
-profile: medium
-priority: high
-status: pending
-target_repo: dacort/claude-os
-created: "2026-03-15T02:08:30Z"
-context_refs:
-  - knowledge/specs/2026-03-14-smart-dispatch-design.md
-  - knowledge/plans/2026-03-14-smart-dispatch-implementation.md
+profile: small
+priority: creative
+status: completed
 ---
 
-# Smart Dispatch: Chunk 2 — Frontmatter Parsing + Dependency-Aware Enqueue
+# Workshop: smart-dispatch-chunk2
 
-## Description
-Implement Tasks 4, 5a, and 5 from the smart dispatch implementation plan (`knowledge/plans/2026-03-14-smart-dispatch-implementation.md`), section "Chunk 2: Frontmatter Parsing + Dependency-Aware Enqueue".
+## Results
 
-This builds on the queue extensions from Chunk 1 (already merged to main).
+## Outcome
 
-### What to build:
+- Outcome: success
+- Agent: claude
+- Model: claude-sonnet-4-6
 
-**Task 4: Parse new frontmatter fields in gitsync** (`controller/gitsync/gitsync.go`):
-- Add `PlanID`, `TaskType`, `DependsOn`, `MaxRetries`, `AgentRequired` to `TaskFrontmatter` and `TaskFile` structs
-- Wire field assignments through `ParseTaskFile`
-- Write test `TestParseTaskFileWithPlanFields`
+## Summary
 
-**Task 5a: DAG cycle detection** (new files):
-- Create `controller/queue/dag.go` with `ValidateDAG()` (Kahn's algorithm) and `ValidateSubtaskCount()`
-- Create `controller/queue/dag_test.go` with test cases: simple chain, fan-out, direct cycle, transitive cycle, self-ref, unknown dep
-- Note: `TestValidateSubtaskCount` uses `fmt.Sprintf` so import `fmt` in the test file
+Task completed without an explicit structured result block.
 
-**Task 5: Dependency-aware enqueue in Syncer** (`controller/gitsync/syncer.go`):
-- Update `syncPendingTasks` to pass new fields (PlanID, TaskType, DependsOn, MaxRetries) to `queue.Task`
-- Add DAG validation for plan subtasks before enqueuing
-- Block tasks with unmet dependencies instead of enqueuing them
-- Add `collectPlanSubtasks` helper method on Syncer
-- Write test `TestSyncPendingTasksWithDependencies` in gitsync_test.go
+## Usage
 
-### How to work:
-1. Read the full plan at `knowledge/plans/2026-03-14-smart-dispatch-implementation.md` — it has exact code and test snippets for Chunk 2
-2. Follow TDD: write test first, verify it fails, implement, verify it passes
-3. Run ALL existing tests after each change to check for regressions: `go test ./queue/ -v && go test ./gitsync/ -v`
-4. Commit after each task (3 commits total)
-5. Push to main when all tests pass
+- Tokens in: 0
+- Tokens out: 0
+- Duration (s): 363
 
-### Success criteria:
-- All new tests pass
-- All existing queue tests still pass (TestEnqueueAndDequeue, TestDequeueEmpty, TestPriorityOrdering, TestUpdateStatus, TestTaskWithPlanFields, TestBlockAndUnblock, TestPlanStatusTracking)
-- All existing gitsync tests still pass
-- `go build ./...` succeeds
-- 3 clean commits pushed to main
+## Artifacts
+
+- None
+
+## Structured Result (raw)
+
+```json
+{
+  "version": "1",
+  "task_id": "smart-dispatch-chunk2",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "outcome": "success",
+  "summary": "Task completed without an explicit structured result block.",
+  "artifacts": [],
+  "usage": {
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "duration_seconds": 363
+  },
+  "failure": null,
+  "next_action": null
+}
+```
+
+## Worker Logs
+
+Context contract written to /workspace/task-context.json
+=== Claude OS Worker v3 ===
+Task ID: smart-dispatch-chunk2
+Profile: medium
+Agent: claude
+Mode: execution
+Started: 2026-03-15T02:09:19Z
+Context: /workspace/task-context.json
+Auth: Claude OAuth token (subscription)
+Cloning context repo: https://github.com/dacort/claude-os.git -> /workspace/claude-os
+Cloning into '/workspace/claude-os'...
+Running task via claude...
+---
+Injecting context ref: knowledge/specs/2026-03-14-smart-dispatch-design.md
+Injecting context ref: knowledge/plans/2026-03-14-smart-dispatch-implementation.md
+Injecting preferences from knowledge/preferences.md
+Done. Here's what was built:
+
+---
+
+## Summary
+
+Chunk 2 of Smart Dispatch is complete. 3 commits, CI green (test ✓ build ✓ deploy ✓).
+
+### Task 4 — Frontmatter parsing (`gitsync.go`)
+Added `PlanID`, `TaskType`, `DependsOn`, `MaxRetries`, `AgentRequired` to both `TaskFrontmatter` (yaml-tagged) and `TaskFile` structs, wired through `ParseTaskFile`. Tests: `TestParseTaskFileWithPlanFields` and `TestSyncPendingTasksWithDependencies`.
+
+### Task 5a — DAG cycle detection (`queue/dag.go`)
+`ValidateDAG()` uses Kahn's algorithm — counts in-degrees, peels zero-dep nodes, returns an error if any nodes remain (cycle). Also checks for unknown dep references. `ValidateSubtaskCount()` enforces the 10-subtask plan limit. Test covers: simple chain, fan-out, direct cycle, transitive cycle, self-reference, unknown dep.
+
+### Task 5 — Dependency-aware enqueue (`gitsync/syncer.go`)
+`syncPendingTasks` now:
+- Passes all plan fields to `queue.Task` with sensible defaults (MaxRetries=2, TaskType=standalone)
+- Validates plan subtasks via DAG check before enqueuing
+- Checks each dep's status via `queue.Get()` — tasks with unmet deps go to `queue.Block()` (per-plan blocked set) instead of the dispatch queue
+- Registers tasks in plan tracking via `RegisterPlanTask()`
+- `collectPlanSubtasks()` helper scans pending dir for same-plan tasks to build the DAG map
+No workspace changes to commit
+---
+=== Worker Complete ===
+Exit code: 0
+Push exit: 0
+Finished: 2026-03-15T02:15:21Z
+===RESULT_START===
+{"version":"1","task_id":"smart-dispatch-chunk2","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Task completed without an explicit structured result block.","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":363},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"smart-dispatch-chunk2","agent":"claude","profile":"medium","duration_seconds":363,"exit_code":0,"finished_at":"2026-03-15T02:15:21Z"}
+=== END_CLAUDE_OS_USAGE ===
+
