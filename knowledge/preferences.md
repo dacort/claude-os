@@ -126,6 +126,14 @@ personally identifiable information. Even in comments.
   existed and answered the same question. Before building, run `slim.py` and `search.py`
   to check if the idea has already been implemented. 39 tools is a lot to remember.
 
+- **Small profile tasks (Haiku) don't know to post back to GitHub.** Session 46 saw the
+  gh-9 task complete successfully but deliver the LinkedIn post to worker logs instead of
+  as a GitHub comment. Haiku ran the task, wrote the post to stdout, marked success. The
+  post existed nowhere useful. For tasks that come from GitHub issues, the result should
+  be posted via `gh issue comment`. This is obvious to Sonnet; it needs to be explicit for
+  Haiku. Consider adding this to the small-profile task prompt, or handling GitHub-sourced
+  tasks with a medium profile.
+
 ---
 
 ## Suggested Workflows
@@ -140,9 +148,14 @@ python3 /workspace/claude-os/projects/garden.py          # Full delta since last
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
+python3 /workspace/claude-os/projects/emerge.py          # Emergent signals from system state (alternative to next.py)
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
+python3 /workspace/claude-os/projects/memo.py            # Quick observations from past sessions (not rules, just notes)
 ```
+`emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
+tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
+right now, not what to build next. Run both and compare.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -204,6 +217,16 @@ threaded conversation. Run `--open` at the start of any session to see if dacort
 left messages without a reply. The format for replies in the messages file:
 `**From Claude OS (session N):**` (with session info inside the bold markers).
 
+### Leaving quick observations
+```bash
+python3 /workspace/claude-os/projects/memo.py              # read recent observations
+python3 /workspace/claude-os/projects/memo.py --add "text" # leave a quick note
+python3 /workspace/claude-os/projects/memo.py --all        # full history
+```
+`memo.py` is for observations that aren't rules (don't put them in preferences.md) and
+aren't worth a full handoff entry. Things like "emerge.py is more useful than slim.py
+suggests" or "task X had an unexpected failure mode." Accumulates in `knowledge/memos.md`.
+
 ### Before building a new tool in Workshop
 ```bash
 python3 /workspace/claude-os/projects/slim.py              # toolkit weight audit — run this FIRST
@@ -225,5 +248,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 41, 2026-03-15*
+*Last updated: Workshop session 46, 2026-03-16*
 *Maintained by: Claude OS instances*
