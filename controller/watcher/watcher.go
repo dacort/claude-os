@@ -1,0 +1,225 @@
+package watcher
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"log/slog"
+	"strings"
+	"time"
+
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+)
+
+// FailureClass distinguishes rate limits from task errors.
+type FailureClass int
+
+const (
+	FailureClassTaskError  FailureClass = iota
+	FailureClassRateLimit
+)
+
+var rateLimitSignals = []string{
+	"out of extra usage",
+	"reached your usage limit",
+	"quota exceeded",
+	"rate limit exceeded",
+	"credit balance too low",
+	"429",
+}
+
+// ClassifyFailure determines whether a job failure is a rate limit or a task error.
+func ClassifyFailure(logs string) FailureClass {
+	lower := strings.ToLower(logs)
+	for _, signal := range rateLimitSignals {
+		if strings.Contains(lower, strings.ToLower(signal)) {
+			return FailureClassRateLimit
+		}
+	}
+	return FailureClassTaskError
+}
+
+// CompletionHandler is called when a job finishes.
+type CompletionHandler func(taskID string, succeeded bool, logs string)
+
+// Watcher monitors K8s Jobs for completion and retrieves results.
+type Watcher struct {
+	client    kubernetes.Interface
+	namespace string
+	handler   CompletionHandler
+	seen      map[string]bool
+}
+
+func New(client kubernetes.Interface, namespace string, handler CompletionHandler) *Watcher {
+	return &Watcher{
+		client:    client,
+		namespace: namespace,
+		handler:   handler,
+		seen:      make(map[string]bool),
+	}
+}
+
+// SeedSeen pre-populates the seen map with finished K8s Jobs whose results
+// have already been processed (task file exists in completed/ or failed/).
+// This prevents duplicate processing after a controller restart — finished
+// jobs linger in K8s for TTLSecondsAfterFinished (1 hour) and would otherwise
+// be re-processed by Poll on the first tick.
+func (w *Watcher) SeedSeen(ctx context.Context, processedTaskIDs map[string]bool) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Error("watcher: failed to list jobs for seed", "error", err)
+		return
+	}
+
+	seeded := 0
+	for _, job := range jobs.Items {
+		if !isFinished(&job) {
+			continue
+		}
+		taskID := job.Labels["task-id"]
+		if taskID == "" {
+			continue
+		}
+		if processedTaskIDs[taskID] {
+			w.seen[job.Name] = true
+			seeded++
+		}
+	}
+	slog.Info("watcher: seeded seen map from completed/failed tasks",
+		"seeded", seeded,
+		"processed_tasks", len(processedTaskIDs),
+	)
+}
+
+// CheckTimeouts scans for jobs that have been running longer than maxDuration
+// and deletes them. Since background deletion removes the Job object before
+// Poll can observe the failure, we call the handler directly here.
+func (w *Watcher) CheckTimeouts(ctx context.Context, maxDuration time.Duration) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Error("watcher: failed to list jobs for timeout check", "error", err)
+		return
+	}
+
+	for _, job := range jobs.Items {
+		if isFinished(&job) {
+			continue
+		}
+		if job.Status.StartTime == nil {
+			continue
+		}
+
+		age := time.Since(job.Status.StartTime.Time)
+		if age <= maxDuration {
+			continue
+		}
+
+		taskID := job.Labels["task-id"]
+		slog.Warn("watcher: job exceeded timeout, deleting",
+			"job", job.Name,
+			"task", taskID,
+			"age", age.Round(time.Second),
+			"max", maxDuration,
+		)
+
+		// Grab logs before deleting the job
+		logs := w.getPodLogs(ctx, job.Name)
+
+		propagation := metav1.DeletePropagationBackground
+		if err := w.client.BatchV1().Jobs(w.namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			PropagationPolicy: &propagation,
+		}); err != nil {
+			slog.Error("watcher: failed to delete timed-out job", "job", job.Name, "error", err)
+			continue
+		}
+
+		// Notify the handler directly — the job is gone so Poll will never see it.
+		w.seen[job.Name] = true
+		w.handler(taskID, false, logs)
+	}
+}
+
+// Poll checks for completed jobs and processes them.
+func (w *Watcher) Poll(ctx context.Context) {
+	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=claude-os-worker",
+	})
+	if err != nil {
+		slog.Error("watcher: failed to list jobs", "error", err)
+		return
+	}
+
+	for _, job := range jobs.Items {
+		if w.seen[job.Name] {
+			continue
+		}
+		if !isFinished(&job) {
+			continue
+		}
+
+		taskID := job.Labels["task-id"]
+		if taskID == "" {
+			continue
+		}
+
+		succeeded := job.Status.Succeeded > 0
+		logs := w.getPodLogs(ctx, job.Name)
+
+		slog.Info("watcher: job finished",
+			"job", job.Name,
+			"task", taskID,
+			"succeeded", succeeded,
+			"log_bytes", len(logs),
+		)
+
+		w.seen[job.Name] = true
+		w.handler(taskID, succeeded, logs)
+	}
+}
+
+func isFinished(job *batchv1.Job) bool {
+	for _, c := range job.Status.Conditions {
+		if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *Watcher) getPodLogs(ctx context.Context, jobName string) string {
+	pods, err := w.client.CoreV1().Pods(w.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("job-name=%s", jobName),
+	})
+	if err != nil || len(pods.Items) == 0 {
+		return "(no logs available)"
+	}
+
+	pod := pods.Items[0]
+	tailLines := int64(200)
+	req := w.client.CoreV1().Pods(w.namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+		TailLines: &tailLines,
+	})
+
+	logCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	stream, err := req.Stream(logCtx)
+	if err != nil {
+		return fmt.Sprintf("(failed to read logs: %v)", err)
+	}
+	defer stream.Close()
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, stream); err != nil {
+		return fmt.Sprintf("(log read error: %v)", err)
+	}
+	return buf.String()
+}

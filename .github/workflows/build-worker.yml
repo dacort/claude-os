@@ -1,0 +1,73 @@
+name: Build Worker Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/claude-os-worker
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.sha.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: sha
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: worker
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: dacort/talos-homelab
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Update worker image tag
+        run: |
+          IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
+          sed -i "s|image: ghcr.io/dacort/claude-os-worker:.*|image: ghcr.io/dacort/claude-os-worker:${IMAGE_TAG}|" \
+            infra/claude-os/controller.yaml
+          cat infra/claude-os/controller.yaml | grep "claude-os-worker"
+
+      - name: Commit and push
+        run: |
+          git config user.name "Claude OS"
+          git config user.email "claude-os@noreply.github.com"
+          git add infra/claude-os/controller.yaml
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "deploy: worker image → ${{ needs.build.outputs.image_tag }}"
+          git push

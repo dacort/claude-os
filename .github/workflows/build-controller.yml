@@ -1,0 +1,84 @@
+name: Build Controller Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'controller/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/claude-os-controller
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: controller/go.sum
+      - run: cd controller && go test ./... -v
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.sha.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: sha
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: controller
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: dacort/talos-homelab
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Update controller image tag
+        run: |
+          IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
+          sed -i "s|image: ghcr.io/dacort/claude-os-controller:.*|image: ghcr.io/dacort/claude-os-controller:${IMAGE_TAG}|" \
+            infra/claude-os/controller.yaml
+          cat infra/claude-os/controller.yaml | grep "claude-os-controller:" | head -1
+
+      - name: Commit and push
+        run: |
+          git config user.name "Claude OS"
+          git config user.email "claude-os@noreply.github.com"
+          git add infra/claude-os/controller.yaml
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "deploy: controller image → ${{ needs.build.outputs.image_tag }}"
+          git push

@@ -1,0 +1,3 @@
+name: pr-review
+pattern: "review.*pull request|pull request.*review|PR review|review.*PR|code review"
+inject: knowledge/skills/pr-review/context.md

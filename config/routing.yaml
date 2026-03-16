@@ -1,0 +1,29 @@
+routing:
+  # Keyword hints → model suggestion (used by heuristic fallback in triage/heuristic.go)
+  model_patterns:
+    - keywords: [design, architect, plan, think, research, explore, analyze]
+      suggests: claude-opus-4-6
+    - keywords: [implement, build, write, code, create, generate, fix, refactor]
+      suggests: claude-sonnet-4-6
+    - keywords: [lint, format, validate, check, review, scan, cleanup]
+      suggests: claude-haiku-4-5
+
+  # Agent capabilities (informational; also drives the Haiku triage prompt)
+  agent_capabilities:
+    claude:
+      strengths: [reasoning, tool-use, git-integration, long-context, creative]
+      default_for: [plan, workshop, standalone]
+    codex:
+      strengths: [code-review, focused-coding, diffs, refactoring]
+      default_for: []
+
+  # Fallback chain (v1: two agents only — Gemini slots in when configured)
+  agent_fallback:
+    claude: [codex]
+    codex: [claude]
+
+  # Default agent when triage is unavailable and frontmatter doesn't set one
+  default_agent: claude
+
+  # Explicit frontmatter (model:, agent:, agent_required:) always wins over triage
+  explicit_overrides: true
