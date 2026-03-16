@@ -1,3 +1,0 @@
-name: github-workflow
-pattern: "open.*PR|create.*PR|merge.*PR|github.*workflow|CI.*fail|fix.*CI"
-inject: knowledge/skills/github-workflow/context.md

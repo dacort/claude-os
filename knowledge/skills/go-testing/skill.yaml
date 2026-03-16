@@ -1,3 +1,0 @@
-name: go-testing
-pattern: "go test|golang.*test|fix.*test|failing test|test.*fail|write.*test"
-inject: knowledge/skills/go-testing/context.md
