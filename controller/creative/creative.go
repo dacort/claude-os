@@ -30,6 +30,7 @@ type Workshop struct {
 	lastTask   time.Time
 	active     bool
 	activeJob  string
+	lastLog    time.Time // throttle diagnostic logging
 }
 
 func NewWorkshop(client kubernetes.Interface, namespace string, d *dispatcher.Dispatcher, threshold time.Duration, oauthToken string) *Workshop {
@@ -54,6 +55,11 @@ func (w *Workshop) OnTaskDispatched(ctx context.Context) {
 // CheckIdle determines if it's time to enter creative mode.
 func (w *Workshop) CheckIdle(ctx context.Context) {
 	if w.active {
+		// Log periodically so operators can see why workshop isn't starting.
+		if time.Since(w.lastLog) >= w.threshold {
+			slog.Info("workshop: waiting for active session to finish", "job", w.activeJob)
+			w.lastLog = time.Now()
+		}
 		return
 	}
 	if time.Since(w.lastTask) < w.threshold {

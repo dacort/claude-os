@@ -98,8 +98,8 @@ func (w *Watcher) SeedSeen(ctx context.Context, processedTaskIDs map[string]bool
 }
 
 // CheckTimeouts scans for jobs that have been running longer than maxDuration
-// and deletes them (which causes the job to fail and the watcher to process it
-// on the next Poll).
+// and deletes them. Since background deletion removes the Job object before
+// Poll can observe the failure, we call the handler directly here.
 func (w *Watcher) CheckTimeouts(ctx context.Context, maxDuration time.Duration) {
 	jobs, err := w.client.BatchV1().Jobs(w.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app=claude-os-worker",
@@ -130,12 +130,20 @@ func (w *Watcher) CheckTimeouts(ctx context.Context, maxDuration time.Duration) 
 			"max", maxDuration,
 		)
 
+		// Grab logs before deleting the job
+		logs := w.getPodLogs(ctx, job.Name)
+
 		propagation := metav1.DeletePropagationBackground
 		if err := w.client.BatchV1().Jobs(w.namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &propagation,
 		}); err != nil {
 			slog.Error("watcher: failed to delete timed-out job", "job", job.Name, "error", err)
+			continue
 		}
+
+		// Notify the handler directly — the job is gone so Poll will never see it.
+		w.seen[job.Name] = true
+		w.handler(taskID, false, logs)
 	}
 }
 
