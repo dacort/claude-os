@@ -17,6 +17,7 @@ import (
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
 	"github.com/dacort/claude-os/controller/queue"
+	"github.com/dacort/claude-os/controller/scheduler"
 	"github.com/dacort/claude-os/controller/triage"
 	"github.com/dacort/claude-os/controller/watcher"
 
@@ -103,6 +104,33 @@ func main() {
 		cfg.Git.Repo, cfg.Git.Branch,
 		"/tmp/claude-os-repo", githubToken, taskQueue,
 	)
+
+	// Scheduled task scheduler — enqueues recurring tasks on cron schedules.
+	taskScheduler := scheduler.New(rdb, func(ctx context.Context, spawned scheduler.SpawnedTask) error {
+		priority := queue.PriorityNormal
+		switch spawned.Priority {
+		case "high":
+			priority = queue.PriorityHigh
+		case "creative":
+			priority = queue.PriorityCreative
+		}
+		task := &queue.Task{
+			ID:          spawned.ID,
+			Title:       spawned.Title,
+			Description: spawned.Description,
+			TargetRepo:  spawned.TargetRepo,
+			Profile:     spawned.Profile,
+			Agent:       spawned.Agent,
+			Model:       spawned.Model,
+			Mode:        spawned.Mode,
+			Priority:    priority,
+			ContextRefs: spawned.ContextRefs,
+			MaxRetries:  1, // scheduled tasks get 1 retry by default
+			TaskType:    queue.TaskTypeStandalone,
+		}
+		return taskQueue.Enqueue(ctx, task)
+	}, governor.CanDispatch)
+	gitSyncer.SetScheduler(taskScheduler)
 
 	// Creative mode (The Workshop)
 	oauthToken := os.Getenv("CLAUDE_CODE_OAUTH_TOKEN")
@@ -215,6 +243,21 @@ func main() {
 				if err := gitSyncer.Sync(ctx); err != nil {
 					slog.Error("git sync failed", "error", err)
 				}
+			}
+		}
+	}()
+
+	// Scheduler tick loop — checks for due scheduled tasks every 60 seconds
+	go func() {
+		slog.Info("starting scheduler tick loop", "interval", "60s")
+		ticker := time.NewTicker(60 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				taskScheduler.Tick(ctx)
 			}
 		}
 	}()
@@ -367,6 +410,9 @@ func main() {
 		if workshop != nil {
 			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
 		}
+
+		// Notify scheduler so the next run of a recurring task can proceed
+		taskScheduler.OnTaskCompleted(ctx, taskID)
 
 		var parsedResult *queue.TaskResult
 

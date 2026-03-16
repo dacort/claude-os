@@ -27,6 +27,9 @@ type TaskFrontmatter struct {
 	DependsOn     []string `yaml:"depends_on"`
 	MaxRetries    int      `yaml:"max_retries"`
 	AgentRequired string   `yaml:"agent_required"`
+	// Scheduled task fields
+	Schedule      string `yaml:"schedule"`       // 5-field cron expression (UTC)
+	MaxConcurrent int    `yaml:"max_concurrent"` // prevent stacking (default 1)
 }
 
 type TaskFile struct {
@@ -46,6 +49,9 @@ type TaskFile struct {
 	DependsOn     []string
 	MaxRetries    int
 	AgentRequired string
+	// Scheduled task fields
+	Schedule      string
+	MaxConcurrent int
 }
 
 func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
@@ -110,7 +116,45 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		DependsOn:     fm.DependsOn,
 		MaxRetries:    fm.MaxRetries,
 		AgentRequired: fm.AgentRequired,
+		Schedule:      fm.Schedule,
+		MaxConcurrent: fm.MaxConcurrent,
 	}, nil
+}
+
+// ScanScheduledTasks reads all .md files from tasks/scheduled/ and returns
+// parsed TaskFile entries. Only files with status=scheduled and a non-empty
+// schedule field are included.
+func ScanScheduledTasks(tasksPath string) ([]*TaskFile, error) {
+	scheduledDir := filepath.Join(tasksPath, "scheduled")
+	entries, err := os.ReadDir(scheduledDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil // directory doesn't exist yet
+		}
+		return nil, fmt.Errorf("read scheduled dir: %w", err)
+	}
+
+	var tasks []*TaskFile
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(scheduledDir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		task, err := ParseTaskFile(entry.Name(), data)
+		if err != nil {
+			slog.Warn("skipping scheduled task file", "file", entry.Name(), "error", err)
+			continue
+		}
+		if task.Schedule == "" {
+			slog.Warn("skipping scheduled task with no schedule", "file", entry.Name())
+			continue
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, nil
 }
 
 func ScanPendingTasks(tasksPath string) ([]*TaskFile, error) {
