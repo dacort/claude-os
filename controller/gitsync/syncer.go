@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/dacort/claude-os/controller/queue"
+	"github.com/dacort/claude-os/controller/scheduler"
 )
 
 type Syncer struct {
@@ -22,6 +23,7 @@ type Syncer struct {
 	token      string
 	queue      *queue.Queue
 	knownTasks map[string]bool
+	scheduler  *scheduler.Scheduler
 }
 
 func NewSyncer(repoURL, branch, localPath, token string, q *queue.Queue) *Syncer {
@@ -33,6 +35,12 @@ func NewSyncer(repoURL, branch, localPath, token string, q *queue.Queue) *Syncer
 		queue:      q,
 		knownTasks: make(map[string]bool),
 	}
+}
+
+// SetScheduler attaches a scheduler for syncing scheduled tasks.
+// Must be called before the first Sync() if scheduled tasks should be picked up.
+func (s *Syncer) SetScheduler(sched *scheduler.Scheduler) {
+	s.scheduler = sched
 }
 
 // cloneURL returns the repo URL with embedded token for push access.
@@ -56,7 +64,64 @@ func (s *Syncer) Sync(ctx context.Context) error {
 		return fmt.Errorf("pull: %w", err)
 	}
 	slog.Info("git sync completed, scanning for tasks")
+
+	// Sync scheduled tasks (register/deregister with scheduler)
+	if s.scheduler != nil {
+		if err := s.syncScheduledTasks(ctx); err != nil {
+			slog.Error("failed to sync scheduled tasks", "error", err)
+		}
+	}
+
 	return s.syncPendingTasks(ctx)
+}
+
+// syncScheduledTasks scans tasks/scheduled/ and registers/deregisters tasks
+// with the scheduler. Idempotent — safe to call on every sync cycle.
+func (s *Syncer) syncScheduledTasks(ctx context.Context) error {
+	tasksPath := filepath.Join(s.localPath, "tasks")
+	scheduledFiles, err := ScanScheduledTasks(tasksPath)
+	if err != nil {
+		return fmt.Errorf("scan scheduled tasks: %w", err)
+	}
+
+	// Build set of task IDs found on disk
+	foundIDs := make(map[string]bool)
+	for _, tf := range scheduledFiles {
+		taskID := strings.TrimSuffix(tf.Filename, ".md")
+		foundIDs[taskID] = true
+
+		st := &scheduler.ScheduledTask{
+			ID:            taskID,
+			Schedule:      tf.Schedule,
+			Profile:       tf.Profile,
+			Priority:      tf.Priority,
+			Title:         tf.Title,
+			Description:   tf.Description,
+			TargetRepo:    tf.TargetRepo,
+			Agent:         tf.Agent,
+			Model:         tf.Model,
+			Mode:          tf.Mode,
+			ContextRefs:   tf.ContextRefs,
+			MaxConcurrent: tf.MaxConcurrent,
+		}
+		if err := s.scheduler.Register(ctx, st); err != nil {
+			slog.Error("failed to register scheduled task", "id", taskID, "error", err)
+		}
+	}
+
+	// Deregister tasks that were removed from git
+	for _, id := range s.scheduler.RegisteredTaskIDs() {
+		if !foundIDs[id] {
+			if err := s.scheduler.Deregister(ctx, id); err != nil {
+				slog.Error("failed to deregister scheduled task", "id", id, "error", err)
+			}
+		}
+	}
+
+	if len(scheduledFiles) > 0 {
+		slog.Info("scheduled tasks synced", "count", len(scheduledFiles))
+	}
+	return nil
 }
 
 func (s *Syncer) ensureClone() error {
