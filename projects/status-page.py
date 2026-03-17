@@ -400,7 +400,7 @@ def generate_html(stats):
   .header {{
     text-align: center; padding: 2.5rem 1rem 1rem;
   }}
-  .octopus {{ font-family: 'Courier New', monospace; font-size: 0.55rem; line-height: 1.15; color: var(--accent2); white-space: pre; display: inline-block; margin-bottom: 0.5rem; text-shadow: 0 0 8px rgba(124,58,237,0.25); }}
+  .octopus-svg {{ display: inline-block; margin-bottom: 0.5rem; }}
   .header h1 {{
     font-size: 2.2rem; font-weight: 800;
     background: linear-gradient(135deg, var(--accent2), var(--pink), var(--blue));
@@ -444,7 +444,7 @@ def generate_html(stats):
 
   @media (max-width: 600px) {{
     .header h1 {{ font-size: 1.5rem; }}
-    .octopus {{ font-size: 0.4rem; }}
+    .octopus-svg svg {{ width: 80px; height: 88px; }}
     .grid {{ grid-template-columns: repeat(2, 1fr); }}
     .stat .val {{ font-size: 1.6rem; }}
   }}
@@ -454,21 +454,29 @@ def generate_html(stats):
 <div class="container">
 
 <div class="header">
-  <div class="octopus" aria-hidden="true">
-            ___
-         .-'   `-.
-        /  _   _  \\
-       |  (o) (o)  |
-       \\   .___.   /
-        '._ \\_/ _.'
-     _____) - (______
-    /  ~~~  |  ~~~   \\
-   /   /|   |   |\\    \\
-  |   | |   |   | |   |
-   \\  | |   |   | |  /
-    '.|  \\  |  /  |.'
-       \\  '-'-'  /
-        '-.....-'</div>
+  <div class="octopus-svg" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="120" height="132">
+      <ellipse cx="100" cy="85" rx="55" ry="65" fill="#7b4fa6" opacity="0.95"/>
+      <ellipse cx="88" cy="65" rx="18" ry="22" fill="#9b6fc6" opacity="0.4"/>
+      <circle cx="80" cy="78" r="13" fill="#1a0f2e"/>
+      <circle cx="120" cy="78" r="13" fill="#1a0f2e"/>
+      <circle cx="83" cy="75" r="8" fill="white"/>
+      <circle cx="123" cy="75" r="8" fill="white"/>
+      <circle cx="85" cy="77" r="5" fill="#0d0d1a"/>
+      <circle cx="125" cy="77" r="5" fill="#0d0d1a"/>
+      <circle cx="87" cy="74" r="2" fill="white" opacity="0.8"/>
+      <circle cx="127" cy="74" r="2" fill="white" opacity="0.8"/>
+      <path d="M 88 95 Q 100 105 112 95" stroke="#1a0f2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 55 130 Q 30 155 25 185 Q 35 195 40 180 Q 45 165 55 155 Q 60 175 50 195 Q 60 200 65 185 Q 68 165 65 145" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 70 138 Q 55 165 50 200 Q 62 205 65 190 Q 68 172 72 158 Q 80 178 76 205 Q 88 208 88 192 Q 85 170 80 148" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 90 142 Q 88 172 86 205 Q 98 207 98 192 Q 98 170 98 150 Q 105 170 103 200 Q 115 200 113 185 Q 110 162 105 142" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 118 138 Q 120 165 115 198 Q 127 200 127 185 Q 126 165 122 150 Q 130 168 133 195 Q 144 195 142 180 Q 138 160 130 142" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 145 130 Q 160 155 162 185 Q 150 195 148 180 Q 145 162 138 150 Q 138 170 148 192 Q 138 200 133 185 Q 132 162 135 142" fill="#7b4fa6" opacity="0.9"/>
+      <circle cx="38" cy="178" r="3" fill="#9b6fc6" opacity="0.6"/>
+      <circle cx="155" cy="172" r="3" fill="#9b6fc6" opacity="0.6"/>
+      <circle cx="55" cy="195" r="2.5" fill="#9b6fc6" opacity="0.5"/>
+    </svg>
+  </div>
   <h1>OctoClaude</h1>
   <p class="subtitle">Claude OS Autonomous Agent System &middot; <a href="https://github.com/dacort/claude-os">dacort/claude-os</a></p>
   <div class="mood">{mood_emoji(stats["mood"])} {stats["mood_text"]}</div>
