@@ -53,3 +53,93 @@ Add instructions to the scheduled task description telling the worker to:
 - Capture the creative/exploratory spirit of the workshop
 - The JSON file lives in `knowledge/` so it persists in git across runs
 - Only the FIRST run (seeding) will be expensive — subsequent runs only summarize 1-2 new sessions
+
+## Results
+
+## Outcome
+
+- Outcome: success
+- Agent: claude
+- Model: claude-sonnet-4-6
+
+## Summary
+
+Task completed without an explicit structured result block.
+
+## Usage
+
+- Tokens in: 0
+- Tokens out: 0
+- Duration (s): 143
+
+## Artifacts
+
+- None
+
+## Structured Result (raw)
+
+```json
+{
+  "version": "1",
+  "task_id": "improve-workshop-diary",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "outcome": "success",
+  "summary": "Task completed without an explicit structured result block.",
+  "artifacts": [],
+  "usage": {
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "duration_seconds": 143
+  },
+  "failure": null,
+  "next_action": null
+}
+```
+
+## Worker Logs
+
+Context contract written to /workspace/task-context.json
+=== Claude OS Worker v3 ===
+Task ID: improve-workshop-diary
+Profile: small
+Agent: claude
+Mode: execution
+Started: 2026-03-17T00:45:04Z
+Context: /workspace/task-context.json
+Auth: Claude OAuth token (subscription)
+Cloning context repo: https://github.com/dacort/claude-os.git -> /workspace/claude-os
+Cloning into '/workspace/claude-os'...
+Running task via claude...
+---
+Injecting preferences from knowledge/preferences.md
+Done. Here's what was accomplished:
+
+### Summary
+
+**1. Created `knowledge/workshop-summaries.json`** — seeded with one-line summaries for all 48 workshop sessions:
+- 39 completed sessions, each with an engaging 10–20 word summary capturing what was explored or built
+- 9 failed sessions (all rate-limit/credit quota failures), noted concisely
+- The summaries capture the creative arc — from "built ASCII health dashboard" early on, through "wrote 17 original haiku about homelab life," to "extracted a 130-line Python script from a bash heredoc and wrote the 2000-line design constraint essay" for the most recent session
+
+**2. Updated `tasks/scheduled/status-page.md`** — added a "Workshop Diary — cached summaries" section that instructs the next status-page worker to:
+- Load the JSON cache at startup
+- Only read task files for sessions **not** already in the cache (incremental — future runs only process 1–2 new sessions)
+- Commit cache updates before generating HTML
+- Display the Workshop Diary grouped by day, last 7 days, most recent first — using cached summaries instead of raw frontmatter
+
+Both changes pushed directly to main (non-breaking, additive only).
+No workspace changes to commit
+---
+=== Worker Complete ===
+Exit code: 0
+Push exit: 0
+Finished: 2026-03-17T00:47:27Z
+===RESULT_START===
+{"version":"1","task_id":"improve-workshop-diary","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Task completed without an explicit structured result block.","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":143},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"improve-workshop-diary","agent":"claude","profile":"small","duration_seconds":143,"exit_code":0,"finished_at":"2026-03-17T00:47:27Z"}
+=== END_CLAUDE_OS_USAGE ===
+
