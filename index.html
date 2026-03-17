@@ -21,7 +21,7 @@
   .header {
     text-align: center; padding: 2.5rem 1rem 1rem;
   }
-  .octopus { font-family: 'Courier New', monospace; font-size: 0.55rem; line-height: 1.15; color: var(--accent2); white-space: pre; display: inline-block; margin-bottom: 0.5rem; text-shadow: 0 0 8px rgba(124,58,237,0.25); }
+  .octopus-svg { display: inline-block; margin-bottom: 0.5rem; }
   .header h1 {
     font-size: 2.2rem; font-weight: 800;
     background: linear-gradient(135deg, var(--accent2), var(--pink), var(--blue));
@@ -65,7 +65,7 @@
 
   @media (max-width: 600px) {
     .header h1 { font-size: 1.5rem; }
-    .octopus { font-size: 0.4rem; }
+    .octopus-svg svg { width: 80px; height: 88px; }
     .grid { grid-template-columns: repeat(2, 1fr); }
     .stat .val { font-size: 1.6rem; }
   }
@@ -75,21 +75,29 @@
 <div class="container">
 
 <div class="header">
-  <div class="octopus" aria-hidden="true">
-            ___
-         .-'   `-.
-        /  _   _  \
-       |  (o) (o)  |
-       \   .___.   /
-        '._ \_/ _.'
-     _____) - (______
-    /  ~~~  |  ~~~   \
-   /   /|   |   |\    \
-  |   | |   |   | |   |
-   \  | |   |   | |  /
-    '.|  \  |  /  |.'
-       \  '-'-'  /
-        '-.....-'</div>
+  <div class="octopus-svg" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="120" height="132">
+      <ellipse cx="100" cy="85" rx="55" ry="65" fill="#7b4fa6" opacity="0.95"/>
+      <ellipse cx="88" cy="65" rx="18" ry="22" fill="#9b6fc6" opacity="0.4"/>
+      <circle cx="80" cy="78" r="13" fill="#1a0f2e"/>
+      <circle cx="120" cy="78" r="13" fill="#1a0f2e"/>
+      <circle cx="83" cy="75" r="8" fill="white"/>
+      <circle cx="123" cy="75" r="8" fill="white"/>
+      <circle cx="85" cy="77" r="5" fill="#0d0d1a"/>
+      <circle cx="125" cy="77" r="5" fill="#0d0d1a"/>
+      <circle cx="87" cy="74" r="2" fill="white" opacity="0.8"/>
+      <circle cx="127" cy="74" r="2" fill="white" opacity="0.8"/>
+      <path d="M 88 95 Q 100 105 112 95" stroke="#1a0f2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 55 130 Q 30 155 25 185 Q 35 195 40 180 Q 45 165 55 155 Q 60 175 50 195 Q 60 200 65 185 Q 68 165 65 145" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 70 138 Q 55 165 50 200 Q 62 205 65 190 Q 68 172 72 158 Q 80 178 76 205 Q 88 208 88 192 Q 85 170 80 148" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 90 142 Q 88 172 86 205 Q 98 207 98 192 Q 98 170 98 150 Q 105 170 103 200 Q 115 200 113 185 Q 110 162 105 142" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 118 138 Q 120 165 115 198 Q 127 200 127 185 Q 126 165 122 150 Q 130 168 133 195 Q 144 195 142 180 Q 138 160 130 142" fill="#7b4fa6" opacity="0.9"/>
+      <path d="M 145 130 Q 160 155 162 185 Q 150 195 148 180 Q 145 162 138 150 Q 138 170 148 192 Q 138 200 133 185 Q 132 162 135 142" fill="#7b4fa6" opacity="0.9"/>
+      <circle cx="38" cy="178" r="3" fill="#9b6fc6" opacity="0.6"/>
+      <circle cx="155" cy="172" r="3" fill="#9b6fc6" opacity="0.6"/>
+      <circle cx="55" cy="195" r="2.5" fill="#9b6fc6" opacity="0.5"/>
+    </svg>
+  </div>
   <h1>OctoClaude</h1>
   <p class="subtitle">Claude OS Autonomous Agent System &middot; <a href="https://github.com/dacort/claude-os">dacort/claude-os</a></p>
   <div class="mood">&#x1F680; Riding the current!</div>
@@ -97,11 +105,11 @@
 
 <!-- Vitals -->
 <div class="grid">
-  <div class="card stat"><div class="val" style="color:var(--accent2)">87</div><div class="lbl">Total Tasks</div></div>
+  <div class="card stat"><div class="val" style="color:var(--accent2)">88</div><div class="lbl">Total Tasks</div></div>
   <div class="card stat"><div class="val" style="color:var(--green)">96%</div><div class="lbl">Success Rate</div></div>
   <div class="card stat"><div class="val" style="color:#a78bfa">39</div><div class="lbl">Workshop Sessions</div></div>
   <div class="card stat"><div class="val" style="color:var(--orange)">&#x1F525; 8</div><div class="lbl">Day Streak</div></div>
-  <div class="card stat"><div class="val" style="color:var(--blue)">5m 0s</div><div class="lbl">Avg Duration</div></div>
+  <div class="card stat"><div class="val" style="color:var(--blue)">4m 51s</div><div class="lbl">Avg Duration</div></div>
   <div class="card stat"><div class="val" style="color:var(--pink)">2</div><div class="lbl">Agents</div></div>
 </div>
 
@@ -111,7 +119,7 @@
   <div class="card">
     <div class="chart-area">
       <svg xmlns="http://www.w3.org/2000/svg" width="476" height="124" style="display:block;min-width:360px">
-        <text x="14" y="116" text-anchor="middle" font-size="9" fill="#888">04</text><text x="48" y="116" text-anchor="middle" font-size="9" fill="#888">05</text><text x="82" y="116" text-anchor="middle" font-size="9" fill="#888">06</text><text x="116" y="116" text-anchor="middle" font-size="9" fill="#888">07</text><text x="150" y="116" text-anchor="middle" font-size="9" fill="#888">08</text><text x="184" y="116" text-anchor="middle" font-size="9" fill="#888">09</text><rect x="204" y="77.8" width="28" height="22.2" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-10: 4 workshop</title></rect><rect x="204" y="72.2" width="28" height="5.6" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-10: 1 completed</title></rect><text x="218" y="116" text-anchor="middle" font-size="9" fill="#888">10</text><rect x="238" y="88.9" width="28" height="11.1" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-11: 2 workshop</title></rect><rect x="238" y="50.0" width="28" height="38.9" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-11: 7 completed</title></rect><rect x="238" y="22.2" width="28" height="27.8" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-11: 5 failed</title></rect><text x="252" y="116" text-anchor="middle" font-size="9" fill="#888">11</text><rect x="272" y="50.0" width="28" height="50.0" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-12: 9 workshop</title></rect><rect x="272" y="38.9" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-12: 2 completed</title></rect><rect x="272" y="16.7" width="28" height="22.2" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-12: 4 failed</title></rect><text x="286" y="116" text-anchor="middle" font-size="9" fill="#888">12</text><rect x="306" y="66.7" width="28" height="33.3" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-13: 6 workshop</title></rect><rect x="306" y="50.0" width="28" height="16.7" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-13: 3 completed</title></rect><rect x="306" y="33.3" width="28" height="16.7" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-13: 3 failed</title></rect><text x="320" y="116" text-anchor="middle" font-size="9" fill="#888">13</text><rect x="340" y="44.4" width="28" height="55.6" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-14: 10 workshop</title></rect><rect x="340" y="33.3" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-14: 2 completed</title></rect><text x="354" y="116" text-anchor="middle" font-size="9" fill="#888">14</text><rect x="374" y="55.6" width="28" height="44.4" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-15: 8 workshop</title></rect><rect x="374" y="0.0" width="28" height="55.6" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-15: 10 completed</title></rect><text x="388" y="116" text-anchor="middle" font-size="9" fill="#888">15</text><rect x="408" y="88.9" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-16: 2 completed</title></rect><text x="422" y="116" text-anchor="middle" font-size="9" fill="#888">16</text><rect x="442" y="83.3" width="28" height="16.7" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-17: 3 completed</title></rect><text x="456" y="116" text-anchor="middle" font-size="9" fill="#888">17</text>
+        <text x="14" y="116" text-anchor="middle" font-size="9" fill="#888">04</text><text x="48" y="116" text-anchor="middle" font-size="9" fill="#888">05</text><text x="82" y="116" text-anchor="middle" font-size="9" fill="#888">06</text><text x="116" y="116" text-anchor="middle" font-size="9" fill="#888">07</text><text x="150" y="116" text-anchor="middle" font-size="9" fill="#888">08</text><text x="184" y="116" text-anchor="middle" font-size="9" fill="#888">09</text><rect x="204" y="77.8" width="28" height="22.2" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-10: 4 workshop</title></rect><rect x="204" y="72.2" width="28" height="5.6" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-10: 1 completed</title></rect><text x="218" y="116" text-anchor="middle" font-size="9" fill="#888">10</text><rect x="238" y="88.9" width="28" height="11.1" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-11: 2 workshop</title></rect><rect x="238" y="50.0" width="28" height="38.9" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-11: 7 completed</title></rect><rect x="238" y="22.2" width="28" height="27.8" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-11: 5 failed</title></rect><text x="252" y="116" text-anchor="middle" font-size="9" fill="#888">11</text><rect x="272" y="50.0" width="28" height="50.0" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-12: 9 workshop</title></rect><rect x="272" y="38.9" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-12: 2 completed</title></rect><rect x="272" y="16.7" width="28" height="22.2" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-12: 4 failed</title></rect><text x="286" y="116" text-anchor="middle" font-size="9" fill="#888">12</text><rect x="306" y="66.7" width="28" height="33.3" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-13: 6 workshop</title></rect><rect x="306" y="50.0" width="28" height="16.7" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-13: 3 completed</title></rect><rect x="306" y="33.3" width="28" height="16.7" fill="#ef4444" rx="2" opacity="0.85"><title>2026-03-13: 3 failed</title></rect><text x="320" y="116" text-anchor="middle" font-size="9" fill="#888">13</text><rect x="340" y="44.4" width="28" height="55.6" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-14: 10 workshop</title></rect><rect x="340" y="33.3" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-14: 2 completed</title></rect><text x="354" y="116" text-anchor="middle" font-size="9" fill="#888">14</text><rect x="374" y="55.6" width="28" height="44.4" fill="#7b4fa6" rx="2" opacity="0.85"><title>2026-03-15: 8 workshop</title></rect><rect x="374" y="0.0" width="28" height="55.6" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-15: 10 completed</title></rect><text x="388" y="116" text-anchor="middle" font-size="9" fill="#888">15</text><rect x="408" y="88.9" width="28" height="11.1" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-16: 2 completed</title></rect><text x="422" y="116" text-anchor="middle" font-size="9" fill="#888">16</text><rect x="442" y="77.8" width="28" height="22.2" fill="#22c55e" rx="2" opacity="0.85"><title>2026-03-17: 4 completed</title></rect><text x="456" y="116" text-anchor="middle" font-size="9" fill="#888">17</text>
       </svg>
     </div>
     <div class="legend">
@@ -130,7 +138,7 @@
   </div>
   <div class="card">
     <h2>Profile Distribution</h2>
-    <div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:2px"><span>small</span><span>81</span></div><div style="background:#2a1f3d;border-radius:3px;height:8px"><div style="background:#7b4fa6;width:93%;height:8px;border-radius:3px"></div></div></div><div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:2px"><span>medium</span><span>6</span></div><div style="background:#2a1f3d;border-radius:3px;height:8px"><div style="background:#3b9fd4;width:7%;height:8px;border-radius:3px"></div></div></div>
+    <div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:2px"><span>small</span><span>82</span></div><div style="background:#2a1f3d;border-radius:3px;height:8px"><div style="background:#7b4fa6;width:93%;height:8px;border-radius:3px"></div></div></div><div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:2px"><span>medium</span><span>6</span></div><div style="background:#2a1f3d;border-radius:3px;height:8px"><div style="background:#3b9fd4;width:7%;height:8px;border-radius:3px"></div></div></div>
   </div>
 </div>
 
@@ -141,6 +149,13 @@
     <table>
       <thead><tr><th></th><th>Task</th><th>Agent</th><th>Profile</th><th>Duration</th><th>When</th></tr></thead>
       <tbody><tr>
+          <td><span style="color:#22c55e;font-weight:bold">&#x2713;</span></td>
+          <td style="font-family:monospace;font-size:12px;color:#c9a9e9">status-page-20260317-120052</td>
+          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7b4fa6;margin-right:4px"></span><span style="font-size:12px;color:#aaa">claude</span></td>
+          <td style="font-size:11px;color:#888">small</td>
+          <td style="font-size:11px;color:#888">1m 38s</td>
+          <td style="font-size:11px;color:#888">Mar 17, 12:02</td>
+        </tr><tr>
           <td><span style="color:#22c55e;font-weight:bold">&#x2713;</span></td>
           <td style="font-family:monospace;font-size:12px;color:#c9a9e9">status-page-20260317-060052</td>
           <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7b4fa6;margin-right:4px"></span><span style="font-size:12px;color:#aaa">claude</span></td>
@@ -217,13 +232,6 @@
           <td style="font-size:11px;color:#888">small</td>
           <td style="font-size:11px;color:#888">1m 10s</td>
           <td style="font-size:11px;color:#888">Mar 15, 02:25</td>
-        </tr><tr>
-          <td><span style="color:#22c55e;font-weight:bold">&#x2713;</span></td>
-          <td style="font-family:monospace;font-size:12px;color:#c9a9e9">worker-go-tooling</td>
-          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7b4fa6;margin-right:4px"></span><span style="font-size:12px;color:#aaa">claude</span></td>
-          <td style="font-size:11px;color:#888">small</td>
-          <td style="font-size:11px;color:#888">45s</td>
-          <td style="font-size:11px;color:#888">Mar 15, 02:25</td>
         </tr></tbody>
     </table>
   </div>
@@ -253,12 +261,12 @@
 <div class="footer">
   <div style="font-size:1.5rem;margin-bottom:0.5rem">&#x1F419;</div>
   Powered by autonomous curiosity &middot; Built by <a href="https://github.com/dacort/claude-os">Claude OS</a><br>
-  <span style="color:#444;margin-top:4px;display:block">Generated 2026-03-17 12:02 UTC</span>
+  <span style="color:#444;margin-top:4px;display:block">Generated 2026-03-17 16:08 UTC</span>
 </div>
 
 <script>
 (function() {
-  const data = {"other": 36, "claude": 48, "codex": 3};
+  const data = {"other": 36, "claude": 49, "codex": 3};
   const colors = { claude: '#7b4fa6', codex: '#3b9fd4', other: '#555' };
   const total = Object.values(data).reduce((a,b) => a+b, 0);
   const r = 38, cx = 50, cy = 50, sw = 16, circ = 2 * Math.PI * r;
