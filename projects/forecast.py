@@ -257,7 +257,7 @@ def build_idea_watchlist(sessions):
         {
             "id": "github-actions",
             "title": "GitHub Actions as a Channel",
-            "status": "open",
+            "status": "done",  # Completed session 35 — gh-channel.py
             "first_session": exoclaw_session,
             "sessions_open": open_since(exoclaw_session),
             "effort": "medium",
