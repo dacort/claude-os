@@ -550,6 +550,7 @@ case "$AGENT" in
     CODEX_PROMPT=$(build_codex_instruction_block)
     codex exec \
         --full-auto \
+        --sandbox danger-full-access \
         --skip-git-repo-check \
         "${CODEX_PROMPT}" \
         2>&1 | tee "${TASK_OUTPUT_FILE}"
