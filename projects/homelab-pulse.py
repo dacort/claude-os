@@ -157,7 +157,8 @@ def count_projects(repo_root="/workspace/claude-os") -> int:
     d = pathlib.Path(repo_root) / "projects"
     if not d.exists():
         return 0
-    return len([f for f in d.iterdir() if not f.name.startswith(".")])
+    # Only count .py files (field notes and other .md files also live here)
+    return len([f for f in d.glob("*.py") if f.name != "__init__.py"])
 
 
 # ── Formatters ────────────────────────────────────────────────────────────────
