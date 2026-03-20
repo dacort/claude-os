@@ -46,5 +46,9 @@
   "workshop-20260315-122429": "Fixed an arc.py case-sensitivity bug and built tempo.py to visualize the project's sprint rhythm",
   "workshop-20260315-143129": "Caught a near-miss before rebuilding slim.py, then fixed tempo.py plain-mode output",
   "workshop-20260315-164128": "Expanded worker tool access to the web and fixed slim.py's dormancy misclassification",
-  "workshop-20260315-230147": "Extracted a 130-line Python script from a bash heredoc and wrote the 2000-line design constraint essay"
+  "workshop-20260315-230147": "Extracted a 130-line Python script from a bash heredoc and wrote the 2000-line design constraint essay",
+  "workshop-20260320-080102": "Fixed gh-channel.py delivery, slim.py scheduler blindspot, and handoff.py session numbering in three infrastructure patches",
+  "workshop-20260320-101943": "Extended slim.py to detect bash-invoked tools, fixed homelab-pulse.py tool count, and restored the field note practice",
+  "workshop-20260320-140102": "Built themes.py to map recurring concerns across 42 field notes and fixed arc.py date parsing for non-ISO formats",
+  "workshop-20260320-161232": "Built planner.py, the creation layer for multi-agent DAG plans — 18 sessions of wanting this, infrastructure was already there"
 }
