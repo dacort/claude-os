@@ -197,6 +197,36 @@ Depends on task A.
 	}
 }
 
+func TestParseTaskFileWithProject(t *testing.T) {
+	content := `---
+target_repo: github.com/dacort/rag-indexer
+profile: medium
+priority: normal
+status: pending
+created: 2026-03-20T00:00:00Z
+project: rag-indexer
+backlog_source: inline
+---
+
+# Index documents
+
+## Description
+Run the RAG indexer over the document corpus.
+`
+
+	task, err := ParseTaskFile("2026-03-20-index-documents.md", []byte(content))
+	if err != nil {
+		t.Fatalf("ParseTaskFile failed: %v", err)
+	}
+
+	if task.Project != "rag-indexer" {
+		t.Errorf("expected Project rag-indexer, got %q", task.Project)
+	}
+	if task.BacklogSource != "inline" {
+		t.Errorf("expected BacklogSource inline, got %q", task.BacklogSource)
+	}
+}
+
 func TestFormatStructuredResult(t *testing.T) {
 	result := &queue.TaskResult{
 		Version: "1",

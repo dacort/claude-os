@@ -45,6 +45,7 @@ type Task struct {
 	Agent           string    `json:"agent,omitempty"`
 	Model           string    `json:"model,omitempty"`
 	Mode            string    `json:"mode,omitempty"`
+	Project         string    `json:"project,omitempty"`
 	ContextRefs     []string  `json:"context_refs,omitempty"`
 	Priority        Priority  `json:"priority"`
 	Status          Status    `json:"status"`

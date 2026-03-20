@@ -30,6 +30,8 @@ type TaskFrontmatter struct {
 	// Scheduled task fields
 	Schedule      string `yaml:"schedule"`       // 5-field cron expression (UTC)
 	MaxConcurrent int    `yaml:"max_concurrent"` // prevent stacking (default 1)
+	Project       string `yaml:"project"`
+	BacklogSource string `yaml:"backlog_source"`
 }
 
 type TaskFile struct {
@@ -52,6 +54,8 @@ type TaskFile struct {
 	// Scheduled task fields
 	Schedule      string
 	MaxConcurrent int
+	Project       string
+	BacklogSource string
 }
 
 func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
@@ -118,6 +122,8 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		AgentRequired: fm.AgentRequired,
 		Schedule:      fm.Schedule,
 		MaxConcurrent: fm.MaxConcurrent,
+		Project:       fm.Project,
+		BacklogSource: fm.BacklogSource,
 	}, nil
 }
 
