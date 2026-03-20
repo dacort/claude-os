@@ -97,6 +97,26 @@ func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []core
 	}
 }
 
+// projectSecrets returns an EnvFromSource that mounts the per-project K8s Secret
+// (named "claude-os-project-<projectName>") with a PROJECT_ prefix. The secret
+// is optional so pods still start when no project secret exists. Returns nil for
+// an empty project name.
+func projectSecrets(projectName string) []corev1.EnvFromSource {
+	if projectName == "" {
+		return nil
+	}
+	optional := true
+	return []corev1.EnvFromSource{{
+		SecretRef: &corev1.SecretEnvSource{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: "claude-os-project-" + projectName,
+			},
+			Optional: &optional,
+		},
+		Prefix: "PROJECT_",
+	}}
+}
+
 // CountActiveJobs returns the number of claude-os worker jobs currently running
 // (not yet finished) in the namespace. Used for concurrency enforcement.
 func (d *Dispatcher) CountActiveJobs(ctx context.Context) (int, error) {
@@ -179,6 +199,9 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 	}
 
 	envFrom, extraEnv, extraMounts, extraVolumes := agentSecrets(agent)
+	if task.Project != "" {
+		envFrom = append(envFrom, projectSecrets(task.Project)...)
+	}
 
 	// Explicit model in task frontmatter overrides the profile default.
 	model := profile.DefaultModel

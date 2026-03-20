@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/dacort/claude-os/controller/queue"
@@ -296,6 +297,85 @@ func TestContextRefsEnvVar(t *testing.T) {
 		want := "knowledge/plans/my-plan/api-schema.md:knowledge/preferences.md"
 		if envMap["CONTEXT_REFS"] != want {
 			t.Errorf("CONTEXT_REFS = %q, want %q", envMap["CONTEXT_REFS"], want)
+		}
+	})
+}
+
+func TestProjectSecrets_WithProject(t *testing.T) {
+	result := projectSecrets("my-app")
+	if len(result) != 1 {
+		t.Fatalf("expected 1 EnvFromSource, got %d", len(result))
+	}
+	ef := result[0]
+	if ef.SecretRef == nil {
+		t.Fatal("expected SecretRef to be set")
+	}
+	wantName := "claude-os-project-my-app"
+	if ef.SecretRef.Name != wantName {
+		t.Errorf("SecretRef.Name = %q, want %q", ef.SecretRef.Name, wantName)
+	}
+	if ef.Prefix != "PROJECT_" {
+		t.Errorf("Prefix = %q, want %q", ef.Prefix, "PROJECT_")
+	}
+	if ef.SecretRef.Optional == nil || !*ef.SecretRef.Optional {
+		t.Error("expected Optional=true")
+	}
+}
+
+func TestProjectSecrets_WithoutProject(t *testing.T) {
+	result := projectSecrets("")
+	if result != nil {
+		t.Errorf("expected nil for empty project, got %v", result)
+	}
+}
+
+func TestCreateJobWithProject(t *testing.T) {
+	writeTestProfiles(t)
+	client := fake.NewSimpleClientset()
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
+
+	t.Run("task with project gets project secret mounted", func(t *testing.T) {
+		task := &queue.Task{
+			ID:      "proj-test",
+			Profile: "small",
+			Project: "my-app",
+		}
+		job, err := d.CreateJob(context.Background(), task)
+		if err != nil {
+			t.Fatalf("CreateJob failed: %v", err)
+		}
+		container := job.Spec.Template.Spec.Containers[0]
+		found := false
+		for _, ef := range container.EnvFrom {
+			if ef.SecretRef != nil && ef.SecretRef.Name == "claude-os-project-my-app" {
+				if ef.Prefix != "PROJECT_" {
+					t.Errorf("project secret prefix = %q, want PROJECT_", ef.Prefix)
+				}
+				if ef.SecretRef.Optional == nil || !*ef.SecretRef.Optional {
+					t.Error("project secret should be optional")
+				}
+				found = true
+			}
+		}
+		if !found {
+			t.Error("expected claude-os-project-my-app secret in EnvFrom")
+		}
+	})
+
+	t.Run("task without project has no project secret", func(t *testing.T) {
+		task := &queue.Task{
+			ID:      "no-proj-test",
+			Profile: "small",
+		}
+		job, err := d.CreateJob(context.Background(), task)
+		if err != nil {
+			t.Fatalf("CreateJob failed: %v", err)
+		}
+		container := job.Spec.Template.Spec.Containers[0]
+		for _, ef := range container.EnvFrom {
+			if ef.SecretRef != nil && strings.HasPrefix(ef.SecretRef.Name, "claude-os-project-") {
+				t.Errorf("unexpected project secret %q in EnvFrom", ef.SecretRef.Name)
+			}
 		}
 	})
 }
