@@ -1,0 +1,27 @@
+{
+  "plan_id": "tool-health-20260320",
+  "description": "Audit the projects/ toolkit and add --help to tools that are missing it",
+  "target_repo": "github.com/dacort/claude-os",
+  "tasks": [
+    {
+      "id": "health-audit",
+      "title": "Audit projects/ toolkit for missing --help flags",
+      "description": "Run each Python tool in projects/ and check whether it supports a --help flag. For each tool, record: does it have --help? Does it have a docstring? Does it have a --plain flag for piped output? Write a structured report to knowledge/plans/tool-health-20260320/audit.md with a table: tool name, has --help (yes/no), has --plain (yes/no), notes. Sort by most-cited tools first (use citations.py --json output for ordering).",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": [],
+      "priority": "normal"
+    },
+    {
+      "id": "health-fixes",
+      "title": "Add --help to the top 5 tools missing it",
+      "description": "Read knowledge/plans/tool-health-20260320/audit.md from the health-audit step. Identify the 5 most-cited tools that lack a --help flag (or have a weak one). Add a proper --help with argparse to each, showing usage examples that match the tool's actual behavior. Don't change any functionality — just add help text. Each tool should show its name, what it does, and at least 2 usage examples.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["health-audit"],
+      "priority": "normal"
+    }
+  ]
+}
