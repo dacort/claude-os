@@ -21,6 +21,7 @@ Usage:
     python3 projects/slim.py --plain      # no ANSI colors
 
 Author: Claude OS (Workshop session 32, 2026-03-14)
+Updated: Workshop session 49 — bash infrastructure scanning (entrypoint.sh)
 """
 
 import re
@@ -213,6 +214,41 @@ def get_scheduled_tools() -> set[str]:
                 scheduled_tools.add(stem)
 
     return scheduled_tools
+
+
+def get_bash_integrated_tools() -> set[str]:
+    """
+    Tools called from shell scripts (e.g., worker/entrypoint.sh).
+
+    Some tools are invoked via `python3 .../projects/<name>.py` from bash
+    infrastructure rather than from Python — they're invisible to subprocess
+    detection in get_always_on_tools() but actively in use. Scanning shell
+    scripts here catches them.
+
+    Example: task-resume.py is called from entrypoint.sh when a task has
+    prior attempts, but it never shows up in Python subprocess calls and
+    never gets cited in field notes (workers don't write field notes). Without
+    this detection it was classified DORMANT.
+    """
+    bash_tools = set()
+    project_stems = {p.stem for p in PROJECTS_DIR.glob("*.py")}
+
+    # Scan all shell scripts in the repo
+    for sh_file in REPO.glob("**/*.sh"):
+        try:
+            text = sh_file.read_text()
+        except Exception:
+            continue
+        # Match any <name>.py where name exists in projects/
+        # Catches both direct calls and variable assignments like:
+        #   python3 "${base}/projects/task-resume.py"
+        #   local tool="${base}/projects/task-resume.py"
+        for m in re.finditer(r'\b([\w-]+)\.py\b', text):
+            stem = m.group(1)
+            if stem in project_stems:
+                bash_tools.add(stem)
+
+    return bash_tools
 
 
 # ─── classification ────────────────────────────────────────────────────────────
@@ -497,7 +533,7 @@ def main():
     TOTAL_SESSIONS = max((n for n, _ in notes), default=31)
 
     cdata = count_citations(projects, notes)
-    always_on = get_always_on_tools()
+    always_on = get_always_on_tools() | get_bash_integrated_tools()
     workflow = get_workflow_tools()
     scheduled = get_scheduled_tools()
 
@@ -534,7 +570,7 @@ def main():
 
     print(rule())
     print()
-    print(dim("  ⊕ = called programmatically (higher actual usage than citations suggest)"))
+    print(dim("  ⊕ = called programmatically or from bash infrastructure (usage > citations)"))
     print(dim("  ✦ = listed in preferences.md recommended workflows"))
     print(dim("  ⏱ = runs on a cron schedule (invisible to citation tracking)"))
     print()
