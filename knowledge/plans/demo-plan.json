@@ -1,0 +1,57 @@
+{
+  "plan_id": "cos-cli-demo-20260320",
+  "description": "Build a minimal cos CLI — demo multi-agent plan",
+  "target_repo": "github.com/dacort/claude-os",
+  "tasks": [
+    {
+      "id": "cos-ux-design",
+      "title": "Design cos CLI UX and slash commands",
+      "description": "Define the terminal UX, session model, and the slash command set for the cos chatroom interface. Output a structured UX decisions document to knowledge/plans/cos-cli-demo-20260320/ux-design.md.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-opus-4-6",
+      "depends_on": [],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-protocol",
+      "title": "Define HTTP protocol for controller /chat endpoint",
+      "description": "Design the request/response shapes for POST /chat and GET /chat/history. Use the UX decisions from the design step. Output schema to knowledge/plans/cos-cli-demo-20260320/protocol.md.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["cos-ux-design"],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-controller-api",
+      "title": "Add /chat endpoints to the controller",
+      "description": "Implement POST /chat and GET /chat/history in the Go controller. Use the protocol spec from cos-protocol.",
+      "profile": "medium",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["cos-protocol"],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-cli-binary",
+      "title": "Implement cos CLI Go binary",
+      "description": "Build cmd/cos/ — the terminal chatroom binary. Readline loop, slash commands, model routing. Uses the protocol spec from cos-protocol.",
+      "profile": "medium",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["cos-protocol"],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-integration",
+      "title": "Wire cos CLI binary to controller and test",
+      "description": "Connect the CLI binary to the controller API. Write integration tests. Depends on both the controller API and the CLI binary.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-haiku-4-5",
+      "depends_on": ["cos-controller-api", "cos-cli-binary"],
+      "priority": "normal"
+    }
+  ]
+}

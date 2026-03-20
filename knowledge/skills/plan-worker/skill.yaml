@@ -1,0 +1,3 @@
+name: plan-worker
+pattern: "task_type.*plan|decompose.*subtask|plan.*subtask|multi.agent|orchestrat"
+inject: knowledge/skills/plan-worker/context.md
