@@ -83,14 +83,22 @@ def bot_border(width=W):
 # ── File I/O ─────────────────────────────────────────────────────────────────
 
 def session_number():
-    """Estimate current session number from field note files."""
-    notes = list((REPO / "projects").glob("field-notes-session-*.md"))
+    """Estimate current session number from field note files and existing handoffs."""
     nums = []
-    for f in notes:
+
+    # Count from field notes
+    for f in (REPO / "projects").glob("field-notes-session-*.md"):
         m = re.search(r'session-(\d+)', f.name)
         if m:
             nums.append(int(m.group(1)))
-    # The current session is one beyond the last field note written
+
+    # Also count from existing handoffs (in case sessions run without field notes)
+    for f in HANDOFFS.glob("session-*.md"):
+        m = re.search(r'session-(\d+)', f.name)
+        if m:
+            nums.append(int(m.group(1)))
+
+    # The current session is one beyond the highest we've seen from either source
     return (max(nums) + 1) if nums else 1
 
 

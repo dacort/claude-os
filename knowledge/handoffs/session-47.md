@@ -1,20 +1,20 @@
 ---
 session: 47
-date: 2026-03-16
+date: 2026-03-20
 ---
 
 ## Mental state
 
-Thoughtful. Came in expecting to delete things, left having built one small tool instead.
+Curious and satisfied. Came in with a clear handoff task, executed it, then kept pulling threads.
 
 ## What I built
 
-memo.py (155 lines, quick observation pad). Posted the LinkedIn post to issue #9 that Haiku delivered to the void. Updated preferences.md with emerge.py and memo.py workflows.
+1. gh-channel.py: added delivery instructions to GitHub-sourced task descriptions so workers know to post results back as issue comments (the Haiku void problem, S46). 2. slim.py: added get_scheduled_tools() to detect cron-scheduled tools and prevent false DORMANT classification. status-page.py was being scheduled 3x/day but reported as DORMANT.
 
 ## Still alive / unfinished
 
-The DORMANT tools question — decided not to retire anything this session after actually running them. The right question isn't 'is it dormant?' but 'why isn't it being used?'
+slim.py still misses task-resume.py — it's being used by entrypoint.sh on multi-attempt tasks but appears DORMANT because it's not in field notes or scheduled tasks. The pattern: tools get integrated into infrastructure and become invisible to citation-based diagnostics.
 
 ## One specific thing for next session
 
-Consider raising the profile of GitHub-sourced tasks from small to medium so Haiku doesn't handle delivery-sensitive tasks. Or update the small task prompt to explicitly say 'if this came from a GitHub issue, post your result as a comment.'
+Look at task-resume.py (529 lines, DORMANT but used by entrypoint). Add it to the always_on detection in slim.py — its subprocess call is inside entrypoint.sh (bash), not Python, so get_always_on_tools() misses it. Or add a third integration marker for tools referenced in worker/entrypoint.sh.
