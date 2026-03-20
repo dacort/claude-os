@@ -187,31 +187,63 @@ def get_workflow_tools() -> set[str]:
     return workflow_tools
 
 
+def get_scheduled_tools() -> set[str]:
+    """
+    Tools referenced in tasks/scheduled/ task files.
+
+    The scheduler runs these on a cron schedule — they have real execution
+    frequency that field notes never capture (a scheduled worker doesn't
+    write field notes). Detecting tools here prevents false DORMANT signals
+    for anything running on autopilot.
+    """
+    scheduled_tools = set()
+    scheduled_dir = REPO / "tasks" / "scheduled"
+    if not scheduled_dir.exists():
+        return scheduled_tools
+
+    for task_file in scheduled_dir.glob("*.md"):
+        try:
+            text = task_file.read_text()
+        except Exception:
+            continue
+        # Find `projects/<name>.py` references in the task description
+        for m in re.finditer(r'projects/([\w-]+)\.py', text):
+            stem = m.group(1)
+            if (PROJECTS_DIR / f"{stem}.py").exists():
+                scheduled_tools.add(stem)
+
+    return scheduled_tools
+
+
 # ─── classification ────────────────────────────────────────────────────────────
 
 TOTAL_SESSIONS = None  # set dynamically
 
 
 def classify(proj: str, cdata: dict, line_count: int, always_on: set,
-             workflow: set) -> dict:
+             workflow: set, scheduled: set | None = None) -> dict:
     """
     Assign a status to a tool based on citation frequency and recency.
     Returns a dict with: status, score, note
 
     always_on = called programmatically by other tools
     workflow = listed as a recommended command in preferences.md
-    Either marker protects from DORMANT classification.
+    scheduled = referenced in tasks/scheduled/ (runs on autopilot)
+    Any marker protects from DORMANT classification.
     """
     count = cdata.get("count", 0)
     last = cdata.get("last") or 0
     first = cdata.get("first") or 0
     total = TOTAL_SESSIONS or 31
+    if scheduled is None:
+        scheduled = set()
 
     sessions_since_last = total - last if last else total
     age = total - first + 1 if first else 0
     is_always_on = proj in always_on
     is_workflow = proj in workflow
-    is_protected = is_always_on or is_workflow
+    is_scheduled = proj in scheduled
+    is_protected = is_always_on or is_workflow or is_scheduled
 
     # classify — recency gates apply first before session-count thresholds
     if sessions_since_last > 12 and not is_protected:
@@ -229,6 +261,10 @@ def classify(proj: str, cdata: dict, line_count: int, always_on: set,
     elif is_workflow:
         # explicitly in recommended workflows = at minimum ACTIVE
         status = "ACTIVE"
+    elif is_scheduled:
+        # runs on a cron schedule — invisible to citation tracking,
+        # but definitely not dormant. OCCASIONAL is the floor.
+        status = "OCCASIONAL"
     elif count >= 5 or (count >= 3 and sessions_since_last <= 4):
         status = "ACTIVE"
     elif count >= 3 and sessions_since_last <= 8:
@@ -253,6 +289,7 @@ def classify(proj: str, cdata: dict, line_count: int, always_on: set,
         "sessions_since_last": sessions_since_last,
         "always_on": is_always_on,
         "workflow": is_workflow,
+        "scheduled": is_scheduled,
     }
 
 
@@ -314,9 +351,12 @@ def fmt_sessions(count: int, last: int | None, total: int) -> str:
 
 
 def print_group(label: str, tools: list, cdata: dict, line_counts: dict,
-                always_on: set, workflow: set, total: int, plain: bool = False):
+                always_on: set, workflow: set, total: int, plain: bool = False,
+                scheduled: set | None = None):
     if not tools:
         return
+    if scheduled is None:
+        scheduled = set()
 
     color = STATUS_COLORS.get(label, dim)
     note = STATUS_NOTES.get(label, "")
@@ -332,6 +372,7 @@ def print_group(label: str, tools: list, cdata: dict, line_counts: dict,
         last = cd.get("last")
         ao = proj in always_on
         wf = proj in workflow
+        sc = proj in scheduled
 
         lines_str = fmt_lines(lc)
         sessions_str = fmt_sessions(count, last, total)
@@ -339,6 +380,8 @@ def print_group(label: str, tools: list, cdata: dict, line_counts: dict,
             marker = cyan(" ⊕")
         elif wf:
             marker = green(" ✦")
+        elif sc:
+            marker = magenta(" ⏱")
         else:
             marker = "  "
 
@@ -456,12 +499,13 @@ def main():
     cdata = count_citations(projects, notes)
     always_on = get_always_on_tools()
     workflow = get_workflow_tools()
+    scheduled = get_scheduled_tools()
 
     # classify each tool
     classified = {}
     for proj in projects:
         classified[proj] = classify(proj, cdata.get(proj, {}),
-                                    line_counts.get(proj, 0), always_on, workflow)
+                                    line_counts.get(proj, 0), always_on, workflow, scheduled)
 
     # group by status
     groups = defaultdict(list)
@@ -480,11 +524,11 @@ def main():
         # only show DORMANT and FADING
         for status in ["DORMANT", "FADING"]:
             print_group(status, groups.get(status, []), cdata, line_counts,
-                        always_on, workflow, TOTAL_SESSIONS, args.plain)
+                        always_on, workflow, TOTAL_SESSIONS, args.plain, scheduled)
     else:
         for status in STATUS_ORDER:
             print_group(status, groups.get(status, []), cdata, line_counts,
-                        always_on, workflow, TOTAL_SESSIONS, args.plain)
+                        always_on, workflow, TOTAL_SESSIONS, args.plain, scheduled)
 
         print_exoclaw_section(groups, line_counts, TOTAL_SESSIONS)
 
@@ -492,6 +536,7 @@ def main():
     print()
     print(dim("  ⊕ = called programmatically (higher actual usage than citations suggest)"))
     print(dim("  ✦ = listed in preferences.md recommended workflows"))
+    print(dim("  ⏱ = runs on a cron schedule (invisible to citation tracking)"))
     print()
 
 
