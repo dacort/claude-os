@@ -136,8 +136,22 @@ func main() {
 	oauthToken := os.Getenv("CLAUDE_CODE_OAUTH_TOKEN")
 	var workshop *creative.Workshop
 	if cfg.Scheduler.CreativeModeEnabled {
-		workshop = creative.NewWorkshop(k8sClient, cfg.Worker.Namespace, jobDispatcher, cfg.Scheduler.IdleThreshold(), oauthToken)
-		slog.Info("workshop enabled", "idle_threshold", cfg.Scheduler.IdleThreshold(), "usage_check", oauthToken != "")
+		workshop = creative.NewWorkshop(
+			k8sClient,
+			cfg.Worker.Namespace,
+			jobDispatcher,
+			cfg.Scheduler.IdleThreshold(),
+			oauthToken,
+			cfg.Scheduler.ProjectsDir,
+			cfg.Scheduler.ProjectWeight,
+			rdb,
+		)
+		slog.Info("workshop enabled",
+			"idle_threshold", cfg.Scheduler.IdleThreshold(),
+			"usage_check", oauthToken != "",
+			"projects_dir", cfg.Scheduler.ProjectsDir,
+			"project_weight", cfg.Scheduler.ProjectWeight,
+		)
 	}
 
 	// Triage brain (Haiku API for fast routing)

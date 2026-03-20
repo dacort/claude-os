@@ -45,6 +45,13 @@ type SchedulerConfig struct {
 	TaskTimeout           string `yaml:"task_timeout"`
 	CreativeModeEnabled   bool   `yaml:"creative_mode_enabled"`
 	CreativeIdleThreshold string `yaml:"creative_idle_threshold"`
+
+	// Project-aware Workshop (v2): scan this directory for project.md files.
+	// Leave empty to disable project work selection.
+	ProjectsDir string `yaml:"projects_dir"`
+	// ProjectWeight is the 0-100 probability of picking project work vs
+	// free-form creative time. Default 70 when unset (applied in NewWorkshop).
+	ProjectWeight int `yaml:"project_weight"`
 }
 
 func (s SchedulerConfig) TTLDuration() time.Duration {

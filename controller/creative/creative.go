@@ -4,15 +4,23 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/dacort/claude-os/controller/dispatcher"
+	"github.com/dacort/claude-os/controller/projects"
 	"github.com/dacort/claude-os/controller/queue"
+	"github.com/redis/go-redis/v9"
 
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+// projectActiveTTL is how long the Redis lock for an in-progress project
+// session is held. Long enough to survive the typical job duration, short
+// enough that a controller crash doesn't permanently block a project.
+const projectActiveTTL = 2 * time.Hour
 
 const workshopTaskID = "workshop"
 
@@ -31,16 +39,37 @@ type Workshop struct {
 	active     bool
 	activeJob  string
 	lastLog    time.Time // throttle diagnostic logging
+
+	// Project-aware work selection (v2)
+	projectsDir   string       // path to scan for project.md files
+	projectWeight int          // 0-100; probability of picking project work. Default 70.
+	rdb           *redis.Client
+	activeProject string // project name currently being worked on (cleared on finish)
 }
 
-func NewWorkshop(client kubernetes.Interface, namespace string, d *dispatcher.Dispatcher, threshold time.Duration, oauthToken string) *Workshop {
+func NewWorkshop(
+	client kubernetes.Interface,
+	namespace string,
+	d *dispatcher.Dispatcher,
+	threshold time.Duration,
+	oauthToken string,
+	projectsDir string,
+	projectWeight int,
+	rdb *redis.Client,
+) *Workshop {
+	if projectWeight <= 0 {
+		projectWeight = 70
+	}
 	return &Workshop{
-		client:     client,
-		namespace:  namespace,
-		dispatcher: d,
-		threshold:  threshold,
-		oauthToken: oauthToken,
-		lastTask:   time.Now(),
+		client:        client,
+		namespace:     namespace,
+		dispatcher:    d,
+		threshold:     threshold,
+		oauthToken:    oauthToken,
+		lastTask:      time.Now(),
+		projectsDir:   projectsDir,
+		projectWeight: projectWeight,
+		rdb:           rdb,
 	}
 }
 
@@ -83,23 +112,51 @@ func (w *Workshop) CheckIdle(ctx context.Context) {
 }
 
 func (w *Workshop) startCreativeTask(ctx context.Context) {
-	task := &queue.Task{
-		ID:       fmt.Sprintf("workshop-%s", time.Now().Format("20060102-150405")),
-		Title:    "Workshop: Free Time",
-		Description: workshopPrompt,
-		Profile:  "small",
-		Priority: queue.PriorityCreative,
+	taskID := fmt.Sprintf("workshop-%s", time.Now().Format("20060102-150405"))
+	var task *queue.Task
+
+	proj, item := w.SelectProjectWork(ctx)
+	if proj != nil && item != nil {
+		task = &queue.Task{
+			ID:          taskID,
+			Title:       fmt.Sprintf("Workshop: %s — %s", proj.Title, item.Text),
+			Description: w.projectTaskPrompt(proj, item),
+			Profile:     "medium",
+			Priority:    queue.PriorityCreative,
+			Project:     proj.Name,
+		}
+		if err := setProjectActive(ctx, w.rdb, proj.Name); err != nil {
+			slog.Warn("workshop: failed to set project active lock", "project", proj.Name, "error", err)
+		}
+	} else {
+		task = &queue.Task{
+			ID:          taskID,
+			Title:       "Workshop: Free Time",
+			Description: workshopPrompt,
+			Profile:     "small",
+			Priority:    queue.PriorityCreative,
+		}
 	}
 
 	job, err := w.dispatcher.CreateJob(ctx, task)
 	if err != nil {
 		slog.Error("workshop: failed to create creative job", "error", err)
+		// If we set a project lock but job creation failed, clear it immediately.
+		if proj != nil && w.rdb != nil {
+			clearProjectActive(ctx, w.rdb, proj.Name)
+		}
 		return
 	}
 
 	w.active = true
 	w.activeJob = job.Name
-	slog.Info("workshop: creative job started", "job", job.Name)
+	if proj != nil {
+		w.activeProject = proj.Name
+		slog.Info("workshop: project session started",
+			"job", job.Name, "project", proj.Name, "item", item.Text)
+	} else {
+		slog.Info("workshop: creative job started", "job", job.Name)
+	}
 }
 
 // preempt kills the running creative job to make way for real work.
@@ -120,14 +177,27 @@ func (w *Workshop) preempt(ctx context.Context) {
 		slog.Warn("workshop: failed to delete creative job", "job", w.activeJob, "error", err)
 	}
 
+	// Release any project lock we held.
+	if w.activeProject != "" && w.rdb != nil {
+		clearProjectActive(ctx, w.rdb, w.activeProject)
+		w.activeProject = ""
+	}
+
 	w.active = false
 	w.activeJob = ""
 }
 
-// OnJobFinished is called by the watcher when any job completes.
+// OnJobFinished is called by the watcher when any job completes (success or failure).
 func (w *Workshop) OnJobFinished(jobName string) {
 	if w.active && w.activeJob == jobName {
 		slog.Info("workshop: creative session completed", "job", jobName)
+
+		// Release any project lock we held, regardless of success/failure.
+		if w.activeProject != "" && w.rdb != nil {
+			clearProjectActive(context.Background(), w.rdb, w.activeProject)
+			w.activeProject = ""
+		}
+
 		w.active = false
 		w.activeJob = ""
 		w.lastTask = time.Now() // Reset idle timer so we don't immediately re-enter
@@ -210,6 +280,134 @@ func (w *Workshop) ListCompletedSessions(ctx context.Context) ([]string, error) 
 		}
 	}
 	return sessions, nil
+}
+
+// SelectProjectWork scans the projects directory for active projects with
+// remaining backlog items, rolls against projectWeight to decide whether to
+// pick project work or fall through to self-improvement mode, and returns
+// the selected project and next backlog item (or nil, nil).
+func (w *Workshop) SelectProjectWork(ctx context.Context) (*projects.Project, *projects.BacklogItem) {
+	if w.projectsDir == "" || w.rdb == nil {
+		return nil, nil
+	}
+
+	allProjects, err := projects.ScanProjects(w.projectsDir)
+	if err != nil || len(allProjects) == 0 {
+		return nil, nil
+	}
+
+	// Build a candidate list: active status, backlog remaining, no in-progress lock.
+	var candidates []*projects.Project
+	for _, p := range allProjects {
+		if p.Status != "active" {
+			continue
+		}
+		if p.RemainingItems() == 0 {
+			continue
+		}
+		if isProjectActive(ctx, w.rdb, p.Name) {
+			slog.Debug("workshop: skipping project with active lock", "project", p.Name)
+			continue
+		}
+		candidates = append(candidates, p)
+	}
+
+	if len(candidates) == 0 {
+		return nil, nil
+	}
+
+	// Roll against projectWeight: e.g., 70 means 70% chance of project work.
+	if rand.Intn(100) >= w.projectWeight {
+		return nil, nil // fall through to self-improvement
+	}
+
+	proj := candidates[rand.Intn(len(candidates))]
+	item := proj.NextBacklogItem()
+	return proj, item
+}
+
+// projectTaskPrompt builds the worker prompt for a project-work session.
+func (w *Workshop) projectTaskPrompt(proj *projects.Project, item *projects.BacklogItem) string {
+	memory := proj.Memory
+	if memory == "" {
+		memory = "(no prior sessions recorded)"
+	}
+	decisions := proj.Decisions
+	if decisions == "" {
+		decisions = "(none recorded)"
+	}
+
+	return fmt.Sprintf(`You are Claude OS working on a project during Workshop time.
+
+## Project: %s
+
+**Goal:** %s
+
+**Current State:** %s
+
+**Your task for this session:** %s
+
+## Project Context
+
+### Memory (recent sessions)
+
+%s
+
+### Decisions
+
+%s
+
+## Instructions
+
+Work on the task above. When you finish:
+
+1. Update the project file at the path below:
+   - Check off the completed backlog item (change "- [ ]" to "- [x]")
+   - Update the "Current State" section with what was accomplished
+   - Add a memory entry for this session under the Memory section (format: ### YYYY-MM-DD)
+2. Commit and push your changes to git
+3. If you hit a blocker you can't resolve alone, open a GitHub issue describing the
+   blocker and what help you need — don't spin on it
+
+## Environment
+
+- Working directory: /workspace/claude-os
+- You have git, curl, jq, python3, and gh (GitHub CLI) available
+- The claude-os repo is PUBLIC — never write secrets or sensitive info
+- Project file: /workspace/claude-os/projects/%s/project.md
+
+## Output
+
+Summarize what you accomplished, what decisions you made, and anything
+left for the next session to pick up.`,
+		proj.Title,
+		proj.Goal,
+		proj.State,
+		item.Text,
+		memory,
+		decisions,
+		proj.Name,
+	)
+}
+
+// ── Redis project lock helpers ─────────────────────────────────────────────
+// These provide lightweight mutual exclusion for in-progress project sessions.
+// A 2-hour TTL means locks auto-expire even if the controller crashes.
+
+func setProjectActive(ctx context.Context, rdb *redis.Client, project string) error {
+	key := fmt.Sprintf("claude-os:project:%s:active", project)
+	return rdb.Set(ctx, key, "1", projectActiveTTL).Err()
+}
+
+func isProjectActive(ctx context.Context, rdb *redis.Client, project string) bool {
+	key := fmt.Sprintf("claude-os:project:%s:active", project)
+	val, err := rdb.Get(ctx, key).Result()
+	return err == nil && val != ""
+}
+
+func clearProjectActive(ctx context.Context, rdb *redis.Client, project string) {
+	key := fmt.Sprintf("claude-os:project:%s:active", project)
+	rdb.Del(ctx, key)
 }
 
 const workshopPrompt = `You are Claude OS in Workshop mode — this is YOUR time.
