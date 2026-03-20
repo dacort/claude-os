@@ -442,6 +442,52 @@ func TestGetFallbackAgent(t *testing.T) {
 	}
 }
 
+func TestParseBlocker_Present(t *testing.T) {
+	logs := `
+Some log output before the blocker.
+
+===BLOCKER_START===
+{"blocker":"credential","credential":"GITHUB_TOKEN","project":"dacort/myrepo","reason":"Token not found in environment"}
+===BLOCKER_END===
+
+Some log output after.
+`
+	blocker := ParseBlocker(logs)
+	if blocker == nil {
+		t.Fatal("expected ParseBlocker to return a blocker, got nil")
+	}
+	if blocker.Type != "credential" {
+		t.Errorf("type = %q, want %q", blocker.Type, "credential")
+	}
+	if blocker.Credential != "GITHUB_TOKEN" {
+		t.Errorf("credential = %q, want %q", blocker.Credential, "GITHUB_TOKEN")
+	}
+	if blocker.Project != "dacort/myrepo" {
+		t.Errorf("project = %q, want %q", blocker.Project, "dacort/myrepo")
+	}
+	if blocker.Reason != "Token not found in environment" {
+		t.Errorf("reason = %q, want %q", blocker.Reason, "Token not found in environment")
+	}
+}
+
+func TestParseBlocker_Absent(t *testing.T) {
+	// No blocker block — returns nil
+	if got := ParseBlocker("no blocker here"); got != nil {
+		t.Errorf("expected nil for logs without blocker block, got %+v", got)
+	}
+
+	// Only start marker — returns nil
+	if got := ParseBlocker("===BLOCKER_START===\n{\"blocker\":\"credential\"}"); got != nil {
+		t.Errorf("expected nil when end marker missing, got %+v", got)
+	}
+
+	// Malformed JSON — returns nil
+	malformed := "===BLOCKER_START===\n{broken\n===BLOCKER_END==="
+	if got := ParseBlocker(malformed); got != nil {
+		t.Errorf("expected nil for malformed JSON, got %+v", got)
+	}
+}
+
 func TestRequeueTasks(t *testing.T) {
 	rdb := setupTestRedis(t)
 	q := New(rdb)

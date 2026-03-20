@@ -414,6 +414,36 @@ type ResultSpawnedTask struct {
 	Agent   string `json:"agent"`
 }
 
+// TaskBlocker is emitted by workers when they cannot proceed without external
+// input (e.g. a missing credential or an unresolvable dependency).
+// Workers delimit it with ===BLOCKER_START=== / ===BLOCKER_END===.
+type TaskBlocker struct {
+	Type       string `json:"blocker"`
+	Credential string `json:"credential,omitempty"`
+	Project    string `json:"project,omitempty"`
+	Reason     string `json:"reason,omitempty"`
+}
+
+// ParseBlocker extracts a TaskBlocker from worker pod logs.
+// Returns nil if the sentinel block is absent or the JSON is malformed.
+func ParseBlocker(logs string) *TaskBlocker {
+	const startMarker = "===BLOCKER_START==="
+	const endMarker = "===BLOCKER_END==="
+
+	start := strings.Index(logs, startMarker)
+	end := strings.LastIndex(logs, endMarker)
+	if start == -1 || end == -1 || end <= start {
+		return nil
+	}
+
+	raw := strings.TrimSpace(logs[start+len(startMarker) : end])
+	var blocker TaskBlocker
+	if err := json.Unmarshal([]byte(raw), &blocker); err != nil {
+		return nil
+	}
+	return &blocker
+}
+
 // ParseResult extracts the structured TaskResult emitted by workers using
 // the new reporting contract. Returns nil if the sentinel block is not found.
 func ParseResult(logs string) *TaskResult {
