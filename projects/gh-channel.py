@@ -139,6 +139,12 @@ requested_by: {user}
 {description}
 
 Submitted via GitHub issue #{issue_number} by @{user}.
+
+**Delivery:** This task came from a GitHub issue. When you have completed the task,
+post your result as a comment on the issue using:
+`gh issue comment {issue_number} --repo {repo} --body "YOUR RESULT HERE"`
+
+Replace the placeholder with a concise summary of what you did or found.
 """
 
 
@@ -163,6 +169,7 @@ def render_task(
         user=user,
         description=description,
         issue_number=issue_number or "?",
+        repo=repo or "dacort/claude-os",
     )
 
 
