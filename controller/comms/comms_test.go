@@ -8,6 +8,50 @@ import (
 	"testing"
 )
 
+// --- GitHubChannel helper tests ---
+
+func TestFormatIssueBody(t *testing.T) {
+	msg := Message{
+		ID:       "msg-001",
+		Title:    "Need credentials",
+		Body:     "Missing GITHUB_TOKEN to push.",
+		Project:  "my-project",
+		TaskID:   "task-001",
+		Type:     NeedsHuman,
+		Mentions: []string{"dacort"},
+	}
+
+	got := formatIssueBody(msg)
+
+	for _, want := range []string{
+		"my-project",
+		"task-001",
+		"@dacort",
+		"<!-- claude-os-task-id:task-001 -->",
+		"Missing GITHUB_TOKEN to push.",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("formatIssueBody missing %q\ngot:\n%s", want, got)
+		}
+	}
+}
+
+func TestExtractTaskID(t *testing.T) {
+	body := "Some content\n<!-- claude-os-task-id:task-42 -->\nMore content"
+	got := extractTaskID(body)
+	if got != "task-42" {
+		t.Errorf("extractTaskID = %q, want %q", got, "task-42")
+	}
+}
+
+func TestExtractTaskID_Missing(t *testing.T) {
+	body := "No marker here, just plain text."
+	got := extractTaskID(body)
+	if got != "" {
+		t.Errorf("extractTaskID should return empty string for missing marker, got %q", got)
+	}
+}
+
 func TestFileChannel_Notify(t *testing.T) {
 	dir := t.TempDir()
 	ch := NewFileChannel(dir)
