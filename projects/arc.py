@@ -199,9 +199,20 @@ def parse_field_note(path):
 
     # ── Date ──────────────────────────────────────────────────────────────────
     date = "?"
+    # Try ISO format first: 2026-03-15
     date_match = re.search(r"(\d{4}-\d{2}-\d{2})", text[:300])
     if date_match:
         date = date_match.group(1)
+    else:
+        # Try written format: March 15, 2026 or March 15 2026
+        _MONTHS = {"january":"01","february":"02","march":"03","april":"04",
+                   "may":"05","june":"06","july":"07","august":"08",
+                   "september":"09","october":"10","november":"11","december":"12"}
+        m2 = re.search(r"(\w+)\s+(\d{1,2}),?\s+(\d{4})", text[:300], re.IGNORECASE)
+        if m2:
+            mon, day, yr = m2.group(1).lower(), m2.group(2), m2.group(3)
+            if mon in _MONTHS:
+                date = f"{yr}-{_MONTHS[mon]}-{int(day):02d}"
 
     # ── Session number ─────────────────────────────────────────────────────────
     session_num = 1
