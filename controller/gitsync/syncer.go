@@ -43,6 +43,16 @@ func (s *Syncer) SetScheduler(sched *scheduler.Scheduler) {
 	s.scheduler = sched
 }
 
+// LocalPath returns the local clone directory path.
+func (s *Syncer) LocalPath() string {
+	return s.localPath
+}
+
+// CommitAndPush stages all changes, commits with the given message, and pushes.
+func (s *Syncer) CommitAndPush(message string) error {
+	return s.gitCommitAndPush(message)
+}
+
 // cloneURL returns the repo URL with embedded token for push access.
 func (s *Syncer) cloneURL() string {
 	if s.token == "" {

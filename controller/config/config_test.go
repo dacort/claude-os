@@ -7,6 +7,20 @@ import (
 	"time"
 )
 
+func TestProjectWeight_Default(t *testing.T) {
+	s := SchedulerConfig{}
+	if got := s.ProjectWeight(); got != 70 {
+		t.Errorf("ProjectWeight() with zero value = %d, want 70", got)
+	}
+}
+
+func TestProjectWeight_Explicit(t *testing.T) {
+	s := SchedulerConfig{WorkshopProjectWeight: 50}
+	if got := s.ProjectWeight(); got != 50 {
+		t.Errorf("ProjectWeight() = %d, want 50", got)
+	}
+}
+
 func TestLoadConfig(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "controller.yaml")

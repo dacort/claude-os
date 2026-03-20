@@ -13,6 +13,17 @@ type Config struct {
 	Git       GitConfig       `yaml:"git"`
 	Scheduler SchedulerConfig `yaml:"scheduler"`
 	Worker    WorkerConfig    `yaml:"worker"`
+	Comms     CommsConfig     `yaml:"comms"`
+}
+
+type CommsConfig struct {
+	Channels []ChannelConfig `yaml:"channels"`
+}
+
+type ChannelConfig struct {
+	Type   string `yaml:"type"`   // "github" or "file"
+	Repo   string `yaml:"repo"`   // for github type: "owner/repo"
+	Secret string `yaml:"secret"` // K8s secret name for github token
 }
 
 type ServerConfig struct {
@@ -49,9 +60,19 @@ type SchedulerConfig struct {
 	// Project-aware Workshop (v2): scan this directory for project.md files.
 	// Leave empty to disable project work selection.
 	ProjectsDir string `yaml:"projects_dir"`
-	// ProjectWeight is the 0-100 probability of picking project work vs
-	// free-form creative time. Default 70 when unset (applied in NewWorkshop).
-	ProjectWeight int `yaml:"project_weight"`
+	// WorkshopProjectWeight is the 0-100 probability of picking project work
+	// vs free-form creative time. Default 70 when unset; use ProjectWeight()
+	// to access so the default is applied automatically.
+	WorkshopProjectWeight int `yaml:"workshop_project_weight"`
+}
+
+// ProjectWeight returns the configured project weight, defaulting to 70 when
+// unset or zero.
+func (s SchedulerConfig) ProjectWeight() int {
+	if s.WorkshopProjectWeight <= 0 {
+		return 70
+	}
+	return s.WorkshopProjectWeight
 }
 
 func (s SchedulerConfig) TTLDuration() time.Duration {

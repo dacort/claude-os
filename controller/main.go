@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/dacort/claude-os/controller/comms"
 	"github.com/dacort/claude-os/controller/config"
 	"github.com/dacort/claude-os/controller/creative"
 	"github.com/dacort/claude-os/controller/dispatcher"
@@ -132,6 +135,31 @@ func main() {
 	}, governor.CanDispatch)
 	gitSyncer.SetScheduler(taskScheduler)
 
+	// Initialize comms channels — file channel always on, github optional
+	var commsChannels []comms.Channel
+	blockedDir := filepath.Join(gitSyncer.LocalPath(), "tasks", "blocked")
+	commsChannels = append(commsChannels, comms.NewFileChannel(blockedDir))
+	for _, chCfg := range cfg.Comms.Channels {
+		switch chCfg.Type {
+		case "github":
+			token := os.Getenv("OCTOCLAUDE_GITHUB_TOKEN")
+			if token == "" {
+				slog.Info("comms: github channel configured but OCTOCLAUDE_GITHUB_TOKEN not set, skipping")
+				continue
+			}
+			parts := strings.SplitN(chCfg.Repo, "/", 2)
+			if len(parts) != 2 {
+				slog.Warn("comms: github channel repo not in owner/repo format, skipping", "repo", chCfg.Repo)
+				continue
+			}
+			commsChannels = append(commsChannels, comms.NewGitHubChannel(parts[0], parts[1], token))
+			slog.Info("comms: github channel enabled", "repo", chCfg.Repo)
+		case "file":
+			// already added above as the always-on fallback
+		}
+	}
+	commsManager := comms.NewManager(commsChannels...)
+
 	// Creative mode (The Workshop)
 	oauthToken := os.Getenv("CLAUDE_CODE_OAUTH_TOKEN")
 	var workshop *creative.Workshop
@@ -143,7 +171,7 @@ func main() {
 			cfg.Scheduler.IdleThreshold(),
 			oauthToken,
 			cfg.Scheduler.ProjectsDir,
-			cfg.Scheduler.ProjectWeight,
+			cfg.Scheduler.ProjectWeight(),
 			rdb,
 		)
 		slog.Info("workshop enabled",
@@ -463,6 +491,22 @@ func main() {
 				if saveErr := taskQueue.SaveTask(ctx, task); saveErr != nil {
 					slog.Warn("failed to save task duration", "task", taskID, "error", saveErr)
 				}
+			}
+		}
+
+		// Check for blocker signals emitted by the worker
+		if blocker := queue.ParseBlocker(logs); blocker != nil {
+			slog.Info("task blocker detected", "task", taskID, "type", blocker.Type)
+			_ = commsManager.Notify(ctx, comms.Message{
+				ID:      taskID,
+				Type:    comms.NeedsHuman,
+				Title:   fmt.Sprintf("Blocked: %s — %s", taskID, blocker.Type),
+				Body:    fmt.Sprintf("**Credential needed:** %s\n\n**Project:** %s", blocker.Credential, blocker.Project),
+				Project: blocker.Project,
+				TaskID:  taskID,
+			})
+			if err := gitSyncer.CommitAndPush("comms: update blocked tasks"); err != nil {
+				slog.Error("failed to push blocked tasks", "error", err)
 			}
 		}
 

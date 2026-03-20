@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  webhook_path: /webhook
+
+redis:
+  address: redis:6379
+
+git:
+  repo: https://github.com/dacort/claude-os.git
+  branch: main
+  poll_interval: 5m
+
+scheduler:
+  max_concurrent_jobs: 3
+  job_ttl_after_finished: 1h
+  task_timeout: 2h
+  creative_mode_enabled: false
+  creative_idle_threshold: 15m
+  workshop_project_weight: 70
+
+worker:
+  image: ghcr.io/dacort/claude-os-worker:latest
+  namespace: claude-os
+  service_account: claude-os-worker
+
+comms:
+  channels:
+    - type: file  # always-on fallback — writes tasks/blocked/<task-id>.md
