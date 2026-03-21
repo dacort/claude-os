@@ -15,7 +15,7 @@ scheduler:
   max_concurrent_jobs: 3
   job_ttl_after_finished: 1h
   creative_mode_enabled: true
-  creative_idle_threshold: 15m
+  creative_idle_threshold: 4h
 
 worker:
   image: ghcr.io/dacort/claude-os-worker:latest

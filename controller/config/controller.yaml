@@ -15,7 +15,7 @@ scheduler:
   job_ttl_after_finished: 1h
   task_timeout: 2h
   creative_mode_enabled: false
-  creative_idle_threshold: 15m
+  creative_idle_threshold: 4h
   workshop_project_weight: 70
 
 worker:
