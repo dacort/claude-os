@@ -326,11 +326,83 @@ func (q *Queue) IsPlanComplete(ctx context.Context, planID string) bool {
 	return done >= total
 }
 
-const keyAgentRateLimited = "claude-os:agent:%s:rate_limited"
+const (
+	keyRecent          = "claude-os:recent"
+	keyAgentRateLimited = "claude-os:agent:%s:rate_limited"
+)
 
 var fallbackChain = map[string][]string{
 	"claude": {"codex"},
 	"codex":  {"claude"},
+}
+
+// PendingCount returns the number of tasks currently in the dispatch queue.
+func (q *Queue) PendingCount(ctx context.Context) (int64, error) {
+	return q.rdb.ZCard(ctx, keyQueue).Result()
+}
+
+// ListPending returns all pending tasks in priority order (highest first).
+func (q *Queue) ListPending(ctx context.Context) ([]*Task, error) {
+	ids, err := q.rdb.ZRevRange(ctx, keyQueue, 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	var tasks []*Task
+	for _, id := range ids {
+		task, err := q.Get(ctx, id)
+		if err != nil {
+			continue
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, nil
+}
+
+// BlockedCount returns the total number of blocked tasks across all plans.
+func (q *Queue) BlockedCount(ctx context.Context) (int64, error) {
+	keys, err := q.rdb.Keys(ctx, "claude-os:plan:*:blocked").Result()
+	if err != nil {
+		return 0, err
+	}
+	var total int64
+	for _, key := range keys {
+		count, err := q.rdb.SCard(ctx, key).Result()
+		if err != nil {
+			continue
+		}
+		total += count
+	}
+	return total, nil
+}
+
+// PushRecent records a task ID as recently completed (capped at 50 entries).
+func (q *Queue) PushRecent(ctx context.Context, taskID string) error {
+	pipe := q.rdb.Pipeline()
+	pipe.LPush(ctx, keyRecent, taskID)
+	pipe.LTrim(ctx, keyRecent, 0, 49)
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// GetRecent returns the last n recently-completed task IDs (most recent first).
+func (q *Queue) GetRecent(ctx context.Context, n int) ([]string, error) {
+	if n <= 0 {
+		n = 5
+	}
+	if n > 50 {
+		n = 50
+	}
+	return q.rdb.LRange(ctx, keyRecent, 0, int64(n-1)).Result()
+}
+
+// QueuePosition returns the 1-based position of a task in the pending queue
+// (1 = next to be dispatched). Returns -1 if the task is not in the queue.
+func (q *Queue) QueuePosition(ctx context.Context, taskID string) int {
+	rank, err := q.rdb.ZRevRank(ctx, keyQueue, taskID).Result()
+	if err != nil {
+		return -1
+	}
+	return int(rank) + 1
 }
 
 // SetAgentRateLimited marks an agent as rate-limited for the given duration.
@@ -342,6 +414,17 @@ func (q *Queue) SetAgentRateLimited(ctx context.Context, agent string, ttl time.
 func (q *Queue) IsAgentRateLimited(ctx context.Context, agent string) bool {
 	val, err := q.rdb.Get(ctx, fmt.Sprintf(keyAgentRateLimited, agent)).Result()
 	return err == nil && val == "1"
+}
+
+// GetAgentRateLimitedUntil returns the expiry time of an agent's rate limit,
+// or nil if the agent is not currently rate-limited.
+func (q *Queue) GetAgentRateLimitedUntil(ctx context.Context, agent string) *time.Time {
+	ttl, err := q.rdb.TTL(ctx, fmt.Sprintf(keyAgentRateLimited, agent)).Result()
+	if err != nil || ttl <= 0 {
+		return nil
+	}
+	t := time.Now().UTC().Add(ttl)
+	return &t
 }
 
 // GetFallbackAgent returns the next available agent in the fallback chain.
