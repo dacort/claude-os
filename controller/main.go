@@ -15,6 +15,7 @@ import (
 
 	"github.com/dacort/claude-os/controller/comms"
 	"github.com/dacort/claude-os/controller/config"
+	"github.com/dacort/claude-os/controller/cosapi"
 	"github.com/dacort/claude-os/controller/creative"
 	"github.com/dacort/claude-os/controller/dispatcher"
 	"github.com/dacort/claude-os/controller/gitsync"
@@ -210,6 +211,16 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "ok")
 	})
+
+	// cos CLI API endpoints
+	cosHandler := &cosapi.Handler{
+		Queue:     taskQueue,
+		Governor:  governor,
+		K8s:       k8sClient,
+		Namespace: cfg.Worker.Namespace,
+	}
+	cosHandler.RegisterRoutes(mux)
+
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler: mux,
@@ -514,6 +525,9 @@ func main() {
 			slog.Info("completing task", "task", taskID)
 			gitSyncer.CompleteTask(taskID, parsedResult, logs)
 			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, "")
+			if err := taskQueue.PushRecent(ctx, taskID); err != nil {
+				slog.Warn("failed to push recent task", "task", taskID, "error", err)
+			}
 
 			// Check if this task is part of a plan
 			if planTask, err := taskQueue.Get(ctx, taskID); err == nil && planTask.PlanID != "" {
@@ -590,6 +604,9 @@ func main() {
 					slog.Info("failing task (retries exhausted)", "task", taskID)
 					gitSyncer.FailTask(taskID, parsedResult, logs)
 					taskQueue.UpdateStatus(ctx, taskID, queue.StatusFailed, "job failed")
+					if err := taskQueue.PushRecent(ctx, taskID); err != nil {
+						slog.Warn("failed to push recent failed task", "task", taskID, "error", err)
+					}
 					if retryTask != nil && retryTask.PlanID != "" {
 						slog.Warn("subtask failed, plan marked failed",
 							"plan_id", retryTask.PlanID, "task", taskID)

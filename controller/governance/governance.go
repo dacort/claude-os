@@ -119,6 +119,26 @@ func (g *Governor) CanBurst(ctx context.Context) bool {
 	return spent < threshold
 }
 
+// Stats is a typed snapshot of the governance metrics for the current day.
+type Stats struct {
+	TokensUsedToday  int64
+	TokensLimitToday int64
+	BurstSpendToday  float64
+	BurstBudgetToday float64
+}
+
+// GetStats returns the current governance metrics as a typed struct.
+func (g *Governor) GetStats(ctx context.Context) Stats {
+	daily := g.getDailyUsage(ctx)
+	burstCents, _ := g.rdb.Get(ctx, g.burstKey()).Int64()
+	return Stats{
+		TokensUsedToday:  daily,
+		TokensLimitToday: g.effectiveDailyLimit(),
+		BurstSpendToday:  float64(burstCents) / 100,
+		BurstBudgetToday: g.limits.DailyBurstBudget,
+	}
+}
+
 func (g *Governor) GetUsageSummary(ctx context.Context) map[string]interface{} {
 	daily := g.getDailyUsage(ctx)
 	weekly, _ := g.rdb.Get(ctx, g.weeklyKey()).Int64()
