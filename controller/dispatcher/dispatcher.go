@@ -11,6 +11,7 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -338,5 +339,19 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 		},
 	}
 
-	return d.client.BatchV1().Jobs(d.namespace).Create(ctx, job, metav1.CreateOptions{})
+	created, err := d.client.BatchV1().Jobs(d.namespace).Create(ctx, job, metav1.CreateOptions{})
+	if errors.IsAlreadyExists(err) {
+		// A finished job from a previous attempt still exists (TTL hasn't expired).
+		// Delete it and retry so re-queued tasks can run.
+		prop := metav1.DeletePropagationBackground
+		delErr := d.client.BatchV1().Jobs(d.namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			PropagationPolicy: &prop,
+		})
+		if delErr != nil {
+			return nil, fmt.Errorf("delete stale job %s: %w", job.Name, delErr)
+		}
+		slog.Info("deleted stale job for re-queued task", "job", job.Name, "task", task.ID)
+		return d.client.BatchV1().Jobs(d.namespace).Create(ctx, job, metav1.CreateOptions{})
+	}
+	return created, err
 }

@@ -164,10 +164,27 @@ func ScanScheduledTasks(tasksPath string) ([]*TaskFile, error) {
 }
 
 func ScanPendingTasks(tasksPath string) ([]*TaskFile, error) {
-	pendingDir := filepath.Join(tasksPath, "pending")
-	entries, err := os.ReadDir(pendingDir)
+	return scanTaskDir(filepath.Join(tasksPath, "pending"))
+}
+
+// ScanAllTasks scans tasks across pending, in-progress, and completed directories.
+// Used by DAG validation to see the full plan graph regardless of task state.
+func ScanAllTasks(tasksPath string) ([]*TaskFile, error) {
+	var all []*TaskFile
+	for _, dir := range []string{"pending", "in-progress", "completed"} {
+		tasks, err := scanTaskDir(filepath.Join(tasksPath, dir))
+		if err != nil {
+			continue // directory may not exist
+		}
+		all = append(all, tasks...)
+	}
+	return all, nil
+}
+
+func scanTaskDir(dir string) ([]*TaskFile, error) {
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("read pending dir: %w", err)
+		return nil, fmt.Errorf("read dir %s: %w", dir, err)
 	}
 
 	var tasks []*TaskFile
@@ -175,7 +192,7 @@ func ScanPendingTasks(tasksPath string) ([]*TaskFile, error) {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(pendingDir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
 		if err != nil {
 			continue
 		}

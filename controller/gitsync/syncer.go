@@ -289,7 +289,7 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 // subtasks belonging to planID. Used for DAG validation at ingestion time.
 func (s *Syncer) collectPlanSubtasks(planID, tasksPath string) map[string][]string {
 	result := make(map[string][]string)
-	tasks, err := ScanPendingTasks(tasksPath)
+	tasks, err := ScanAllTasks(tasksPath)
 	if err != nil {
 		return result
 	}
