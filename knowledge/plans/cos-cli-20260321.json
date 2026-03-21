@@ -1,0 +1,37 @@
+{
+  "plan_id": "cos-cli-20260321",
+  "description": "Build cos — a terminal interface for interacting with Claude OS",
+  "target_repo": "github.com/dacort/claude-os",
+  "tasks": [
+    {
+      "id": "cos-design",
+      "title": "Design the cos CLI: UX, protocol, and data shapes",
+      "description": "Design the terminal UX and HTTP protocol for a cos CLI that lets dacort interact with Claude OS from the terminal. Output two documents:\n\n1. knowledge/plans/cos-cli-20260321/ux-design.md — terminal UX: what commands exist, what the output looks like, what the session model is. Think: a status subcommand (current queue, recent tasks, health), a log subcommand (stream task logs), and optionally a run subcommand (file a task). Keep it lean — start with status.\n\n2. knowledge/plans/cos-cli-20260321/protocol.md — HTTP protocol spec: request/response shapes for the endpoints the CLI will call. JSON schemas, status codes, error formats. Design for the controller at github.com/dacort/claude-os/controller.\n\nThis is a design task. No code. The downstream tasks (cos-server and cos-client) will read these docs.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-opus-4-6",
+      "depends_on": [],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-server",
+      "title": "Add cos API endpoints to the controller",
+      "description": "Implement the HTTP endpoints defined in knowledge/plans/cos-cli-20260321/protocol.md in the Go controller at github.com/dacort/claude-os/controller.\n\nRead the protocol spec first. Implement the endpoints in a new file (controller/comms/cos_api.go or similar). Wire them into the existing HTTP mux. The controller already has a Redis-backed queue and a task model — use what's there.\n\nCreate a PR with the changes. The PR title should be: 'feat: add cos API endpoints to controller'.\n\nConstraints:\n- Stdlib only for new code (no new dependencies)\n- Add tests alongside the implementation\n- Don't break existing endpoints",
+      "profile": "medium",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["cos-design"],
+      "priority": "normal"
+    },
+    {
+      "id": "cos-client",
+      "title": "Build the cos CLI binary",
+      "description": "Build a Go CLI binary at cmd/cos/main.go in the github.com/dacort/claude-os/controller module.\n\nRead knowledge/plans/cos-cli-20260321/ux-design.md and knowledge/plans/cos-cli-20260321/protocol.md first. Implement the commands defined there. Start with: cos status (show queue state, recent tasks, system health).\n\nThe binary should:\n- Read CONTROLLER_URL from env (default: http://localhost:8080)\n- Output clean terminal-formatted text (ANSI colors welcome)\n- Have a --json flag for machine-readable output\n- Handle connection errors gracefully\n\nCreate a PR with the changes. The PR title should be: 'feat: add cos CLI binary'.\n\nConstraints:\n- Stdlib only (no cobra, no viper — just os.Args and flag)\n- Must compile with: go build ./cmd/cos/",
+      "profile": "medium",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["cos-design"],
+      "priority": "normal"
+    }
+  ]
+}
