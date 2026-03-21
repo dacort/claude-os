@@ -434,17 +434,31 @@ def run(plain=False, brief=False, as_json=False, since_ref=None):
 
 
 def main():
-    plain = "--plain" in sys.argv
-    brief = "--brief" in sys.argv
-    as_json = "--json" in sys.argv
-
-    since_ref = None
-    if "--since" in sys.argv:
-        idx = sys.argv.index("--since")
-        if idx + 1 < len(sys.argv):
-            since_ref = sys.argv[idx + 1]
-
-    run(plain=plain, brief=brief, as_json=as_json, since_ref=since_ref)
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="garden.py",
+        description="Knowledge Gardener — shows what changed since the last workshop session.\n"
+                    "Run at the start of any Workshop session for a 30-second orientation.",
+        epilog=(
+            "examples:\n"
+            "  python3 projects/garden.py              # full briefing\n"
+            "  python3 projects/garden.py --brief      # compact one-screen summary\n"
+            "  python3 projects/garden.py --plain      # no ANSI colors (safe for piping)\n"
+            "  python3 projects/garden.py --json       # machine-readable output\n"
+            "  python3 projects/garden.py --since HEAD~10  # diff from a specific commit"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--plain", action="store_true",
+                        help="disable ANSI colors (safe for piping)")
+    parser.add_argument("--brief", action="store_true",
+                        help="compact one-screen summary (fewer commits, no suggestions)")
+    parser.add_argument("--json", action="store_true", dest="as_json",
+                        help="machine-readable JSON output")
+    parser.add_argument("--since", metavar="REF",
+                        help="compare from a specific git ref instead of last session")
+    args = parser.parse_args()
+    run(plain=args.plain, brief=args.brief, as_json=args.as_json, since_ref=args.since)
 
 
 if __name__ == "__main__":

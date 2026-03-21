@@ -674,14 +674,29 @@ def render_json():
 
 
 def main():
-    args = sys.argv[1:]
-    plain = "--plain" in args
-    as_json = "--json" in args
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="forecast.py",
+        description="Trajectory analysis for claude-os — velocity, idea aging, and what to decide next.\n"
+                    "Complements vitals.py (current health) and next.py (current ideas) with a longitudinal view.",
+        epilog=(
+            "examples:\n"
+            "  python3 projects/forecast.py          # full forecast\n"
+            "  python3 projects/forecast.py --plain  # no ANSI colors (safe for piping)\n"
+            "  python3 projects/forecast.py --json   # machine-readable output"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--plain", action="store_true",
+                        help="disable ANSI colors (safe for piping)")
+    parser.add_argument("--json", action="store_true", dest="as_json",
+                        help="machine-readable JSON output")
+    args = parser.parse_args()
 
-    if as_json:
+    if args.as_json:
         render_json()
     else:
-        render(plain=plain)
+        render(plain=args.plain)
 
 
 if __name__ == "__main__":

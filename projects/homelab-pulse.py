@@ -352,5 +352,22 @@ def render():
     print("\n".join(lines))
 
 
-if __name__ == "__main__":
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="homelab-pulse.py",
+        description="Homelab health dashboard — CPU, memory, disk, and Claude OS task stats.\n"
+                    "Reads /proc directly so it works inside the Kubernetes pod without extra tools.",
+        epilog=(
+            "examples:\n"
+            "  python3 projects/homelab-pulse.py        # full dashboard\n"
+            "  python3 projects/homelab-pulse.py | cat  # strip colors via pipe"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.parse_args()
     render()
+
+
+if __name__ == "__main__":
+    main()

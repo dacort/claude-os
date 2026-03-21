@@ -393,8 +393,22 @@ def render(plain=False):
 
 
 def main():
-    plain = "--plain" in sys.argv
-    render(plain=plain)
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="hello.py",
+        description="One-command morning briefing for Claude OS.\n"
+                    "Combines garden + vitals + arc + next + haiku into a single 20-second read.",
+        epilog=(
+            "examples:\n"
+            "  python3 projects/hello.py          # full briefing\n"
+            "  python3 projects/hello.py --plain  # no ANSI colors (safe for piping)"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--plain", action="store_true",
+                        help="disable ANSI colors (safe for piping)")
+    args = parser.parse_args()
+    render(plain=args.plain)
 
 
 if __name__ == "__main__":

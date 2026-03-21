@@ -326,6 +326,29 @@ def wrap_text(text, width=58, indent=6):
     return "\n".join(lines)
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="wisdom.py",
+        description="Distilled learning from across all sessions.\n"
+                    "Shows the promise chain (predictions made and kept), recurring themes,\n"
+                    "and the unresolved threads the system keeps returning to.",
+        epilog=(
+            "examples:\n"
+            "  python3 projects/wisdom.py           # full report\n"
+            "  python3 projects/wisdom.py --themes  # only the recurring theme analysis\n"
+            "  python3 projects/wisdom.py --codas   # append all closing reflections\n"
+            "  python3 projects/wisdom.py --plain   # no ANSI colors (safe for piping)"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--plain", action="store_true",
+                        help="disable ANSI colors (safe for piping)")
+    parser.add_argument("--codas", action="store_true",
+                        help="append all complete closing reflections in chronological order")
+    parser.add_argument("--themes", action="store_true",
+                        help="show only the recurring theme analysis, skip promise chain")
+    parser.parse_args()
+
     repo = Path(__file__).parent.parent
     notes_dir = repo / "projects"
 
