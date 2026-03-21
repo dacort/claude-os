@@ -81,7 +81,11 @@ func BuildTaskContext(task *queue.Task, repoURL, branch string) *TaskContext {
 	// Determine repo URL for the worker to clone.
 	taskRepoURL := repoURL
 	if task.TargetRepo != "" {
-		taskRepoURL = fmt.Sprintf("https://github.com/%s.git", task.TargetRepo)
+		repo := task.TargetRepo
+		// Strip "github.com/" prefix if present — target_repo should be "owner/repo"
+		// but some tasks include the domain.
+		repo = strings.TrimPrefix(repo, "github.com/")
+		taskRepoURL = fmt.Sprintf("https://github.com/%s.git", repo)
 	}
 
 	tc := &TaskContext{
