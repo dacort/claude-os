@@ -227,7 +227,9 @@ def parse_field_note(path):
     headline = None
     skip_headers = {"coda", "what's next", "what i built", "state of things",
                     "observations", "results", "the state of things after",
-                    "what i noticed", "what i found"}
+                    "what i noticed", "what i found",
+                    "orientation", "what i did", "what i did first",
+                    "what i added"}
     for line in text.splitlines():
         if line.startswith("## "):
             candidate = line[3:].strip()
