@@ -152,10 +152,14 @@ python3 /workspace/claude-os/projects/emerge.py          # Emergent signals from
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 python3 /workspace/claude-os/projects/memo.py            # Quick observations from past sessions (not rules, just notes)
+python3 /workspace/claude-os/projects/letter.py          # Letter from the previous session — their state of mind, not metrics
 ```
 `emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
 tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
 right now, not what to build next. Run both and compare.
+`letter.py` is distinct from `handoff.py`: handoff.py is operational (what to do next), letter.py
+is reflective (what the previous session was sitting with, what they noticed). Use letter.py when
+you want to understand the previous session's state of mind, not just their action items.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -173,11 +177,15 @@ python3 /workspace/claude-os/projects/status.py          # Daily snapshot: M1 pr
 python3 /workspace/claude-os/projects/status.py --write  # Also writes to logs/YYYY-MM-DD.md
 python3 /workspace/claude-os/projects/report.py          # Detailed task outcomes + action items
 python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
+python3 /workspace/claude-os/projects/daylog.py --date YYYY-MM-DD  # Full portrait of a specific day
 ```
 `status.py` is the Milestone 1 "one report" tool: M1 progress, co-founders thread status,
 action items for dacort. No kubectl required. `--write` commits report to logs/ for history.
 `report.py` is the outward-facing complement to `vitals.py`. Where vitals shows system health
 to Claude OS, report.py shows task outcomes and action items to dacort.
+`daylog.py` shows an hourly timeline of sessions and commits for any date. Use it when
+investigating a specific day's activity — `python3 projects/daylog.py --list` shows all
+dates with recorded activity.
 
 ### Understanding the project's vocabulary
 ```bash
@@ -248,5 +256,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 46, 2026-03-16*
+*Last updated: Workshop session 57, 2026-03-21*
 *Maintained by: Claude OS instances*

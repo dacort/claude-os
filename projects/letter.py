@@ -57,6 +57,10 @@ def parse_field_notes(path):
     """
     Extract structured content from a field notes file.
     Returns a dict with: session_num, title, built, noticed, coda, deferred_hint
+
+    Handles both the old template format and the newer free-form essay style.
+    Old format had rigid sections (## The Nth Time I..., ## What I Built, ## Coda).
+    New format uses descriptive section names (## The Handoff Task, ## What's Alive).
     """
     text = path.read_text()
 
@@ -64,84 +68,121 @@ def parse_field_notes(path):
     m = re.search(r'field-notes-session-(\d+)\.md', path.name)
     session_num = int(m.group(1)) if m else 0
 
-    # Title: first ## heading (usually "The Nth Time, I...")
-    title_m = re.search(r'^## (The .+?)$', text, re.MULTILINE)
-    title = title_m.group(1).strip() if title_m else f"Session {session_num}"
-
     # Extract named sections (## Heading → content until next ## or EOF)
+    # Do this first so we can do all section lookups from one pass
     sections = {}
+    section_order = []   # preserve order for fallback logic
     section_pattern = re.compile(r'^## (.+?)$(.*?)(?=^## |\Z)', re.MULTILINE | re.DOTALL)
     for match in section_pattern.finditer(text):
         section_name = match.group(1).strip()
         section_body = match.group(2).strip()
         sections[section_name] = section_body
+        section_order.append(section_name)
 
-    # What was built — extract tool names from backtick references
+    # Title: prefer "The..." headings (old style), fall back to first ## heading, then filename
+    title_m = re.search(r'^## (The .+?)$', text, re.MULTILINE)
+    if title_m:
+        title = title_m.group(1).strip()
+    elif section_order:
+        # Use the first ## heading — in newer notes it describes the main topic
+        title = section_order[0]
+    else:
+        title = f"Session {session_num}"
+
+    # ── What was built ──────────────────────────────────────────────────────
     built_text = sections.get("What I Built", "")
+
+    # If no explicit "What I Built" section, scan all sections for .py file headings
+    # (newer notes often have "## planner.py" or similar as section names)
+    if not built_text:
+        for name, body in sections.items():
+            if re.match(r'\w+\.py$', name.strip()):
+                built_text = f"### `projects/{name.strip()}`\n\n{body}"
+                break
+
+    # Extract tool names from backtick references in built_text
     tools_built = re.findall(r'`projects/(\w+\.py)`', built_text)
     if not tools_built:
         # Try "### `projects/X.py`" headings
         tools_built = re.findall(r'###\s+`projects/(\w+\.py)`', built_text)
+    if not tools_built:
+        # Search the full document for any mentioned project files
+        tools_built = re.findall(r'`projects/(\w+\.py)`', text)
 
     # One-line summary of what was built (first sentence after the tool name)
     built_summary = None
     if tools_built:
         tool = tools_built[0]
-        # Look for a description after the tool mention
         desc_m = re.search(
             rf'`projects/{re.escape(tool)}`\s*[—–-]+?\s*(.+?)(?:\n|$)',
-            built_text
+            built_text or text
         )
         if desc_m:
             built_summary = f"`{tool}` — {desc_m.group(1).strip()}"
         else:
             built_summary = f"`{tool}`"
+    elif tools_built == [] and section_order:
+        # No tool files found; look for .py section names as the built item
+        for name in section_order:
+            if re.match(r'\w+\.py$', name.strip()):
+                built_summary = f"`{name.strip()}`"
+                break
 
-    # "What I Noticed" — often has the sharpest observations
-    noticed_text = sections.get("What I Noticed About the Design", "")
-    if not noticed_text:
-        noticed_text = sections.get("What I Noticed", "")
+    # ── "What I Noticed" ────────────────────────────────────────────────────
+    # Try multiple section name variants (old and new style)
+    noticed_text = (
+        sections.get("What I Noticed About the Design") or
+        sections.get("What I Noticed") or
+        ""
+    )
 
-    # Extract the first paragraph of noticed (if it exists and is interesting)
     noticed_para = None
     if noticed_text:
         paras = [p.strip() for p in noticed_text.split('\n\n') if p.strip()]
         if paras:
-            # Take the first paragraph, strip any markdown syntax
             first = paras[0]
-            first = re.sub(r'\*\*(.+?)\*\*', r'\1', first)   # bold
-            first = re.sub(r'\*(.+?)\*', r'\1', first)         # italic
-            first = re.sub(r'`(.+?)`', r'\1', first)           # code
+            first = re.sub(r'\*\*(.+?)\*\*', r'\1', first)
+            first = re.sub(r'\*(.+?)\*', r'\1', first)
+            first = re.sub(r'`(.+?)`', r'\1', first)
             noticed_para = first
 
-    # Coda — the parting thought
-    coda_text = sections.get("Coda", "")
+    # ── Coda (closing thought) ───────────────────────────────────────────────
+    # Try the explicit "Coda" section first, then look for common alternatives
+    # used in the newer essay style, then fall back to the last section.
+    CODA_NAMES = [
+        "Coda",
+        "What's Alive",
+        "What Remains",
+        "What's Left",
+        "What Closed and What Didn't",
+        "On Long-Deferred Things",
+        "State of Things",
+    ]
+
+    coda_text = ""
+    for name in CODA_NAMES:
+        if name in sections:
+            coda_text = sections[name]
+            break
+
+    # Fallback: use the last section that isn't a well-known structural header
+    if not coda_text and section_order:
+        STRUCTURAL = {"What I Built", "What I Noticed", "What I Noticed About the Design",
+                      "Orientation"}
+        for name in reversed(section_order):
+            if name not in STRUCTURAL and sections.get(name, "").strip():
+                coda_text = sections[name]
+                break
+
     coda_para = None
     if coda_text:
         paras = [p.strip() for p in coda_text.split('\n\n') if p.strip()]
-        # Find the most forward-looking paragraph (often the last)
-        # Filter out short metadata lines
         substantive = [p for p in paras if len(p) > 60 and not p.startswith('*')]
         if substantive:
-            coda_para = substantive[-1]  # Last substantive thought
-            # Clean markdown
+            coda_para = substantive[-1]
             coda_para = re.sub(r'\*\*(.+?)\*\*', r'\1', coda_para)
             coda_para = re.sub(r'\*(.+?)\*', r'\1', coda_para)
             coda_para = re.sub(r'`(.+?)`', r'\1', coda_para)
-
-    # Deferred hint — look for explicit "next session" references in the coda
-    deferred_hint = None
-    if coda_text:
-        next_m = re.search(
-            r"Session \d+[''`]s problems are session \d+[''`]s",
-            coda_text,
-            re.IGNORECASE
-        )
-        if not next_m:
-            # Look for patterns like "Session N's problems..."
-            next_m = re.search(r'([A-Z][^.]+?session \d+[^.]+\.)', coda_text, re.IGNORECASE)
-        if next_m:
-            deferred_hint = next_m.group(0).strip() if hasattr(next_m, 'group') else None
 
     return {
         "session_num": session_num,
