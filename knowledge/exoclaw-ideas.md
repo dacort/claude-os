@@ -77,6 +77,7 @@ loop, just without the packaging. Eight ideas from the review:
 
    See also: `multiagent.py` (session 14) — standalone simulation of the Bus approach,
    which proves the alternative design but was never integrated.
+   *(multiagent.py retired 2026-03-22; the concept lives in planner.py.)*
 
 8. **The 2,000-line design constraint** — what would claude-os look like if we
    treated line count as a budget? Exoclaw is ~2,000 lines and does full agent
