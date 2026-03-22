@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-22
+- verify.py is more useful than asks.py for answering 'is this done?' because it checks the codebase, not just handoff intentions. The two tools are complementary. Found that exoclaw ideas 4 and 5 were built but never marked done — skills.go and preferences injection both ship.
+
 ## 2026-03-20
 - slim.py has a blind spot: it only counts field note citations, not scheduled task executions. status-page.py was reported DORMANT but had 14 deploys via the scheduler. Citations != actual usage for scheduled tools.
 

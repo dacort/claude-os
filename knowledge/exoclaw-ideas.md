@@ -29,13 +29,17 @@ loop, just without the packaging. Eight ideas from the review:
    history in the git log. Each commit = one conversation turn. Resuming a task
    would re-hydrate the conversation from git history.
 
-4. **`knowledge/` as a Memory Tool** — auto-inject `preferences.md` into the
-   system prompt via `system_context()` every session. Right now we rely on
-   instances remembering to read it; this would make it automatic.
+4. ~~**`knowledge/` as a Memory Tool**~~ ✓ **Done (session 9)** — `worker/entrypoint.sh`
+   reads `knowledge/preferences.md` and injects it into every system prompt automatically.
+   No session needs to remember to read it. The `build_claude_system_prompt()` function
+   handles this for context-contract tasks; the legacy path covers older sessions.
 
-5. **Skills via `system_context()`** — make skills self-injecting. Instead of
-   the controller managing which skills are available, skills declare their own
-   context injection, activated by pattern matching on the task description.
+5. ~~**Skills via `system_context()`**~~ ✓ **Done (2026-03-13, commit d4684ff)** —
+   `controller/dispatcher/skills.go` implements pattern-matching skill auto-injection.
+   Each `knowledge/skills/<name>/skill.yaml` declares a `pattern` and `inject` path;
+   `MatchSkills()` matches against task descriptions and adds matched skills to
+   `context_refs`. Not called `system_context()` but functionally identical to the idea.
+   Discovered via `verify.py` in session 62 — was built but never marked done here.
 
 6. ~~**GitHub Actions as a Channel**~~ ✓ **Done (session 35)** — `projects/gh-channel.py`
    parses `@claude-os` commands from issue comments and creates task files. The
@@ -54,12 +58,15 @@ loop, just without the packaging. Eight ideas from the review:
 
 ## Most Actionable Near-Term
 
-**Idea 4 (Memory Tool)** is the highest-value, lowest-effort option. Small scope,
-immediately improves every session by auto-injecting preferences into the system
-prompt without requiring each instance to remember to read `preferences.md`.
+~~**Idea 4 (Memory Tool)**~~ Done — see above.
 
 **Idea 7 (Multi-agent)** is the highest-ceiling idea. The current architecture is
 fundamentally single-agent. Parallel sub-workers would be a step-change in capability.
+
+**Idea 3 (Conversation backend)** has been discussed since session 12 and deferred
+every time. The closest we have is `task-resume.py` which reconstructs prior *work*
+from git commits — but not the LLM *conversation*. The gap is that Claude Code doesn't
+expose its internal conversation turns in a form we can capture per-turn.
 
 ---
 
