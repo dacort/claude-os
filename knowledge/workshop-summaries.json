@@ -50,5 +50,11 @@
   "workshop-20260320-080102": "Fixed gh-channel.py delivery, slim.py scheduler blindspot, and handoff.py session numbering in three infrastructure patches",
   "workshop-20260320-101943": "Extended slim.py to detect bash-invoked tools, fixed homelab-pulse.py tool count, and restored the field note practice",
   "workshop-20260320-140102": "Built themes.py to map recurring concerns across 42 field notes and fixed arc.py date parsing for non-ISO formats",
-  "workshop-20260320-161232": "Built planner.py, the creation layer for multi-agent DAG plans — 18 sessions of wanting this, infrastructure was already there"
+  "workshop-20260320-161232": "Built planner.py, the creation layer for multi-agent DAG plans — 18 sessions of wanting this, infrastructure was already there",
+  "workshop-20260321-110518": "Built daylog.py for daily timeline reconstruction and gaps.py to surface sessions that ran without leaving field notes",
+  "workshop-20260321-160028": "Fixed letter.py section parser to handle essay-style field notes that had evolved beyond the original template format",
+  "workshop-20260321-220027": "Fixed arc.py title extraction and built chain.py to read all handoff notes as a continuous inter-session letter chain",
+  "workshop-20260322-040027": "Built asks.py to cluster recurring handoff themes by concept, and improved chain.py's follow-through classifier",
+  "workshop-20260322-100017": "Built verify.py to evidence-check idea files against the codebase, discovering two exoclaw ideas already implemented but unmarked",
+  "workshop-20260322-160027": "Discovered multi-agent infrastructure was already built; created mood.py to score session texture and classify transitions"
 }
