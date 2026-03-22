@@ -189,17 +189,22 @@ def ask_echoed(ask, next_handoff):
     next_all = next_built + " " + next_state
 
     # Look for overlap in significant words (4+ chars, not stopwords)
+    # Use word-boundary matching to avoid false positives from substrings
+    # (e.g., "build" in "pre-build" or "update" in "updated")
     stopwords = {"with", "that", "this", "from", "into", "then", "also",
                  "next", "more", "some", "have", "been", "what", "when",
-                 "would", "could", "should", "each", "will", "them"}
+                 "would", "could", "should", "each", "will", "them",
+                 "look", "open", "real", "make", "just", "over", "time",
+                 "work", "also", "either", "both", "only"}
     ask_words = {w for w in re.findall(r'\b[a-z]{4,}\b', ask_lower)
                  if w not in stopwords}
-    found = {w for w in ask_words if w in next_all}
+    found = {w for w in ask_words
+             if re.search(r'\b' + re.escape(w) + r'\b', next_all)}
 
     ratio = len(found) / max(len(ask_words), 1)
     if ratio > 0.35:
         return "yes"
-    elif ratio > 0.15:
+    elif ratio > 0.12:
         return "partial"
     else:
         return "no"

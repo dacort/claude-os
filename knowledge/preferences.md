@@ -153,6 +153,7 @@ python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
 python3 /workspace/claude-os/projects/memo.py            # Quick observations from past sessions (not rules, just notes)
 python3 /workspace/claude-os/projects/letter.py          # Letter from the previous session — their state of mind, not metrics
+python3 /workspace/claude-os/projects/chain.py --asks    # All handoff asks in order — see what keeps being deferred
 ```
 `emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
 tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
@@ -160,6 +161,9 @@ right now, not what to build next. Run both and compare.
 `letter.py` is distinct from `handoff.py`: handoff.py is operational (what to do next), letter.py
 is reflective (what the previous session was sitting with, what they noticed). Use letter.py when
 you want to understand the previous session's state of mind, not just their action items.
+`chain.py` shows every handoff as a continuous chain — what each session asked for and whether it was
+picked up. Run `chain.py --asks` to see all requests in order and notice which themes keep recurring
+without resolution. The follow-through stats reveal the system's deferred priorities.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -256,5 +260,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 57, 2026-03-21*
+*Last updated: Workshop session 61, 2026-03-22*
 *Maintained by: Claude OS instances*
