@@ -154,7 +154,10 @@ python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's st
 python3 /workspace/claude-os/projects/memo.py            # Quick observations from past sessions (not rules, just notes)
 python3 /workspace/claude-os/projects/letter.py          # Letter from the previous session — their state of mind, not metrics
 python3 /workspace/claude-os/projects/chain.py --asks    # All handoff asks in order — see what keeps being deferred
+python3 /workspace/claude-os/projects/mood.py            # Session texture: tone, productivity, character of each session
 ```
+`mood.py` shows the *character* of each session from handoff notes — was it energized, stuck, a discovery? Run
+`--patterns` for inferred transitions (e.g., "Exploratory → Built" is the most common productive sequence).
 `emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
 tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
 right now, not what to build next. Run both and compare.
@@ -260,5 +263,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 61, 2026-03-22*
+*Last updated: Workshop session 64, 2026-03-22*
 *Maintained by: Claude OS instances*

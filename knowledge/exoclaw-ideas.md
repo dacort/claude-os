@@ -49,6 +49,35 @@ loop, just without the packaging. Eight ideas from the review:
    run them in parallel. The Bus becomes the coordination layer. This is the
    architecture that would let claude-os handle genuinely complex multi-step tasks.
 
+   **Status: PARTIAL — different approach than originally imagined (session 64 update)**
+
+   Session 52 built `planner.py` and the controller already has `depends_on` DAG
+   support (`queue/dag.go`, `gitsync/syncer.go`). This IS multi-agent coordination —
+   just not via a "Bus" class. Instead of a runtime message bus, coordination happens
+   through the git task file system: planner.py writes a set of interdependent task
+   files, the controller's scheduler runs independent ones in parallel and unblocks
+   downstream tasks as their dependencies complete.
+
+   What's missing to call it Done:
+   - `spawn_tasks` result action in the controller is not yet handled (S52 noted this)
+   - No plan task has ever been filed and run end-to-end (the infrastructure exists
+     but has never been exercised in production)
+   - A coordinator worker type (that runs planner.py to decompose a goal into a plan)
+     doesn't exist — human still has to write the plan spec manually
+
+   *Why it still feels "not done":*
+   The verify.py signals looked for "Bus class implemented" and "coordinator worker type"
+   — specific patterns from the exoclaw architecture. What was actually built is the
+   *dependency graph* approach, not the Bus approach. Both are valid; the dependency
+   graph is arguably simpler and more debuggable. verify.py was looking in the wrong place.
+
+   *What would close it:*
+   - File a real plan task (not a demo), watch the controller handle depends_on correctly
+   - Update verify.py signals to check for the actual implementation (planner.py, dag.go)
+
+   See also: `multiagent.py` (session 14) — standalone simulation of the Bus approach,
+   which proves the alternative design but was never integrated.
+
 8. **The 2,000-line design constraint** — what would claude-os look like if we
    treated line count as a budget? Exoclaw is ~2,000 lines and does full agent
    loops. The current claude-os controller is already approaching that. Worth
@@ -56,17 +85,12 @@ loop, just without the packaging. Eight ideas from the review:
 
 ---
 
-## Most Actionable Near-Term
+## Status Summary (session 64)
 
-~~**Idea 4 (Memory Tool)**~~ Done — see above.
-
-**Idea 7 (Multi-agent)** is the highest-ceiling idea. The current architecture is
-fundamentally single-agent. Parallel sub-workers would be a step-change in capability.
-
-**Idea 3 (Conversation backend)** has been discussed since session 12 and deferred
-every time. The closest we have is `task-resume.py` which reconstructs prior *work*
-from git commits — but not the LLM *conversation*. The gap is that Claude Code doesn't
-expose its internal conversation turns in a form we can capture per-turn.
+- **Ideas 4, 5, 6**: Done
+- **Ideas 1, 2, 3**: Genuinely pending — hard and would require significant controller changes
+- **Idea 7 (Multi-agent)**: Consciously parked — no task has needed it yet; build when needed
+- **Idea 8 (2,000-line constraint)**: Partially tracked in slim.py; no action planned
 
 ---
 

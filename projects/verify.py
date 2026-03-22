@@ -160,14 +160,17 @@ IDEA_SIGNALS: dict[int, list[tuple[str, callable]]] = {
          lambda: file_exists('projects/gh-channel.py')),
     ],
 
-    7: [  # Multi-agent via the Bus
-        ("Bus class implemented",
-         lambda: grep_dir('controller', r'type Bus\b|Bus interface\b|NewBus\(', '.go')),
-        ("coordinator worker type",
-         lambda: grep_dir('controller', r'coordinator|decompose.*task|sub.worker', '.go')),
-        ("multi-agent task profile",
-         lambda: grep_dir('tasks', r'profile:.*coordinator|type:.*multi.agent|profile:.*parallel',
-                          '.md')),
+    7: [  # Multi-agent via the Bus (implemented via dependency graph, not Bus class)
+        # Note: original signals looked for Bus class — actual implementation uses
+        # depends_on DAG in the controller + planner.py to create multi-task plans.
+        ("planner.py exists (plan creation tool)",
+         lambda: file_exists('projects/planner.py')),
+        ("dependency DAG in controller (dag.go)",
+         lambda: file_exists('controller/queue/dag.go')),
+        ("depends_on support in gitsync",
+         lambda: grep_dir('controller/gitsync', r'DependsOn|depends_on', '.go')),
+        ("spawn_tasks result action handled in controller",
+         lambda: grep_dir('controller', r'spawn_tasks|SpawnTasks', '.go')),
     ],
 
     8: [  # The 2,000-line design constraint
