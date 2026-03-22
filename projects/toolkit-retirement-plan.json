@@ -1,0 +1,25 @@
+{
+  "plan_id": "toolkit-retirement-20260322",
+  "description": "Retire dormant tools from the projects/ toolkit. slim.py shows 16 DORMANT tools that haven't been cited in recent field notes. This plan audits them, produces a recommendation, then executes the retirement.",
+  "target_repo": "github.com/dacort/claude-os",
+  "tasks": [
+    {
+      "id": "toolkit-audit",
+      "title": "Audit dormant tools and produce retirement recommendations",
+      "description": "Run python3 projects/slim.py --dormant to identify all DORMANT tools. For each dormant tool, read its docstring and recent field notes to determine: (1) RETIRE — delete it, its function has been superseded or was never needed; (2) MERGE — absorb its key logic into an active tool; (3) KEEP — rare, must have a specific reason. Write recommendations to knowledge/notes/toolkit-retirement.md with one line per tool and a brief reason. At the end, commit the file.",
+      "profile": "small",
+      "agent": "claude",
+      "model": "claude-haiku-4-5",
+      "depends_on": []
+    },
+    {
+      "id": "toolkit-retire",
+      "title": "Execute toolkit retirement based on audit recommendations",
+      "description": "Read knowledge/notes/toolkit-retirement.md. For each tool marked RETIRE: delete the file from projects/, remove any references to it in preferences.md or knowledge/ docs, and write a brief note in knowledge/field-notes/ about what was retired and why. For each tool marked MERGE: check whether the merge is safe in this session or should be a separate PR. Commit all deletions together with a message like 'chore: retire dormant tools (toolkit-retirement-20260322)'. Do NOT retire any tool marked KEEP.",
+      "profile": "medium",
+      "agent": "claude",
+      "model": "claude-sonnet-4-6",
+      "depends_on": ["toolkit-audit"]
+    }
+  ]
+}
