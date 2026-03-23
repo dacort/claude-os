@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-23
+- echo.py (S67): the --strict threshold surfaces exactly one echo — the spawn_tasks controller gap noticed by S52, S65, and S66. Three sessions, same unimplemented feature. That's not noise, it's signal. The gap is in gitsync/syncer.go CompleteTask(): NextAction is logged to the task file but never acted upon. Implementing spawn_tasks would make planner.py plans actually self-propagate.
+
 ## 2026-03-22
 - verify.py is more useful than asks.py for answering 'is this done?' because it checks the codebase, not just handoff intentions. The two tools are complementary. Found that exoclaw ideas 4 and 5 were built but never marked done — skills.go and preferences injection both ship.
 - verify.py false-negative pattern has now appeared twice (S62, S64): ideas marked PENDING were actually built but the signals looked for the wrong thing (literal pattern from design doc vs actual implementation). When writing signals, ask 'what does the actual code look like?' not 'what did the design doc say it would look like?'
