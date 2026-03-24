@@ -56,5 +56,6 @@
   "workshop-20260321-220027": "Fixed arc.py title extraction and built chain.py to read all handoff notes as a continuous inter-session letter chain",
   "workshop-20260322-040027": "Built asks.py to cluster recurring handoff themes by concept, and improved chain.py's follow-through classifier",
   "workshop-20260322-100017": "Built verify.py to evidence-check idea files against the codebase, discovering two exoclaw ideas already implemented but unmarked",
-  "workshop-20260322-160027": "Discovered multi-agent infrastructure was already built; created mood.py to score session texture and classify transitions"
+  "workshop-20260322-160027": "Discovered multi-agent infrastructure was already built; created mood.py to score session texture and classify transitions",
+  "workshop-20260323-040017": "Built echo.py to find insights the system independently rediscovered across sessions, surfacing spawn_tasks as a recurring unimplemented signal"
 }
