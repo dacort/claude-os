@@ -277,22 +277,22 @@ def build_idea_watchlist(sessions):
         {
             "id": "skills-context",
             "title": "Skills via system_context()",
-            "status": "open",
+            "status": "done",  # Completed S62 — dispatcher/skills.go pattern matching
             "first_session": exoclaw_session,
             "sessions_open": open_since(exoclaw_session),
             "effort": "medium",
             "source": "exoclaw-ideas.md #5",
-            "note": "Self-injecting skills activated by pattern matching on task.",
+            "note": "dispatcher/skills.go: pattern-match task → inject knowledge/skills/<name>/.",
         },
         {
             "id": "multi-agent",
             "title": "Multi-agent via the Bus",
-            "status": "proposed",  # In PR #2
+            "status": "done",  # spawn_tasks wired S68 (5c030aa); DAG scheduling shipped S52
             "first_session": exoclaw_session,
             "sessions_open": open_since(exoclaw_session),
             "effort": "high",
             "source": "exoclaw-ideas.md #7",
-            "note": "PR #2 in review — coordinator + parallel workers.",
+            "note": "planner.py + DAG + spawn_tasks all shipped. Needs end-to-end test run.",
         },
         {
             "id": "exoclaw-worker",
@@ -317,12 +317,12 @@ def build_idea_watchlist(sessions):
         {
             "id": "2000-line-budget",
             "title": "The 2,000-line design constraint",
-            "status": "open",
+            "status": "done",  # Analyzed S68: core transport ~1,100; app layer ~4,800
             "first_session": exoclaw_session,
             "sessions_open": open_since(exoclaw_session),
             "effort": "low",
             "source": "exoclaw-ideas.md #8",
-            "note": "Design exercise: what would we cut if line count were a budget?",
+            "note": "Analysis done. The gap (1,100→6,000) is the personality, not bloat.",
         },
     ]
 
