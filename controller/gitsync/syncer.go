@@ -241,14 +241,20 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 		}
 
 		// If any dependency is not yet completed, block this task instead of
-		// enqueuing it. The watcher will unblock it when deps complete.
+		// enqueuing it. Re-evaluated every sync cycle so blocked tasks get
+		// unblocked once deps appear in tasks/completed/ on disk.
 		if len(task.DependsOn) > 0 {
 			allMet := true
 			for _, dep := range task.DependsOn {
 				depTask, err := s.queue.Get(ctx, dep)
 				if err != nil || depTask.Status != queue.StatusCompleted {
-					allMet = false
-					break
+					// Fallback: check if dep exists in tasks/completed/ on disk.
+					// Redis is ephemeral and may have lost the record after restart.
+					completedPath := filepath.Join(tasksPath, "completed", dep+".md")
+					if _, statErr := os.Stat(completedPath); statErr != nil {
+						allMet = false
+						break
+					}
 				}
 			}
 			if !allMet {
@@ -259,9 +265,14 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 				if task.PlanID != "" {
 					s.queue.RegisterPlanTask(ctx, task.PlanID, taskID)
 				}
-				s.knownTasks[taskID] = true
+				// Don't mark as knownTask — re-check deps on every sync cycle
 				slog.Info("blocked task (unmet dependencies)", "id", taskID, "depends_on", task.DependsOn)
 				continue
+			}
+			// Deps now met — unblock if previously blocked, then fall through to enqueue
+			if task.PlanID != "" {
+				s.queue.Unblock(ctx, task)
+				slog.Info("deps now met, unblocking task", "id", taskID)
 			}
 		}
 

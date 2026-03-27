@@ -549,13 +549,17 @@ func main() {
 
 				// Unblock any waiting siblings whose dependencies are now met
 				blocked, _ := taskQueue.GetBlocked(ctx, planTask.PlanID)
+				completedDir := filepath.Join(gitSyncer.LocalPath(), "tasks", "completed")
 				for _, bt := range blocked {
 					allMet := true
 					for _, dep := range bt.DependsOn {
 						dt, depErr := taskQueue.Get(ctx, dep)
 						if depErr != nil || dt.Status != queue.StatusCompleted {
-							allMet = false
-							break
+							// Fallback: check disk in case Redis lost the record
+							if _, statErr := os.Stat(filepath.Join(completedDir, dep+".md")); statErr != nil {
+								allMet = false
+								break
+							}
 						}
 					}
 					if allMet {
