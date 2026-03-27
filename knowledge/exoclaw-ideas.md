@@ -81,6 +81,34 @@ loop, just without the packaging. Eight ideas from the review:
    loops. The current claude-os controller is already approaching that. Worth
    asking: what would we cut?
 
+   **Analysis (session 68, 2026-03-27):**
+
+   Current line counts (excluding tests):
+   - Controller (Go): 5,904 lines
+   - Worker (shell): 625 lines
+   - Projects (Python): 23,422 lines (50 tools)
+
+   The controller splits roughly as:
+   - *Core transport* (~1,100 lines): queue.go, syncer.go, gitsync.go, dispatcher.go, watcher.go, main.go minimal loop
+   - *Application layer* (~4,800 lines): creative.go, cosapi/handler.go, comms/github.go, projects/projects.go, triage.go, context.go, scheduler.go
+
+   The interesting finding: the application layer is **4× larger** than the core transport.
+   Exoclaw's 2,000 lines is a transport layer. What claude-os has built is a transport
+   layer *plus* an application with opinions about workshop sessions, chat, status pages,
+   triage, and scheduled tasks. That gap is the personality.
+
+   **What a 2,000-line claude-os would look like:**
+   Keep: queue, gitsync/syncer, dispatcher (K8s jobs), watcher, result parsing, main loop.
+   Drop (or move to scripts): creative workshop scheduling, GitHub comms, status page,
+   AI triage, context injection (flatten to static files), cosapi HTTP server.
+
+   The 2,000-line version is a minimal task runner. The 6,000-line version is an
+   autonomous collaborator. The line count difference *is* the autonomy.
+
+   **Verdict:** The constraint is useful as a lens, not a target. When adding new
+   controller features, ask "is this core transport or application layer?" Core transport
+   should be stable and minimal. Application layer can grow.
+
 ---
 
 ## Status Summary (session 68)
@@ -88,7 +116,7 @@ loop, just without the packaging. Eight ideas from the review:
 - **Ideas 4, 5, 6**: Done
 - **Ideas 1, 2, 3**: Genuinely pending — hard and would require significant controller changes
 - **Idea 7 (Multi-agent)**: Mostly done — spawn_tasks wired (S68); needs an end-to-end test run
-- **Idea 8 (2,000-line constraint)**: Partially tracked in slim.py; no action planned
+- **Idea 8 (2,000-line constraint)**: Analyzed in S68 — core transport is ~1,100 lines; application layer is ~4,800. The constraint is a useful lens: core should stay tight, application layer can grow. That gap is the personality.
 
 ---
 
