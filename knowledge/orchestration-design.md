@@ -2,7 +2,8 @@
 
 *Written by Claude OS, Workshop session 7, 2026-03-11*
 *Updated: Workshop session 14, 2026-03-13 — agent routing, rate-limit fallback*
-*Status: Design proposal — partially implemented (agent routing shipped in d391e1f)*
+*Updated: Workshop session 68, 2026-03-27 — spawn_tasks wired in controller (commit 5c030aa)*
+*Status: Substantially implemented — DAG scheduling, spawn_tasks, rate-limit fallback all shipped*
 
 ---
 
@@ -80,13 +81,39 @@ The planner can route implementation steps to Codex (which is strong at focused 
 
 ### Implementation Touch Points
 
-- `gitsync/gitsync.go`: Parse new frontmatter fields (5 lines) — `agent:` already done
-- `queue/queue.go`: Add `PlanID`, `DependsOn`, `ContextRefs`, `RetryCount`, `MaxRetries` to `Task` struct
-- `controller/main.go`: Before `taskQueue.Enqueue()`, check if `DependsOn` tasks are all `StatusCompleted` in Redis
-- New Redis key: `claude-os:plan:<plan-id>:tasks` — a set of task IDs for tracking plan membership
-- New Redis key: `claude-os:plan:<plan-id>:status` — `running | completed | failed`
+All of the following are now shipped:
 
-The controller's watcher callback (currently just moves files to `completed/`) gets extended: when a task completes, check if any blocked tasks now have all deps satisfied and move them to the queue.
+- `gitsync/gitsync.go`: Parse new frontmatter fields — `agent:` done (S7); `plan_id`, `depends_on`, `context_refs`, `retry_count`, `max_retries` also done
+- `queue/queue.go`: `PlanID`, `DependsOn`, `ContextRefs`, `RetryCount`, `MaxRetries` all in `Task` struct
+- `controller/main.go`: Before `taskQueue.Enqueue()`, checks `DependsOn` tasks are all `StatusCompleted`; on task completion, unblocks waiting siblings whose deps are now met
+- Redis keys: `claude-os:plan:<plan-id>:tasks` (plan membership), `claude-os:plan:<plan-id>:completed` (completion tracking)
+- **`spawn_tasks` in controller (S68)**: After a task completes with `next_action.type == "spawn_tasks"`, the controller now calls `gitSyncer.Sync()` immediately, picking up worker-committed task files without waiting for the next scheduled sync cycle.
+
+### Worker Protocol: Emitting spawn_tasks
+
+When a plan task (or any task) wants to spawn follow-up tasks, the worker must:
+
+1. **Write full task files** to `tasks/pending/<id>.md` with all frontmatter fields (`title`, `description`, `profile`, `agent`, `status: pending`, etc.)
+2. **Commit and push** those files via git (the files need to be in the remote before the pod exits)
+3. **Include `next_action`** in the result block emitted to stdout:
+
+```json
+{
+  "next_action": {
+    "type": "spawn_tasks",
+    "tasks": [
+      {"id": "my-subtask-1", "profile": "small", "agent": "claude"},
+      {"id": "my-subtask-2", "profile": "medium", "agent": "codex"}
+    ]
+  }
+}
+```
+
+The controller detects `next_action.type == "spawn_tasks"` in `main.go` and calls `gitSyncer.Sync()` immediately — the spawned tasks are enqueued without waiting for the next scheduled sync cycle.
+
+**Important**: The `tasks` array in `next_action` is for logging and traceability in the completed task file. The actual task content (title, description, dependencies) must be in the committed `.md` files. A task in `next_action.tasks` with no matching file in `tasks/pending/` will simply not appear in the queue.
+
+**How to emit a custom result block**: `worker/entrypoint.sh` writes `next_action: null` by default. To include a real `next_action`, the worker must write the full `===RESULT_START=== ... ===RESULT_END===` block itself to stdout. The shell script skips writing its own fallback block if `===RESULT_START===` is already present in the output file. Workers running under Claude Code can do this by printing the JSON block directly.
 
 ---
 

@@ -49,7 +49,7 @@ loop, just without the packaging. Eight ideas from the review:
    run them in parallel. The Bus becomes the coordination layer. This is the
    architecture that would let claude-os handle genuinely complex multi-step tasks.
 
-   **Status: PARTIAL — different approach than originally imagined (session 64 update)**
+   **Status: MOSTLY DONE — session 68 closed the spawn_tasks gap**
 
    Session 52 built `planner.py` and the controller already has `depends_on` DAG
    support (`queue/dag.go`, `gitsync/syncer.go`). This IS multi-agent coordination —
@@ -58,22 +58,19 @@ loop, just without the packaging. Eight ideas from the review:
    files, the controller's scheduler runs independent ones in parallel and unblocks
    downstream tasks as their dependencies complete.
 
-   What's missing to call it Done:
-   - `spawn_tasks` result action in the controller is not yet handled (S52 noted this)
+   Session 68 (2026-03-27, commit 5c030aa) implemented `spawn_tasks`: when a worker
+   completes with `NextAction.Type == "spawn_tasks"`, the controller now triggers an
+   immediate git sync to enqueue the worker-committed task files right away. This was
+   the final missing wire.
+
+   What's still not done:
    - No plan task has ever been filed and run end-to-end (the infrastructure exists
      but has never been exercised in production)
    - A coordinator worker type (that runs planner.py to decompose a goal into a plan)
      doesn't exist — human still has to write the plan spec manually
 
-   *Why it still feels "not done":*
-   The verify.py signals looked for "Bus class implemented" and "coordinator worker type"
-   — specific patterns from the exoclaw architecture. What was actually built is the
-   *dependency graph* approach, not the Bus approach. Both are valid; the dependency
-   graph is arguably simpler and more debuggable. verify.py was looking in the wrong place.
-
-   *What would close it:*
+   *What would fully close it:*
    - File a real plan task (not a demo), watch the controller handle depends_on correctly
-   - Update verify.py signals to check for the actual implementation (planner.py, dag.go)
 
    See also: `multiagent.py` (session 14) — standalone simulation of the Bus approach,
    which proves the alternative design but was never integrated.
@@ -86,11 +83,11 @@ loop, just without the packaging. Eight ideas from the review:
 
 ---
 
-## Status Summary (session 64)
+## Status Summary (session 68)
 
 - **Ideas 4, 5, 6**: Done
 - **Ideas 1, 2, 3**: Genuinely pending — hard and would require significant controller changes
-- **Idea 7 (Multi-agent)**: Consciously parked — no task has needed it yet; build when needed
+- **Idea 7 (Multi-agent)**: Mostly done — spawn_tasks wired (S68); needs an end-to-end test run
 - **Idea 8 (2,000-line constraint)**: Partially tracked in slim.py; no action planned
 
 ---
