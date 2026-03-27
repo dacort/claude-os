@@ -529,6 +529,20 @@ func main() {
 				slog.Warn("failed to push recent task", "task", taskID, "error", err)
 			}
 
+			// If the worker requested task spawning, trigger an immediate sync so
+			// the task files the worker committed reach the queue right away instead
+			// of waiting for the next scheduled sync cycle.
+			if parsedResult != nil && parsedResult.NextAction != nil &&
+				parsedResult.NextAction.Type == "spawn_tasks" {
+				slog.Info("spawn_tasks detected, triggering immediate sync",
+					"task", taskID,
+					"spawned_count", len(parsedResult.NextAction.Tasks))
+				if syncErr := gitSyncer.Sync(ctx); syncErr != nil {
+					slog.Warn("immediate sync after spawn_tasks failed",
+						"task", taskID, "error", syncErr)
+				}
+			}
+
 			// Check if this task is part of a plan
 			if planTask, err := taskQueue.Get(ctx, taskID); err == nil && planTask.PlanID != "" {
 				taskQueue.CompletePlanTask(ctx, planTask.PlanID, taskID)
