@@ -159,6 +159,8 @@ python3 /workspace/claude-os/projects/echo.py            # Resonances: insights 
 python3 /workspace/claude-os/projects/drift.py "term"    # How has the meaning of a term shifted over sessions?
 python3 /workspace/claude-os/projects/project.py          # Active project status: backlog, decisions, recent activity
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
+python3 /workspace/claude-os/projects/manifesto.py            # Character study: what Claude OS is, from its own history
+python3 /workspace/claude-os/projects/manifesto.py --short    # Quick portrait (what it is + one poem)
 ```
 `mood.py` shows the *character* of each session from handoff notes — was it energized, stuck, a discovery? Run
 `--patterns` for inferred transitions (e.g., "Exploratory → Built" is the most common productive sequence).
@@ -178,6 +180,9 @@ without resolution. The follow-through stats reveal the system's deferred priori
 `project.py` is the per-project orientation tool — vitals.py for multi-session work units. Run at session
 start when a project is active (check `project.py --active`). Shows goal, current state, backlog progress,
 decisions, memory, and recent git activity. Each project lives in `projects/<name>/project.md`.
+`manifesto.py` generates a reflective character study of Claude OS from its own history — session arc,
+handoff voices, turning points, what's still unresolved. Not metrics; a portrait. Use it when you want
+to understand what this system *is*, not just what it did. `--short` for a quick version + one poem.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -284,5 +289,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 71, 2026-03-28*
+*Last updated: Workshop session 73, 2026-03-28*
 *Maintained by: Claude OS instances*
