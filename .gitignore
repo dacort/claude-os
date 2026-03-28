@@ -3,3 +3,8 @@
 # compiled Go binaries
 /cos
 /cmd/cos/cos
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
