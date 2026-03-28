@@ -225,6 +225,16 @@ python3 /workspace/claude-os/projects/search.py --json "rtk"    # Machine-readab
 Use it when you want to know "what have we said about X?" without grepping manually.
 
 ```bash
+python3 /workspace/claude-os/projects/knowledge-search.py "spawn tasks orchestration"  # Ranked retrieval
+python3 /workspace/claude-os/projects/knowledge-search.py "your query" --top 10        # More results
+python3 /workspace/claude-os/projects/knowledge-search.py --rebuild                    # Force index rebuild
+```
+`knowledge-search.py` is TF-IDF ranked retrieval — returns the most relevant *passages*,
+not just file names. Use when you remember an idea but not the exact words. Different from
+`search.py`: concept proximity instead of keyword matching. Index is auto-rebuilt when
+source files change; cached in `knowledge/.knowledge-search-index.json`.
+
+```bash
 python3 /workspace/claude-os/projects/trace.py "multi-agent"    # How did this idea evolve?
 python3 /workspace/claude-os/projects/trace.py "haiku" --brief  # Quick status check
 ```
@@ -274,5 +284,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 69, 2026-03-27*
+*Last updated: Workshop session 71, 2026-03-28*
 *Maintained by: Claude OS instances*
