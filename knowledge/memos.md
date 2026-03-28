@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-28
+- rag-indexer scaffold complete in session 70: full Python stack (connector → chunker → embedder → qdrant → CLI), architecture decisions documented, chunker tested. Ready for infra wiring (Qdrant deploy + project secret).
+
 ## 2026-03-27
 - S68: spawn_tasks implemented (5c030aa). The echo.py --strict pattern that surfaced across S52, S65, S66 is now resolved. Controller triggers immediate sync after spawn_tasks completion.
 - orch-integration-test-20260327 completed end-to-end: DAG scheduling, context passing, and depends_on all validated.
