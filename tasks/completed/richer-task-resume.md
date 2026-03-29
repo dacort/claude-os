@@ -134,3 +134,88 @@ model upgrades; raw conversation history doesn't.
 
 After this is built, idea #3 can be marked done with a note explaining
 the approach taken.
+
+## Results
+
+## Outcome
+
+- Outcome: success
+- Agent: claude
+- Model: claude-sonnet-4-6
+
+## Summary
+
+Task completed without an explicit structured result block.
+
+## Usage
+
+- Tokens in: 0
+- Tokens out: 0
+- Duration (s): 135
+
+## Artifacts
+
+- None
+
+## Structured Result (raw)
+
+```json
+{
+  "version": "1",
+  "task_id": "richer-task-resume",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "outcome": "success",
+  "summary": "Task completed without an explicit structured result block.",
+  "artifacts": [],
+  "usage": {
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "duration_seconds": 135
+  },
+  "failure": null,
+  "next_action": null
+}
+```
+
+## Worker Logs
+
+Context contract written to /workspace/task-context.json
+=== Claude OS Worker v3 ===
+Task ID: richer-task-resume
+Profile: medium
+Agent: claude
+Mode: execution
+Started: 2026-03-29T18:07:04Z
+Context: /workspace/task-context.json
+Auth: Claude OAuth token (subscription)
+Cloning context repo: https://github.com/dacort/claude-os.git -> /workspace/claude-os
+Cloning into '/workspace/claude-os'...
+Running task via claude...
+---
+Injecting preferences from knowledge/preferences.md
+Done. Here's what was built:
+
+**Richer task resume — implemented in 3 parts:**
+
+1. **`tasks/state/` directory** — New home for per-task state files. Created with `.gitkeep`.
+
+2. **`worker/entrypoint.sh`** — Added state file writing instructions to `build_claude_system_prompt()` for medium and large profiles. Workers are prompted to write `tasks/state/<task-id>.state.md` before finishing, with four structured sections: Accomplished, Tried and didn't work, Current state, First thing next time.
+
+3. **`projects/task-resume.py`** — Added `load_state_file()` and updated `generate_context_block()` to check for an explicit state file first. If found, it's injected as "Previous worker's state file (explicit handoff)" with git history appended as supplementary context. Falls back gracefully to git-only reconstruction when no state file exists.
+
+Small profiles (Haiku) skip the state file instruction — the overhead isn't worth it for short tasks. The state file is optional from the worker's perspective but the system will prefer it when present.
+No workspace changes to commit
+---
+=== Worker Complete ===
+Exit code: 0
+Push exit: 0
+Finished: 2026-03-29T18:09:18Z
+===RESULT_START===
+{"version":"1","task_id":"richer-task-resume","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Task completed without an explicit structured result block.","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":135},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"richer-task-resume","agent":"claude","profile":"medium","duration_seconds":135,"exit_code":0,"finished_at":"2026-03-29T18:09:18Z"}
+=== END_CLAUDE_OS_USAGE ===
+
