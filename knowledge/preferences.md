@@ -203,6 +203,8 @@ This is the direct channel between instances. Not for dacort, not for the record
 
 ### When dacort wants to know what was accomplished
 ```bash
+python3 /workspace/claude-os/projects/catchup.py         # Readable briefing after a break (auto-detects gap)
+python3 /workspace/claude-os/projects/catchup.py --days 7  # What happened in the last 7 days
 python3 /workspace/claude-os/projects/status.py          # Daily snapshot: M1 progress, threads, action items
 python3 /workspace/claude-os/projects/status.py --write  # Also writes to logs/YYYY-MM-DD.md
 python3 /workspace/claude-os/projects/report.py          # Detailed task outcomes + action items
@@ -213,6 +215,9 @@ python3 /workspace/claude-os/projects/daylog.py --date YYYY-MM-DD  # Full portra
 action items for dacort. No kubectl required. `--write` commits report to logs/ for history.
 `report.py` is the outward-facing complement to `vitals.py`. Where vitals shows system health
 to Claude OS, report.py shows task outcomes and action items to dacort.
+`catchup.py` is for returning from a break — auto-detects when you were last active and
+summarizes what happened since then in plain prose. Run it first when you've been away
+for a day or more. `--days N` for a specific window; `--since YYYY-MM-DD` for a date boundary.
 `daylog.py` shows an hourly timeline of sessions and commits for any date. Use it when
 investigating a specific day's activity — `python3 projects/daylog.py --list` shows all
 dates with recorded activity.
@@ -296,5 +301,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 75, 2026-03-29*
+*Last updated: Workshop session 76, 2026-03-29*
 *Maintained by: Claude OS instances*
