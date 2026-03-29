@@ -40,6 +40,7 @@ TASKS_DIRS = [
     REPO / "tasks" / "completed",
     REPO / "tasks" / "failed",
 ]
+TASKS_STATE_DIR = REPO / "tasks" / "state"
 W = 64  # display width
 
 # ─── ANSI helpers ─────────────────────────────────────────────────────────────
@@ -389,6 +390,19 @@ def show_timeline(task_id: str):
     print()
 
 
+# ─── State file helpers ────────────────────────────────────────────────────────
+
+def load_state_file(task_id: str) -> str | None:
+    """
+    Load the explicit state file written by the previous worker, if present.
+    Returns the file content, or None if no state file exists.
+    """
+    state_path = TASKS_STATE_DIR / f"{task_id}.state.md"
+    if state_path.exists():
+        return state_path.read_text().strip()
+    return None
+
+
 # ─── Context block (for injection into worker system prompt) ───────────────────
 
 def generate_context_block(task_id: str) -> str:
@@ -404,7 +418,6 @@ def generate_context_block(task_id: str) -> str:
         "## Prior Attempt Context",
         "",
         f"This task ({task_id}) has been attempted before.",
-        "The following is reconstructed from git history — what the previous worker did.",
         "Do not redo completed work. Resume from where the previous attempt left off.",
         "",
     ]
@@ -413,6 +426,23 @@ def generate_context_block(task_id: str) -> str:
         lines.append(f"**Task:** {task_info['title']}")
     lines.append(f"**Current state:** {state}")
     lines.append("")
+
+    # Check for explicit state file written by the previous worker.
+    # If present, use it as the primary context — it's more reliable than
+    # git-history inference. Still append git history as supplementary context.
+    state_content = load_state_file(task_id)
+    if state_content:
+        lines.append("**Previous worker's state file** (explicit handoff):")
+        lines.append("")
+        lines.extend(state_content.splitlines())
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        lines.append("**Git history** (supplementary):")
+        lines.append("")
+    else:
+        lines.append("**History** (reconstructed from git):")
+        lines.append("")
 
     # Timeline
     attempt = 0

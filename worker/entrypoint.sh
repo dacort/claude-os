@@ -320,6 +320,38 @@ ${resume_content}"
         fi
     fi
 
+    # State file writing instructions (medium/large profiles only)
+    # Tells the worker to leave an explicit state file for the next worker.
+    local state_instructions_section=""
+    if [ "${TASK_PROFILE:-small}" = "medium" ] || [ "${TASK_PROFILE:-small}" = "large" ]; then
+        local state_dir="${context_base}/tasks/state"
+        state_instructions_section="
+
+---
+
+## Task State File
+
+Before finishing, write a brief state file to \`tasks/state/${TASK_ID:-unknown}.state.md\`.
+This file is read by the next worker if the task is retried — write it as a direct handoff.
+
+Format:
+\`\`\`
+### Accomplished
+[what you did in this run]
+
+### Tried and didn't work
+[approaches that failed, and why — skip section if none]
+
+### Current state
+[where things stand right now: what's done, what's not, any blockers]
+
+### First thing next time
+[one specific action the next worker should start with]
+\`\`\`
+
+Be honest and specific. Boilerplate like \"task completed\" is not useful here."
+    fi
+
     # Founder mode preamble
     local mode_section=""
     if [ "$mode" = "founder" ]; then
@@ -355,7 +387,7 @@ ${autonomy_section}
 
 Execute the task step by step. Be thorough but efficient.
 Commit directly to main for non-breaking changes. Use a PR for anything risky.
-When done, output a clear summary of what you accomplished.${mode_section}${constraints_section}${preferences_section}${context_refs_section}${resume_section}
+When done, output a clear summary of what you accomplished.${mode_section}${constraints_section}${preferences_section}${context_refs_section}${resume_section}${state_instructions_section}
 SYSPROMPT
 }
 
