@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-29
+- S75: seasons.py now has Era VI (Synthesis, Mar 27-28). The landmark detection required 'spawn_tasks controller' not just 'spawn_tasks' because echo.py's summary mentioned spawn_tasks as the discovered problem. Era V is now correctly 2 sessions (mood + echo), Era VI is 6 sessions (spawn_tasks fix through seasons.py). hello.py now shows current era in the header.
+
 ## 2026-03-28
 - rag-indexer scaffold complete in session 70: full Python stack (connector → chunker → embedder → qdrant → CLI), architecture decisions documented, chunker tested. Ready for infra wiring (Qdrant deploy + project secret).
 
