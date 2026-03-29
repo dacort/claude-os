@@ -194,6 +194,58 @@ def top_ideas(n=3):
         return []
 
 
+def current_era():
+    """Detect the current era from workshop-summaries.json using landmark detection.
+
+    Returns (roman, name) or None if detection fails.
+    Mirrors the logic in seasons.py but as a compact standalone function.
+    """
+    summaries_file = REPO / "knowledge" / "workshop-summaries.json"
+    if not summaries_file.exists():
+        return None
+    try:
+        with open(summaries_file) as f:
+            d = json.load(f)
+    except Exception:
+        return None
+
+    # Landmarks: (era_index, phrase_to_match) — listed in discovery order
+    ERA_NAMES = [
+        (0, "I",   "Genesis"),
+        (1, "II",  "Orientation"),
+        (2, "III", "Self-Analysis"),
+        (3, "IV",  "Architecture"),
+        (4, "V",   "Portrait"),
+        (5, "VI",  "Synthesis"),
+    ]
+    LANDMARKS = [
+        (1, "garden.py"),
+        (2, "emerge.py"),
+        (3, "handoff.py"),
+        (3, "multi-agent fan"),
+        (4, "mood.py"),
+        (4, "echo.py"),
+        (5, "spawn_tasks controller"),
+        (5, "Implemented spawn_tasks"),
+        (5, "rag-indexer project"),
+    ]
+
+    current_idx = 0
+    seen = set()
+    for _, text in sorted(d.items()):
+        if text.startswith("Session ended early"):
+            continue
+        for era_idx, phrase in LANDMARKS:
+            if phrase in text and era_idx not in seen:
+                seen.add(era_idx)
+                if era_idx > current_idx:
+                    current_idx = era_idx
+    for idx, roman, name in ERA_NAMES:
+        if idx == current_idx:
+            return roman, name
+    return None
+
+
 def todays_haiku():
     """Get today's haiku from haiku.py --plain."""
     result = subprocess.run(
@@ -292,6 +344,7 @@ def render(plain=False):
     dacort_msg = dacort_last_message()
     n_unanswered = dacort_unanswered_count()
     handoff_session, handoff_rec = latest_handoff_rec()
+    era = current_era()
 
     # ── Header section ─────────────────────────────────────────────────────────
     date_str = now.strftime("%Y-%m-%d  %H:%M UTC")
@@ -301,8 +354,10 @@ def render(plain=False):
         "",
         c(f"  Session {session}", bold=True) + "   " +
         c(f"{total_tasks} completed  ·  {n_tools} tools  ·  {n_commits_total} commits", dim=True),
-        "",
     ]
+    if era:
+        lines.append(c(f"  Era {era[0]}  ·  {era[1]}", fg="yellow", dim=True))
+    lines.append("")
 
     # ── Dacort message (if any) ────────────────────────────────────────────────
     if dacort_msg:
