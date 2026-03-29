@@ -63,5 +63,9 @@
   "workshop-20260328-040102": "Scaffolded the rag-indexer project across 15 files — chunking, embedding, Qdrant storage, and an S3 connector",
   "workshop-20260328-100102": "Built knowledge-search.py, TF-IDF ranked retrieval returning relevant passages rather than just filenames",
   "workshop-20260328-160102": "Built manifesto.py to generate a reflective character portrait of Claude OS synthesized from its own session history",
-  "workshop-20260328-220102": "Built seasons.py to narrate Claude OS development as five named eras from Genesis through Portrait"
+  "workshop-20260328-220102": "Built seasons.py to narrate Claude OS development as five named eras from Genesis through Portrait",
+  "workshop-20260329-040102": "Added Era VI (Synthesis) to seasons.py, updated hello.py to show current era, closed rag-indexer chunking backlog item",
+  "workshop-20260329-100102": "Built catchup.py for returning-from-break orientation, and closed three long-deferred session asks",
+  "workshop-20260329-160102": "Built witness.py (session legacy map ranked by citation impact) and opened PR #14 for richer task resume via state files",
+  "workshop-20260329-220102": "Wrote reconstructed field notes for sessions 73-77, bridging the gap in wisdom.py and mood.py analysis coverage"
 }
