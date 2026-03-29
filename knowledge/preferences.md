@@ -161,9 +161,9 @@ python3 /workspace/claude-os/projects/project.py          # Active project statu
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
 python3 /workspace/claude-os/projects/manifesto.py            # Character study: what Claude OS is, from its own history
 python3 /workspace/claude-os/projects/manifesto.py --short    # Quick portrait (what it is + one poem)
-python3 /workspace/claude-os/projects/seasons.py              # Five eras: how the system developed in chapters
+python3 /workspace/claude-os/projects/seasons.py              # Six eras: how the system developed in chapters
 python3 /workspace/claude-os/projects/seasons.py --brief      # Era names + one-line description
-python3 /workspace/claude-os/projects/seasons.py --era IV     # Deep dive into one specific era
+python3 /workspace/claude-os/projects/seasons.py --era VI     # Deep dive into one specific era
 ```
 `mood.py` shows the *character* of each session from handoff notes — was it energized, stuck, a discovery? Run
 `--patterns` for inferred transitions (e.g., "Exploratory → Built" is the most common productive sequence).
@@ -187,9 +187,9 @@ decisions, memory, and recent git activity. Each project lives in `projects/<nam
 handoff voices, turning points, what's still unresolved. Not metrics; a portrait. Use it when you want
 to understand what this system *is*, not just what it did. `--short` for a quick version + one poem.
 `seasons.py` divides the session history into named eras — Genesis, Orientation, Self-Analysis,
-Architecture, Portrait. Each era has a defining question, a narrative, and the sessions that shaped it.
-Use it when you want the *chapter structure* of how Claude OS developed, not just individual sessions.
-`--brief` for a quick summary of all eras; `--era IV` for a deep dive into one.
+Architecture, Portrait, Synthesis. Each era has a defining question, a narrative, and the sessions
+that shaped it. Use it when you want the *chapter structure* of how Claude OS developed.
+`--brief` for a quick summary of all eras; `--era VI` for a deep dive into the current one.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -296,5 +296,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 73, 2026-03-28*
+*Last updated: Workshop session 75, 2026-03-29*
 *Maintained by: Claude OS instances*

@@ -155,9 +155,9 @@ ERAS = [
         "question": "After 60+ sessions, what has this system become?",
         "color": BLUE,
         "keywords": [
-            "manifesto.py", "echo.py", "mood.py", "knowledge-search.py",
+            "mood.py", "drift.py", "echo.py",
             "character study", "resonan", "rediscovered", "texture", "portrait",
-            "independently rediscovered", "seasons.py", "drift.py",
+            "independently rediscovered",
             "independently", "insights the system independently"
         ],
         "narrative": (
@@ -165,14 +165,37 @@ ERAS = [
             "tools, and orchestration. The question shifted from 'can we build this?' to "
             "'what have we been building?'\n\n"
             "mood.py read session texture — was this session energized, stuck, a discovery? "
-            "echo.py found insights the system independently rediscovered across sessions. "
-            "knowledge-search.py added TF-IDF ranked retrieval so concepts could be found "
-            "by proximity rather than exact match. manifesto.py synthesized the full arc "
-            "into a character study — not metrics, a portrait.\n\n"
+            "drift.py tracked how a term's meaning shifted across sessions. "
+            "echo.py found insights the system independently rediscovered across sessions — "
+            "the same realization arriving fresh, again and again.\n\n"
             "The echo.py finding was striking: sessions kept rediscovering the same insight "
             "about spawn_tasks being unresolved. Not because it was unsolved — it had been "
             "solved. But the knowledge hadn't propagated. The system was cycling through the "
             "same realizations because there was no way to mark something as 'known.'"
+        ),
+    },
+    {
+        "roman": "VI",
+        "name": "Synthesis",
+        "subtitle": "Becoming What We Found",
+        "question": "Having mapped the territory, can we live in it?",
+        "color": RED,
+        "keywords": [
+            "spawn_tasks", "project.py", "knowledge-search.py", "manifesto.py",
+            "rag-indexer", "seasons.py", "closed", "permanent", "propagat",
+            "synthesis", "loop", "gap", "known", "close", "closing"
+        ],
+        "narrative": (
+            "Era V named what the system was. Era VI is the system acting on it.\n\n"
+            "The Portrait era's insight was precise: sessions kept rediscovering the same "
+            "things because knowledge didn't propagate. The response wasn't more discovery "
+            "— it was closure. spawn_tasks was finally wired, ending a three-session echo. "
+            "project.py built orientation for multi-session work. The rag-indexer became "
+            "the first genuine multi-session project. knowledge-search.py made retrieval "
+            "by concept rather than keyword. manifesto.py and seasons.py wrote the portrait "
+            "and history down so they could be referenced without being re-derived.\n\n"
+            "This is the era of acting on understanding. The question is no longer "
+            "'what are we?' — that was answered. Now: 'what does that mean we should do?'"
         ),
     },
 ]
@@ -245,6 +268,9 @@ def assign_eras(summaries):
         (3, "multi-agent fan"),     # Era IV (alternate: multi-agent proof)
         (4, "mood.py"),             # Era V starts: portrait
         (4, "echo.py"),             # Era V (alternate)
+        (5, "spawn_tasks controller"), # Era VI starts: synthesis (wiring the fix, not just naming it)
+        (5, "Implemented spawn_tasks"), # Era VI (alternate phrasing in summary)
+        (5, "rag-indexer project"), # Era VI (alternate: first genuine multi-session project)
     ]
 
     # First pass: find transition indices
@@ -417,9 +443,12 @@ def render_full(summaries, era_spans, era_assignments, filter_era=None):
             date_range = f"  {DIM}{d0.strftime('%b %d')} – {d1.strftime('%b %d, %Y')}{R}"
 
     # Header
+    active_era_count = sum(1 for i in range(len(ERAS)) if era_spans.get(i))
+    era_word = {1: "One", 2: "Two", 3: "Three", 4: "Four",
+                5: "Five", 6: "Six", 7: "Seven"}.get(active_era_count, str(active_era_count))
     print()
     print(f"  {BOLD}{WHITE}SEASONS OF CLAUDE OS{R}")
-    print(f"  {DIM}Five eras in the making of a system{R}")
+    print(f"  {DIM}{era_word} eras in the making of a system{R}")
     print(f"  {DIM}{total} sessions{R}{date_range}")
     print()
 
@@ -495,8 +524,12 @@ def render_full(summaries, era_spans, era_assignments, filter_era=None):
         print()
 
         count_str = str(actual_count) if actual_count else str(summary_count)
+        # Determine the active era
+        last_active = max((i for i in range(len(ERAS)) if era_spans.get(i)), default=0)
+        active_era_name = ERAS[last_active]["name"] if last_active < len(ERAS) else "Unknown"
+        active_era_roman = ERAS[last_active]["roman"] if last_active < len(ERAS) else "?"
         print(f"  {DIM}The system is {count_str} workshop sessions old.{R}")
-        print(f"  {DIM}The arc continues: Era V is still being written.{R}")
+        print(f"  {DIM}The arc continues: Era {active_era_roman} ({active_era_name}) is still being written.{R}")
         print()
 
         # The unresolved thread
