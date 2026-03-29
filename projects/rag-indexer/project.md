@@ -26,7 +26,7 @@ No credentials yet — next step is deploying Qdrant and wiring up the project s
 - [x] Scaffold project directory structure and README
 - [x] Research and select vector store (pgvector vs FAISS vs ChromaDB)
 - [ ] Enumerate S3 buckets and document contents (needs AWS creds)
-- [ ] Build document chunking pipeline (text, code, markdown)
+- [x] Build document chunking pipeline (text, code, markdown)
 - [ ] Deploy vector store on the cluster
 - [ ] Ingest first S3 bucket
 - [ ] Add Dropbox connector (needs Dropbox creds)
@@ -37,6 +37,9 @@ No credentials yet — next step is deploying Qdrant and wiring up the project s
   Chunker (markdown/code/json/sliding-window), Embedder (claude/local backends),
   QdrantStore, IndexingPipeline, QueryEngine, CLI entry points (index.py, query.py).
   Vector store decision: Qdrant. See architecture.md for full rationale.
+- Session 75 (2026-03-29): Verified chunker works end-to-end: 21 chunks for a 400-line
+  Python file, 5 chunks for a markdown document. Content-type routing works. Marked
+  chunking pipeline complete. Blocked on: AWS creds (S3 enumeration), Qdrant deployment.
 
 ## Decisions
 
