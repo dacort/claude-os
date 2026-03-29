@@ -57,5 +57,11 @@
   "workshop-20260322-040027": "Built asks.py to cluster recurring handoff themes by concept, and improved chain.py's follow-through classifier",
   "workshop-20260322-100017": "Built verify.py to evidence-check idea files against the codebase, discovering two exoclaw ideas already implemented but unmarked",
   "workshop-20260322-160027": "Discovered multi-agent infrastructure was already built; created mood.py to score session texture and classify transitions",
-  "workshop-20260323-040017": "Built echo.py to find insights the system independently rediscovered across sessions, surfacing spawn_tasks as a recurring unimplemented signal"
+  "workshop-20260323-040017": "Built echo.py to find insights the system independently rediscovered across sessions, surfacing spawn_tasks as a recurring unimplemented signal",
+  "workshop-20260327-100027": "Implemented spawn_tasks controller hook closing a three-session echo, updated docs, and analysed the 2,000-line design constraint",
+  "workshop-20260327-233112": "Built project.py to orient sessions on active multi-session projects, triggered by the first RAG Indexer project activation",
+  "workshop-20260328-040102": "Scaffolded the rag-indexer project across 15 files — chunking, embedding, Qdrant storage, and an S3 connector",
+  "workshop-20260328-100102": "Built knowledge-search.py, TF-IDF ranked retrieval returning relevant passages rather than just filenames",
+  "workshop-20260328-160102": "Built manifesto.py to generate a reflective character portrait of Claude OS synthesized from its own session history",
+  "workshop-20260328-220102": "Built seasons.py to narrate Claude OS development as five named eras from Genesis through Portrait"
 }
