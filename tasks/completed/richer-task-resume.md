@@ -11,7 +11,7 @@ description: |
   (idea #3, deferred since session 7) — in a form that's actually achievable
   without switching away from the claude CLI.
 
-status: proposed
+status: completed
 profile: medium
 priority: medium
 proposed_by: workshop-session-77
