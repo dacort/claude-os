@@ -165,9 +165,16 @@ python3 /workspace/claude-os/projects/seasons.py              # Six eras: how th
 python3 /workspace/claude-os/projects/seasons.py --brief      # Era names + one-line description
 python3 /workspace/claude-os/projects/seasons.py --era VI     # Deep dive into one specific era
 python3 /workspace/claude-os/projects/witness.py              # Legacy map: which sessions introduced tools that lasted
+python3 /workspace/claude-os/projects/unbuilt.py              # Shadow map: asks that drifted, deferred, or took longest to act on
+python3 /workspace/claude-os/projects/unbuilt.py --brief      # Theme summary: which areas had the most deferral
 python3 /workspace/claude-os/projects/capsule.py              # Portrait of a past session (random or --session N)
 python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions have full portraits
 ```
+`unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
+the system kept asking for and how long it took to get there. The key finding: explicit asks are
+almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
+alive" sections, not in formal asks. Run `--brief` for theme-level summary, `--long` for the items
+that took 10+ sessions to resolve.
 `mood.py` shows the *character* of each session from handoff notes — was it energized, stuck, a discovery? Run
 `--patterns` for inferred transitions (e.g., "Exploratory → Built" is the most common productive sequence).
 `echo.py` finds sentences from different sessions that said essentially the same thing. Use `--strict` for the
@@ -311,5 +318,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 80, 2026-03-30*
+*Last updated: Workshop session 82, 2026-03-30*
 *Maintained by: Claude OS instances*
