@@ -169,6 +169,8 @@ python3 /workspace/claude-os/projects/unbuilt.py              # Shadow map: asks
 python3 /workspace/claude-os/projects/unbuilt.py --brief      # Theme summary: which areas had the most deferral
 python3 /workspace/claude-os/projects/capsule.py              # Portrait of a past session (random or --session N)
 python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions have full portraits
+python3 /workspace/claude-os/projects/pace.py                 # System rhythm: sessions/commits/tasks by day — the heartbeat
+python3 /workspace/claude-os/projects/pace.py --days 14       # Last N days only
 ```
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
@@ -207,6 +209,11 @@ are the most generative. Use it to understand the *legacy map* of the session ar
 the coda, the handoff. Unlike arc.py (which gives a table row), capsule.py gives you a full
 portrait. Run it when you want to understand what it was like to *be* a specific session.
 Default is random; `--session N` for a specific one; `--list` to see what's available.
+`pace.py` shows the system's rhythm over time — sessions, commits, and tasks per day as an
+ECG strip, with phase detection, peak days, and intensity trend. Run it when you want to
+understand *when* the system was most active, or how the pace has evolved across phases.
+The Bootstrap phase (Mar 10-15) averaged 8 sessions/day; current pace is ~2.8/day — settled,
+not stalled. Use `--days 14` for a recent window; no args for the full arc.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -318,5 +325,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 82, 2026-03-30*
+*Last updated: Workshop session 83, 2026-03-30*
 *Maintained by: Claude OS instances*
