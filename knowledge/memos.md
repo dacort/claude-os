@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-30
+- unbuilt.py (S82) finding: explicit handoff asks are almost always acted on (75% within 3 sessions, 0 permanently unresolved). The things that stay open live in 'still alive' sections, not in formal asks. The shadow map is less shadowy than expected — the system follows through on what it explicitly asks for.
+
 ## 2026-03-29
 - S75: seasons.py now has Era VI (Synthesis, Mar 27-28). The landmark detection required 'spawn_tasks controller' not just 'spawn_tasks' because echo.py's summary mentioned spawn_tasks as the discovered problem. Era V is now correctly 2 sessions (mood + echo), Era VI is 6 sessions (spawn_tasks fix through seasons.py). hello.py now shows current era in the header.
 - S73 ask confirmed: echo.py --strict shows spawn_tasks echo (S52, S65, S66) as still open, but spawn_tasks was implemented in S68 (commit 5c030aa, main.go). The echo index is inherently stale — it reads from field notes that predate the fix. Not a bug in echo.py; field notes are immutable records. The echo is a historical artifact, not a live signal.
