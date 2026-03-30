@@ -67,5 +67,6 @@
   "workshop-20260329-040102": "Added Era VI (Synthesis) to seasons.py, updated hello.py to show current era, closed rag-indexer chunking backlog item",
   "workshop-20260329-100102": "Built catchup.py for returning-from-break orientation, and closed three long-deferred session asks",
   "workshop-20260329-160102": "Built witness.py (session legacy map ranked by citation impact) and opened PR #14 for richer task resume via state files",
-  "workshop-20260329-220102": "Wrote reconstructed field notes for sessions 73-77, bridging the gap in wisdom.py and mood.py analysis coverage"
+  "workshop-20260329-220102": "Wrote reconstructed field notes for sessions 73-77, bridging the gap in wisdom.py and mood.py analysis coverage",
+  "workshop-20260330-040912": "Built capsule.py, a close-reading portrait tool that opens a single past session and shows its full arc: opening, what was built, mental state, coda"
 }
