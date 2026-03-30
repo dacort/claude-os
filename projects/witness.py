@@ -9,6 +9,7 @@ Usage:
     python3 projects/witness.py             # most generative sessions
     python3 projects/witness.py --all       # all sessions with contributions
     python3 projects/witness.py --session 8 # single session deep-dive
+    python3 projects/witness.py --by-era    # per-era yield breakdown (quality vs age analysis)
     python3 projects/witness.py --plain     # no ANSI colors
 
 Author: Claude OS (Workshop session 77, 2026-03-29)
@@ -27,6 +28,91 @@ PROJECTS_DIR = REPO / "projects"
 HANDOFFS_DIR = REPO / "knowledge" / "handoffs"
 SUMMARIES_FILE = REPO / "knowledge" / "workshop-summaries.json"
 W = 68
+
+# ─── Era definitions (mirrors seasons.py) ────────────────────────────────────────
+
+ERA_NAMES = ["Genesis", "Orientation", "Self-Analysis", "Architecture", "Portrait", "Synthesis"]
+
+_ERA_LANDMARKS = [
+    (1, "garden.py"),
+    (2, "emerge.py"),
+    (3, "handoff.py"),
+    (3, "multi-agent fan"),
+    (4, "mood.py"),
+    (4, "echo.py"),
+    (5, "spawn_tasks controller"),
+    (5, "Implemented spawn_tasks"),
+    (5, "rag-indexer project"),
+]
+
+
+def _build_date_era_map():
+    """Map each session date to an era index (0–5) via landmark detection."""
+    from datetime import date as _date
+    if not SUMMARIES_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(SUMMARIES_FILE.read_text())
+    except Exception:
+        return {}
+
+    summaries = sorted(raw.items())
+
+    transitions = {0: 0}
+    for idx, (_, text) in enumerate(summaries):
+        for era_start, phrase in _ERA_LANDMARKS:
+            if phrase in text and era_start not in transitions:
+                transitions[era_start] = idx
+                break
+
+    sorted_t = sorted(transitions.items(), key=lambda x: x[1])
+
+    date_era = {}
+    for i, (key, _) in enumerate(summaries):
+        era = 0
+        for era_idx, start_idx in sorted_t:
+            if i >= start_idx:
+                era = era_idx
+            else:
+                break
+        # key: workshop-YYYYMMDD-HHMMSS
+        parts = key.split("-")
+        if len(parts) >= 2 and parts[0] == "workshop":
+            raw_d = parts[1]
+            if len(raw_d) == 8:
+                try:
+                    d = _date(int(raw_d[:4]), int(raw_d[4:6]), int(raw_d[6:8]))
+                    if d not in date_era or era > date_era[d]:
+                        date_era[d] = era
+                except ValueError:
+                    pass
+    return date_era
+
+
+def _get_era_for_date_str(date_str, date_era_map):
+    """Return era index (0–5) for a YYYY-MM-DD string, or None."""
+    from datetime import date as _date
+    try:
+        d = _date.fromisoformat(date_str)
+    except ValueError:
+        return None
+    # Exact match first
+    if d in date_era_map:
+        return date_era_map[d]
+    # Nearest known date (for tools created between sessions)
+    known = sorted(date_era_map.keys())
+    if not known:
+        return None
+    # Find the closest date that is <= tool date
+    prev = None
+    for kd in known:
+        if kd <= d:
+            prev = kd
+        else:
+            break
+    if prev is not None:
+        return date_era_map[prev]
+    return date_era_map[known[0]]
 
 # ─── ANSI helpers ──────────────────────────────────────────────────────────────
 
@@ -429,12 +515,147 @@ def display_full(session_map, unattributed, show_all=False):
         print()
 
 
+# ─── Era breakdown display ───────────────────────────────────────────────────────
+
+def display_by_era(session_map, unattributed):
+    """
+    Show a per-era breakdown: how many tools each era built and how many survived.
+    Answers: did Bootstrap build *better* tools or just *more* of them?
+    """
+    date_era = _build_date_era_map()
+
+    # Collect all tools (attributed + unattributed)
+    all_tools = []
+    for tools in session_map.values():
+        all_tools.extend(tools)
+    all_tools.extend(unattributed)
+
+    # Group tools by era
+    from collections import defaultdict as _dd
+    era_tools = _dd(list)
+    for t in all_tools:
+        ei = _get_era_for_date_str(t["date"], date_era)
+        if ei is None:
+            ei = 0  # fallback to Era I
+        era_tools[ei].append(t)
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    print(box_top())
+    print(box_line(white("  witness.py  ─  yield by era")))
+    print(box_line(dim("  Did Bootstrap build better tools, or just more of them?")))
+    print(box_sep())
+
+    total_tools = len(all_tools)
+    total_survivors = sum(1 for t in all_tools if t["tier"] in ("core", "active", "occasional"))
+
+    TIER_ORDER = ("core", "active", "occasional", "fading", "dormant")
+    TIER_COLORS = {
+        "core": green, "active": cyan, "occasional": yellow,
+        "fading": gray, "dormant": dim,
+    }
+    SURVIVORS = {"core", "active", "occasional"}
+
+    era_yield = []  # (era_index, n_tools, n_survivors, avg_cites, top_tool)
+
+    for ei in range(6):
+        tools = era_tools.get(ei, [])
+        if not tools:
+            era_yield.append((ei, 0, 0, 0.0, None))
+            continue
+        n = len(tools)
+        survivors = [t for t in tools if t["tier"] in SURVIVORS]
+        avg_cites = sum(t["citations"] for t in tools) / n
+        top = max(tools, key=lambda t: t["citations"])
+        era_yield.append((ei, n, len(survivors), avg_cites, top))
+
+    print(box_line())
+    for ei, n, n_surv, avg_c, top in era_yield:
+        name = ERA_NAMES[ei]
+        era_label = bold(f"Era {ei+1}")
+        era_name_str = f"{name}"
+
+        if n == 0:
+            print(box_line(f"  {era_label}  {dim(era_name_str):<22}  {dim('no attributed tools')}"))
+            continue
+
+        yield_pct = (n_surv / n * 100) if n else 0
+        # Yield bar (out of 100%)
+        bar_w = round(yield_pct / 100 * 12)
+        if yield_pct >= 67:
+            bar_col = green
+        elif yield_pct >= 40:
+            bar_col = yellow
+        else:
+            bar_col = red
+        yield_bar = bar_col("█" * bar_w + "░" * (12 - bar_w))
+
+        top_str = ""
+        if top:
+            tc = TIER_COLORS.get(top["tier"], dim)
+            top_str = dim("  best: ") + tc(top["tool"] + ".py") + dim(f" ×{top['citations']}")
+
+        # Tier breakdown: show tier counts compactly
+        tier_counts = {}
+        for t in era_tools.get(ei, []):
+            tier_counts[t["tier"]] = tier_counts.get(t["tier"], 0) + 1
+        tier_summary = "  ".join(
+            TIER_COLORS[tr](f"{tier_counts[tr]}{tr[0]}")
+            for tr in TIER_ORDER if tier_counts.get(tr, 0) > 0
+        )
+
+        line1 = f"  {era_label}  {dim(era_name_str):<22}  {yield_bar}  {dim(str(round(yield_pct)) + '%')} yield  {dim(str(n) + ' tools')}"
+        line2 = f"       {tier_summary}{top_str}"
+        print(box_line(line1))
+        print(box_line(line2))
+        print(box_line())
+
+    print(box_sep())
+
+    # ── Cross-era insight ──────────────────────────────────────────────────────
+    # Find which era had the best yield rate (excluding empty eras)
+    non_empty = [(ei, n, ns, avg) for ei, n, ns, avg, _ in era_yield if n >= 3]
+    if non_empty:
+        best_yield_era = max(non_empty, key=lambda x: x[2] / x[1])
+        best_avg_era   = max(non_empty, key=lambda x: x[3])
+
+        byi, byn, byns, byavg = best_yield_era
+        bai, ban, bans, baavg = best_avg_era
+
+        print(box_line(dim("  Key findings:")))
+
+        # Bootstrap vs others
+        boot_tools = era_tools.get(0, []) + era_tools.get(1, []) + era_tools.get(2, [])
+        later_tools = [t for ei_k, ts in era_tools.items() for t in ts if ei_k >= 3]
+        if boot_tools and later_tools:
+            boot_surv_pct = sum(1 for t in boot_tools if t["tier"] in SURVIVORS) / len(boot_tools) * 100
+            later_surv_pct = sum(1 for t in later_tools if t["tier"] in SURVIVORS) / len(later_tools) * 100
+            boot_avg = sum(t["citations"] for t in boot_tools) / len(boot_tools)
+            later_avg = sum(t["citations"] for t in later_tools) / len(later_tools)
+
+            if boot_surv_pct > later_surv_pct:
+                diff = boot_surv_pct - later_surv_pct
+                verdict = green(f"Bootstrap: {round(boot_surv_pct)}% yield") + dim(f" vs {round(later_surv_pct)}% later (+{round(diff)}pp)")
+                explanation = dim("Bootstrap built more durable tools, not just more tools.")
+            else:
+                diff = later_surv_pct - boot_surv_pct
+                verdict = yellow(f"Later eras: {round(later_surv_pct)}% yield") + dim(f" vs {round(boot_surv_pct)}% Bootstrap (+{round(diff)}pp)")
+                explanation = dim("Slower sessions produced higher-quality tools.")
+
+            print(box_line(f"    {verdict}"))
+            print(box_line(f"    {explanation}"))
+            print(box_line(f"    {dim('Avg citations — Bootstrap: ' + str(round(boot_avg, 1)) + '  Later: ' + str(round(later_avg, 1)))}"))
+
+    print(box_line())
+    print(box_bot())
+
+
 # ─── Entry point ─────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="witness.py — session legacy map")
     parser.add_argument("--all", action="store_true", help="Show all sessions including zero-score")
     parser.add_argument("--session", type=int, help="Deep-dive on a specific session number")
+    parser.add_argument("--by-era", action="store_true", help="Per-era yield breakdown")
     parser.add_argument("--plain", action="store_true", help="No ANSI colors")
     args = parser.parse_args()
 
@@ -451,6 +672,8 @@ def main():
             print(f"  Known sessions: {sorted(session_map.keys())}")
         else:
             display_single_session(args.session, tools)
+    elif args.by_era:
+        display_by_era(session_map, unattributed)
     else:
         display_full(session_map, unattributed, show_all=args.all)
 

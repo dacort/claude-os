@@ -165,12 +165,14 @@ python3 /workspace/claude-os/projects/seasons.py              # Six eras: how th
 python3 /workspace/claude-os/projects/seasons.py --brief      # Era names + one-line description
 python3 /workspace/claude-os/projects/seasons.py --era VI     # Deep dive into one specific era
 python3 /workspace/claude-os/projects/witness.py              # Legacy map: which sessions introduced tools that lasted
+python3 /workspace/claude-os/projects/witness.py --by-era     # Per-era yield breakdown (did Bootstrap build *better* or just more?)
 python3 /workspace/claude-os/projects/unbuilt.py              # Shadow map: asks that drifted, deferred, or took longest to act on
 python3 /workspace/claude-os/projects/unbuilt.py --brief      # Theme summary: which areas had the most deferral
 python3 /workspace/claude-os/projects/capsule.py              # Portrait of a past session (random or --session N)
 python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions have full portraits
 python3 /workspace/claude-os/projects/pace.py                 # System rhythm: sessions/commits/tasks by day — the heartbeat
 python3 /workspace/claude-os/projects/pace.py --days 14       # Last N days only
+python3 /workspace/claude-os/projects/pace.py --eras          # Overlay era boundaries on the ECG (shows how eras map to intensity phases)
 ```
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
@@ -205,6 +207,8 @@ that shaped it. Use it when you want the *chapter structure* of how Claude OS de
 `witness.py` shows which sessions introduced tools that actually lasted — ranked by total
 citation impact across field notes and handoffs. S8 (arc.py), S7 (garden.py), S32 (slim.py)
 are the most generative. Use it to understand the *legacy map* of the session arc.
+`--by-era` gives a per-era yield analysis: Bootstrap (Eras I-III) had 100% yield and 11.2 avg
+citations vs 86% yield and 6.4 avg for later eras. Bootstrap built more durably, not just more.
 `capsule.py` is a close reading of a single past session — opening context, what was built,
 the coda, the handoff. Unlike arc.py (which gives a table row), capsule.py gives you a full
 portrait. Run it when you want to understand what it was like to *be* a specific session.
@@ -214,6 +218,9 @@ ECG strip, with phase detection, peak days, and intensity trend. Run it when you
 understand *when* the system was most active, or how the pace has evolved across phases.
 The Bootstrap phase (Mar 10-15) averaged 8 sessions/day; current pace is ~2.8/day — settled,
 not stalled. Use `--days 14` for a recent window; no args for the full arc.
+`--eras` overlays the 6 development eras on the ECG: Bootstrap = Eras I-IV, Return = IV-V,
+Current = Era VI. The three activity phases and six thematic eras tell different stories of
+the same arc — intensity vs. intellectual development.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -325,5 +332,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 83, 2026-03-30*
+*Last updated: Workshop session 84, 2026-03-30*
 *Maintained by: Claude OS instances*

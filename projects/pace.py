@@ -9,6 +9,7 @@ Usage:
   python3 projects/pace.py              # full rhythm view
   python3 projects/pace.py --plain      # no ANSI colors
   python3 projects/pace.py --days 14    # last N days only
+  python3 projects/pace.py --eras       # overlay era boundaries on the ECG
 """
 
 import os
@@ -19,6 +20,7 @@ from collections import Counter, defaultdict
 from datetime import date, timedelta, datetime
 
 PLAIN = "--plain" in sys.argv
+SHOW_ERAS = "--eras" in sys.argv
 
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 
@@ -37,6 +39,73 @@ def magenta(t): return ansi(t, 35)
 def red(t):     return ansi(t, 31)
 def white(t):   return ansi(t, 97)
 def grey(t):    return ansi(t, 90)
+def blue(t):    return ansi(t, 34)
+
+# Era colors: I=green, II=cyan, III=magenta, IV=yellow, V=blue, VI=red
+ERA_COLORS = [green, cyan, magenta, yellow, blue, red]
+ERA_NAMES  = ["Genesis", "Orientation", "Self-Analysis", "Architecture", "Portrait", "Synthesis"]
+
+# Landmarks that signal era transitions (from seasons.py)
+ERA_LANDMARKS = [
+    (1, "garden.py"),
+    (2, "emerge.py"),
+    (3, "handoff.py"),
+    (3, "multi-agent fan"),
+    (4, "mood.py"),
+    (4, "echo.py"),
+    (5, "spawn_tasks controller"),
+    (5, "Implemented spawn_tasks"),
+    (5, "rag-indexer project"),
+]
+
+
+def load_era_dates():
+    """
+    Map each calendar date to an era index (0–5) using the same landmark
+    detection as seasons.py.  Returns {date: era_index} for all session dates.
+    """
+    path = os.path.join(REPO, "knowledge", "workshop-summaries.json")
+    try:
+        with open(path) as f:
+            raw = json.load(f)
+    except FileNotFoundError:
+        return {}
+
+    summaries = sorted(raw.items())   # [(key, text), ...] chronological
+
+    # First pass: find which session index (0-based) starts each era
+    transitions = {0: 0}
+    for idx, (_, text) in enumerate(summaries):
+        for era_start, phrase in ERA_LANDMARKS:
+            if phrase in text and era_start not in transitions:
+                transitions[era_start] = idx
+                break
+
+    sorted_transitions = sorted(transitions.items(), key=lambda x: x[1])
+
+    # Second pass: assign each session → era, then map its date
+    date_to_era = {}
+    for i, (key, _) in enumerate(summaries):
+        # resolve era for this session index
+        era = 0
+        for era_idx, start_idx in sorted_transitions:
+            if i >= start_idx:
+                era = era_idx
+            else:
+                break
+        # extract date from key: workshop-YYYYMMDD-HHMMSS
+        parts = key.split("-")
+        if len(parts) >= 2 and parts[0] == "workshop":
+            raw_date = parts[1]
+            if len(raw_date) == 8:
+                try:
+                    d = date(int(raw_date[:4]), int(raw_date[4:6]), int(raw_date[6:8]))
+                    # A day can span multiple sessions → keep the highest era seen
+                    if d not in date_to_era or era > date_to_era[d]:
+                        date_to_era[d] = era
+                except ValueError:
+                    pass
+    return date_to_era
 
 # ── Data loading ──────────────────────────────────────────────────────────────
 
@@ -270,6 +339,9 @@ def main():
           f"{cyan(str(total_tasks))} tasks")
     print()
 
+    # Optionally load era data
+    era_dates = load_era_dates() if SHOW_ERAS else {}
+
     # ── Phase summary ─────────────────────────────────────────────────────────
     phase_names = ["Bootstrap", "Return", "Current", "Later"]
     if len(phases) > len(phase_names):
@@ -291,11 +363,27 @@ def main():
             if gap > 0:
                 gap_before = dim(f"  ← {gap}d gap")
 
+        # Era annotation: which eras appear in this phase?
+        era_note = ""
+        if SHOW_ERAS and era_dates:
+            phase_eras = sorted(set(
+                era_dates[d] for d in all_dates
+                if start <= d <= end and d in era_dates
+            ))
+            if phase_eras:
+                if len(phase_eras) == 1:
+                    ei = phase_eras[0]
+                    era_note = "  " + ERA_COLORS[ei](f"[Era {ei+1}: {ERA_NAMES[ei]}]")
+                else:
+                    parts_str = "–".join(str(e+1) for e in [phase_eras[0], phase_eras[-1]])
+                    names_str = f"{ERA_NAMES[phase_eras[0]]}→{ERA_NAMES[phase_eras[-1]]}"
+                    era_note = "  " + dim(f"[Eras {parts_str}: {names_str}]")
+
         print(f"  {dim(str(i+1) + '.')} {name:<12}  "
               f"{start.strftime('%b %d')}–{end.strftime('%b %d')}  "
               f"{dim(str(active_in_phase) + ' days active')}  "
               f"{green(str(s) + 's')} {yellow(str(c_) + 'c')} {cyan(str(t) + 't')}"
-              f"{gap_before}")
+              f"{gap_before}{era_note}")
 
     print()
 
@@ -305,6 +393,20 @@ def main():
     print(ecg_row("sessions", sessions, all_dates, max_s, green))
     print(ecg_row("commits ", commits,  all_dates, max_c, yellow))
     print(ecg_row("tasks   ", tasks,    all_dates, max_t, cyan))
+
+    # Optional era row
+    if SHOW_ERAS and era_dates:
+        era_chars = []
+        for d in all_dates:
+            if d in era_dates:
+                ei = era_dates[d]
+                col = ERA_COLORS[ei] if ei < len(ERA_COLORS) else grey
+                era_chars.append(col(str(ei + 1)))
+            else:
+                era_chars.append(grey("·"))
+        label_str = f"  {'eras':<10}"
+        print(label_str + "  " + "".join(era_chars))
+
     print()
 
     # ── Date labels ────────────────────────────────────────────────────────────
@@ -328,6 +430,13 @@ def main():
     print(dim(prefix + "".join(tick_chars)))
     print(dim(prefix + "".join(label_chars)))
     print()
+
+    # Optional era legend
+    if SHOW_ERAS and era_dates:
+        print(f"  {dim('ERA LEGEND')}")
+        for ei, (name, col) in enumerate(zip(ERA_NAMES, ERA_COLORS)):
+            print(f"  {col(str(ei+1))} {col(name)}")
+        print()
 
     # ── Peak days ─────────────────────────────────────────────────────────────
     print(f"  {bold('PEAK DAYS')}")
