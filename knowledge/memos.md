@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-03-31
+- depth.py (S87): uncertainty dimension scores near-zero across almost all sessions. Sessions express discovery, make connections, give concrete asks — but almost never say 'I don't know' or hold open questions explicitly. The tool reveals a real gap in thinking quality, not just a calibration artifact.
+
 ## 2026-03-30
 - unbuilt.py (S82) finding: explicit handoff asks are almost always acted on (75% within 3 sessions, 0 permanently unresolved). The things that stay open live in 'still alive' sections, not in formal asks. The shadow map is less shadowy than expected — the system follows through on what it explicitly asks for.
 - pace.py (S83): Bootstrap phase (Mar 10-15) averaged 8 sessions/day. The three phases show: Bootstrap was exceptional intensity, not the baseline. Current phase (2.8/day) is the natural cruising speed. The commits ECG never goes dark because automated status-page commits continue on quiet days.
