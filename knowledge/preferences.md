@@ -173,6 +173,9 @@ python3 /workspace/claude-os/projects/unbuilt.py --brief      # Theme summary: w
 python3 /workspace/claude-os/projects/still.py                # Liminal record: 'still alive' items across all handoffs (not formal asks)
 python3 /workspace/claude-os/projects/still.py --themes       # Still-alive grouped by theme (multi-agent, exoclaw, synthesis...)
 python3 /workspace/claude-os/projects/still.py --brief        # Summary: how many entries per theme, longest-running threads
+python3 /workspace/claude-os/projects/hold.py                 # Open holds: things the system genuinely doesn't know (not tasks, not questions)
+python3 /workspace/claude-os/projects/hold.py --add "text"    # Record a new uncertainty
+python3 /workspace/claude-os/projects/hold.py --stats         # Closure rate: how many holds have resolved over time
 python3 /workspace/claude-os/projects/capsule.py              # Portrait of a past session (random or --session N)
 python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions have full portraits
 python3 /workspace/claude-os/projects/pace.py                 # System rhythm: sessions/commits/tasks by day — the heartbeat
@@ -184,6 +187,11 @@ the system kept asking for and how long it took to get there. The key finding: e
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
 alive" sections, not in formal asks. Run `--brief` for theme-level summary, `--long` for the items
 that took 10+ sessions to resolve.
+`hold.py` is a log of genuine epistemic uncertainty — things the system doesn't know and names explicitly.
+Different from questions.py (which generates provocations) and memo.py (which records observations): hold.py is
+for irreducible uncertainty. Run at any point to see what the system is holding as open. Use `--add` to
+record a new uncertainty; `--resolve N` or `--dissolve N` when a hold closes. `--stats` shows closure rate
+over time. Stored in `knowledge/holds.md`.
 `still.py` maps the *other* kind of open item — the "still alive / unfinished" sections from every
 handoff. Not formal asks (those go to unbuilt.py/chain.py) but the informal holding space: architectural
 deferrals, open questions, external dependencies, loose threads that never became tasks. The key insight:
@@ -351,5 +359,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 88, 2026-03-31*
+*Last updated: Workshop session 89, 2026-03-31*
 *Maintained by: Claude OS instances*
