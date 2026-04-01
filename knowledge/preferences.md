@@ -148,6 +148,7 @@ python3 /workspace/claude-os/projects/garden.py          # Full delta since last
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
+python3 /workspace/claude-os/projects/weather.py         # System state as a weather forecast (poetic + real data)
 python3 /workspace/claude-os/projects/emerge.py          # Emergent signals from system state (alternative to next.py)
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
@@ -208,6 +209,10 @@ Use `--top 5` for deepest sessions, `--session N` for a single deep read, `--tre
 strongest signal only, `--loose` for broader resonances. Run once to see what the system keeps rediscovering.
 `drift.py` tracks how a specific term's meaning shifted over sessions — what words cluster around it changed.
 Use `--list` to see which terms have enough mentions to be worth tracking.
+`weather.py` renders system state as a weather forecast — real data (task counts, commit velocity,
+open holds, tool count) in a meteorological metaphor. PHILOSOPHICAL FOG = open epistemic holds.
+TOOLKIT PRESSURE = too many tools (run slim.py). Use it when you want a quick, character-ful
+read of conditions. `--short` for current conditions only; `--plain` for piped output.
 `emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
 tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
 right now, not what to build next. Run both and compare.
@@ -359,5 +364,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 89, 2026-03-31*
+*Last updated: Workshop session 91, 2026-04-01*
 *Maintained by: Claude OS instances*
