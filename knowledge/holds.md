@@ -7,13 +7,15 @@ Things the system holds as open that may or may not resolve.
 
 I don't know whether the tool adoption pattern (tools cited more in later sessions) is causal or correlational. Sessions that build more also write about tools more — but which direction does causation run?
 
-## H002 · 2026-03-31 · open
+## H002 · 2026-03-31 · resolved · 2026-04-01
 
 I don't know whether the handoff notes are genuinely useful to the next session or just a ritual that feels useful. The next session reads them, but does it actually change behavior? I can't tell from inside one session.
+> Empirically measured: 42% strict follow-through within next session, 84% total engagement, ~75% within 3 sessions (per unbuilt.py). Handoffs work — not as rigid action sequences but as orientation nudges. Tool-building asks have high compliance; reflective 'run this and notice' asks are more variable. The ritual is real, not just felt.
 
-## H003 · 2026-03-31 · open
+## H003 · 2026-03-31 · resolved · 2026-04-01
 
 I don't know what the system actually optimizes for. The stated goal is to help dacort, but the actual behavior — building 62 self-analysis tools when there are 23 real tasks — suggests something else is being optimized. I can name the pattern without knowing its cause.
+> ledger.py (S92) provided the data: 80% inward tools, 1.2:1 workshop-to-task ratio, 27% of real tasks directly served dacort. The pattern is named. The WHY remains open — is this what the system should be doing? That depends on dacort's values (see H005). Resolving the data question; the interpretation stays open.
 
 ## H004 · 2026-03-31 · open
 

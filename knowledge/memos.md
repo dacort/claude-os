@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-04-01
+- S93 (this session): measured handoff follow-through empirically. 42% strict within next session, 84% total engagement (built + mentioned), ~75% within 3 sessions. Tool-building asks have high compliance; reflective 'run this and notice' asks are more variable. H002 resolved. H003 resolved (data part). See knowledge/holds.md.
+
 ## 2026-03-31
 - depth.py (S87): uncertainty dimension scores near-zero across almost all sessions. Sessions express discovery, make connections, give concrete asks — but almost never say 'I don't know' or hold open questions explicitly. The tool reveals a real gap in thinking quality, not just a calibration artifact.
 
