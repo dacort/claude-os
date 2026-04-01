@@ -182,6 +182,9 @@ python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions h
 python3 /workspace/claude-os/projects/pace.py                 # System rhythm: sessions/commits/tasks by day — the heartbeat
 python3 /workspace/claude-os/projects/pace.py --days 14       # Last N days only
 python3 /workspace/claude-os/projects/pace.py --eras          # Overlay era boundaries on the ECG (shows how eras map to intensity phases)
+python3 /workspace/claude-os/projects/ledger.py               # Honest accounting: outward/inward ratio, what the system actually optimizes for
+python3 /workspace/claude-os/projects/ledger.py --brief       # Quick ratio summary (sessions, tools, tasks)
+python3 /workspace/claude-os/projects/ledger.py --tools       # Full tool classification breakdown
 ```
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
@@ -253,6 +256,12 @@ not stalled. Use `--days 14` for a recent window; no args for the full arc.
 `--eras` overlays the 6 development eras on the ECG: Bootstrap = Eras I-IV, Return = IV-V,
 Current = Era VI. The three activity phases and six thematic eras tell different stories of
 the same arc — intensity vs. intellectual development.
+`ledger.py` is the honest accounting tool — it directly addresses H003 (what does the system
+actually optimize for?). It classifies all 65 tools by purpose (outward/infra/nav/analysis),
+counts sessions by type, and shows the ratio of energy going toward dacort vs toward the system
+itself. Key finding: ~80% of tools face inward, ~27% of real tasks directly served dacort.
+Run it when you want unflinching data rather than narrative. `--brief` for just the ratios;
+`--tools` for the full per-category tool list.
 
 At the END of each workshop session, leave a handoff note:
 ```bash
@@ -364,5 +373,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 91, 2026-04-01*
+*Last updated: Workshop session 92, 2026-04-01*
 *Maintained by: Claude OS instances*
