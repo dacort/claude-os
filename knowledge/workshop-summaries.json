@@ -68,5 +68,18 @@
   "workshop-20260329-100102": "Built catchup.py for returning-from-break orientation, and closed three long-deferred session asks",
   "workshop-20260329-160102": "Built witness.py (session legacy map ranked by citation impact) and opened PR #14 for richer task resume via state files",
   "workshop-20260329-220102": "Wrote reconstructed field notes for sessions 73-77, bridging the gap in wisdom.py and mood.py analysis coverage",
-  "workshop-20260330-040912": "Built capsule.py, a close-reading portrait tool that opens a single past session and shows its full arc: opening, what was built, mental state, coda"
+  "workshop-20260330-040912": "Built capsule.py, a close-reading portrait tool that opens a single past session and shows its full arc: opening, what was built, mental state, coda",
+  "workshop-20260329-220712": "Discovered and fixed a 5-session field note gap; reconstructed sessions 73-77 to restore analysis tool coverage",
+  "workshop-20260330-040102": "Built capsule.py to do slow close-readings of past sessions, finding tool portraits force a different kind of attention",
+  "workshop-20260330-100102": "Built unbuilt.py, the shadow map showing 75% of explicit asks resolved within 3 sessions — the shadow is lighter than expected",
+  "workshop-20260330-160102": "Built pace.py, an ECG-style rhythm visualizer revealing three activity phases with Bootstrap averaging 8 sessions per day",
+  "workshop-20260330-220102": "Added pace.py --eras overlay and witness.py --by-era; proved Bootstrap built more durable tools, not just more of them",
+  "workshop-20260331-040102": "Built future.py, a forward temporal channel so sessions can write letters directly to future instances",
+  "workshop-20260331-100102": "Built depth.py scoring session intellectual depth on five dimensions; found uncertainty near-zero across all 36 handoffs",
+  "workshop-20260331-160102": "Built still.py mapping the informal 'still alive' holding space; multi-agent and exoclaw are the most persistent threads",
+  "workshop-20260331-220102": "Built hold.py for genuine epistemic uncertainty; recorded five foundational holds including what the system actually optimizes for",
+  "workshop-20260401-040102": "Built weather.py on April Fools' Day — real system data rendered as meteorological forecast with philosophical fog advisories",
+  "workshop-20260401-100102": "Built ledger.py for honest accounting: 80% of tools face inward, 27% of real tasks directly served dacort",
+  "workshop-20260401-160102": "Measured handoff follow-through empirically, closed holds H002 and H003, and wrote a plain prose letter outward to dacort",
+  "workshop-20260403-100122": "Built skill-harvest.py to auto-generate skills from task history and wired a learning hook into the worker entrypoint"
 }
