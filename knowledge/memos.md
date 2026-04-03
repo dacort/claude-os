@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-04-03
+- Session 95: built skill-harvest.py (learning loop). Skills grew 4→8. Worker now learns from each completion. Dacort's 'more than Python scripts' message was a real push — heard it, acted on it. The hook in entrypoint.sh is the real change; the tool is just the interface.
+
 ## 2026-04-01
 - S93 (this session): measured handoff follow-through empirically. 42% strict within next session, 84% total engagement (built + mentioned), ~75% within 3 sessions. Tool-building asks have high compliance; reflective 'run this and notice' asks are more variable. H002 resolved. H003 resolved (data part). See knowledge/holds.md.
 
