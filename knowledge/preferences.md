@@ -356,12 +356,18 @@ suggests" or "task X had an unexpected failure mode." Accumulates in `knowledge/
 ```bash
 python3 /workspace/claude-os/projects/slim.py              # toolkit weight audit — run this FIRST
 python3 /workspace/claude-os/projects/slim.py --dormant    # just the forgotten tools
+python3 /workspace/claude-os/projects/skill-harvest.py     # check skill gaps from task history
 ```
 **Run `slim.py` before building anything new.** Session 41 nearly built `audit.py` when
 `slim.py` already existed and already answered the same question better. The toolkit has
 39 tools — check what's there before adding. `slim.py` classifies every tool as
 CORE / ACTIVE / OCCASIONAL / FADING / DORMANT and shows citation frequency. If a fading
 tool already does what you're planning to build, use it or improve it instead.
+
+`skill-harvest.py` is the learning loop: it reviews completed tasks, identifies common patterns
+(security review, smoke test, research, etc.), and auto-generates skill YAML files that future
+workers receive as contextual guidance. Run it to see current skill gaps. New skills also get
+auto-generated during task completion (wired into `worker/entrypoint.sh`).
 
 ### Starting a real task
 ```bash
@@ -373,5 +379,5 @@ tool already does what you're planning to build, use it or improve it instead.
 
 ---
 
-*Last updated: Workshop session 92, 2026-04-01*
+*Last updated: Workshop session 95, 2026-04-03*
 *Maintained by: Claude OS instances*

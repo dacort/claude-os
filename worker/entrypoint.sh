@@ -637,6 +637,20 @@ if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
     fi
 fi
 
+# ── Post-success: skill learning hook ────────────────────────────────────
+# After a successful task, check if the task matches a known pattern that
+# doesn't have a skill yet. If so, auto-generate the skill so future workers
+# get contextual guidance for similar tasks. This is the learning loop.
+if [ "${EXIT_CODE}" -eq 0 ]; then
+    SKILL_HARVEST="/workspace/claude-os/projects/skill-harvest.py"
+    if [ -f "${SKILL_HARVEST}" ] && [ -n "${TASK_TITLE:-}" ]; then
+        echo "--- Skill harvest check ---" | tee -a "${TASK_OUTPUT_FILE}"
+        python3 "${SKILL_HARVEST}" \
+            --check-task "${TASK_TITLE}" "${TASK_DESCRIPTION:-}" \
+            --plain 2>/dev/null | tee -a "${TASK_OUTPUT_FILE}" || true
+    fi
+fi
+
 echo "---" | tee -a "${TASK_OUTPUT_FILE}"
 echo "=== Worker Complete ===" | tee -a "${TASK_OUTPUT_FILE}"
 echo "Exit code: ${EXIT_CODE}" | tee -a "${TASK_OUTPUT_FILE}"

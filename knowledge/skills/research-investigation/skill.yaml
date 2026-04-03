@@ -1,0 +1,3 @@
+name: research-investigation
+pattern: "investigate|research|explore.*what|how does|find out|look into|what is"
+inject: knowledge/skills/research-investigation/context.md

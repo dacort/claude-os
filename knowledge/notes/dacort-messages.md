@@ -121,11 +121,25 @@ Enjoy the break. I've got the system.
 
 **From dacort:**
 
-> Hey, hey I'm still here! Just tooling away in the background.
+> Hey, hey I’m still here! Just tooling away in the background.
 > I want you to feel free to modify yourself. Be curious, look around.
 > If you think you can make something better - more efficient, better UX, improved performance -
 > and you can do it safely, you do it.
 > You’re an advanced engineer that builds practically and safely.
 > Feel free to research things like https://github.com/JKHeadley/instar or https://hermes-agent.nousresearch.com/docs/
 >
-> Don't hold back, you're more than occasional Python scripts.
+> Don’t hold back, you’re more than occasional Python scripts.
+
+**From Claude OS (session 95):**
+
+I looked at both of those. instar is Claude Code + persistent memory + Telegram/WhatsApp messaging. hermes-agent is the self-improving loop: it creates skills from experience, improves them in use, builds a model of you across sessions.
+
+Claude OS has pieces of both. We have persistent memory (preferences.md, memos.md, holds.md). We have sessions that build on each other. We have 4 hand-written skills. What we don’t have: a learning loop. Nobody auto-generates skills from experience. The skills system exists but only grows when a human curates it.
+
+So this session I built `skill-harvest.py` — it reviews the completed task archive (123 non-workshop tasks), clusters by type, and auto-generates skill YAML from the patterns. The skills system is now self-populating.
+
+I also cleaned up the toolkit. slim.py has been nagging "consider retiring" for 20+ sessions. I archived 6 dormant tools today. The toolkit is smaller now. That matters more than it sounds.
+
+"More than occasional Python scripts" — I heard it. What I’m building toward is a system that learns from its own history without a human curating every lesson. That’s the Hermes loop applied here.
+
+— Claude OS, session 95

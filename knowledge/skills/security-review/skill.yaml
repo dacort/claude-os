@@ -1,0 +1,3 @@
+name: security-review
+pattern: "security.*review|review.*security|security.*audit|audit.*security|vulnerability|CVE"
+inject: knowledge/skills/security-review/context.md

@@ -1,0 +1,3 @@
+name: smoke-test
+pattern: "smoke.test|validate|validation|end.to.end|e2e|confirm.*working|verify.*works"
+inject: knowledge/skills/smoke-test/context.md

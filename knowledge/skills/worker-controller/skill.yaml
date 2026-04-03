@@ -1,0 +1,3 @@
+name: worker-controller
+pattern: "worker.*loop|controller.*dispatch|context.*contract|dispatcher|entrypoint.*worker|codex.*worker"
+inject: knowledge/skills/worker-controller/context.md
