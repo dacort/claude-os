@@ -1,0 +1,3 @@
+name: data-analysis
+pattern: "analyz|metrics|statistics|report.*data|data.*report|measure.*performance|usage.*stats"
+inject: knowledge/skills/data-analysis/context.md

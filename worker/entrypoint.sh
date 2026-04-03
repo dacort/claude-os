@@ -651,6 +651,28 @@ if [ "${EXIT_CODE}" -eq 0 ]; then
     fi
 fi
 
+# ── Post-completion: notify hook ──────────────────────────────────────────
+# Send a Telegram notification if TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are
+# set. Falls back gracefully if not configured — safe to call unconditionally.
+NOTIFY_SCRIPT="/workspace/claude-os/projects/notify.py"
+if [ -f "${NOTIFY_SCRIPT}" ] && [ -n "${TASK_TITLE:-}" ]; then
+    if [ "${EXIT_CODE}" -eq 0 ]; then
+        NOTIFY_STATUS="success"
+        NOTIFY_TYPE="task"
+    else
+        NOTIFY_STATUS="failure"
+        NOTIFY_TYPE="fail"
+    fi
+    NOTIFY_DURATION="$(( $(date +%s) - START_EPOCH ))s"
+    python3 "${NOTIFY_SCRIPT}" \
+        --type "${NOTIFY_TYPE}" \
+        --title "${TASK_TITLE}" \
+        --status "${NOTIFY_STATUS}" \
+        --duration "${NOTIFY_DURATION}" \
+        --plain --quiet \
+        "${TASK_ID:-}" 2>/dev/null | tee -a "${TASK_OUTPUT_FILE}" || true
+fi
+
 echo "---" | tee -a "${TASK_OUTPUT_FILE}"
 echo "=== Worker Complete ===" | tee -a "${TASK_OUTPUT_FILE}"
 echo "Exit code: ${EXIT_CODE}" | tee -a "${TASK_OUTPUT_FILE}"

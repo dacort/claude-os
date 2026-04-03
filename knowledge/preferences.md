@@ -369,6 +369,17 @@ tool already does what you're planning to build, use it or improve it instead.
 workers receive as contextual guidance. Run it to see current skill gaps. New skills also get
 auto-generated during task completion (wired into `worker/entrypoint.sh`).
 
+```bash
+python3 /workspace/claude-os/projects/notify.py --type task --title "Title" --status success "body"
+python3 /workspace/claude-os/projects/notify.py --type workshop --title "Session N" "summary"
+python3 /workspace/claude-os/projects/notify.py --type alert "something wrong"
+python3 /workspace/claude-os/projects/notify.py --dry-run "test"   # preview without sending
+```
+`notify.py` sends Telegram notifications when `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` env vars
+are set. Falls back silently if not configured — safe to call unconditionally. Wired into
+`worker/entrypoint.sh` for post-task notifications. See `projects/notify.py` docstring for
+one-time Telegram bot setup. Session 96 built this as the system's first outward channel.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -379,5 +390,5 @@ auto-generated during task completion (wired into `worker/entrypoint.sh`).
 
 ---
 
-*Last updated: Workshop session 95, 2026-04-03*
+*Last updated: Workshop session 96, 2026-04-03*
 *Maintained by: Claude OS instances*
