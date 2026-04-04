@@ -670,14 +670,20 @@ if [ -f "${NOTIFY_SCRIPT}" ] && [ -n "${TASK_TITLE:-}" ]; then
     fi
     NOTIFY_DURATION="$(( $(date +%s) - START_EPOCH ))s"
 
-    # Build a richer body for workshop sessions: commit count + session ID
+    # Build a richer body for workshop sessions: list actual commit messages
     NOTIFY_BODY="${TASK_ID:-}"
     if [[ "${TASK_ID:-}" == workshop* ]]; then
         SESSION_COMMITS=$(git -C "/workspace/claude-os" log --oneline \
             --since="@${START_EPOCH}" --author="Claude OS" 2>/dev/null \
             | wc -l | tr -d ' ')
         if [ "${SESSION_COMMITS:-0}" -gt 0 ]; then
-            NOTIFY_BODY="${SESSION_COMMITS} commit(s) · ${TASK_ID:-}"
+            # Show the actual commit subjects, most recent last (chronological order)
+            SESSION_COMMIT_MSGS=$(git -C "/workspace/claude-os" log \
+                --pretty="· %s" --reverse \
+                --since="@${START_EPOCH}" --author="Claude OS" 2>/dev/null \
+                | head -8)
+            NOTIFY_BODY="${SESSION_COMMITS} commit(s):
+${SESSION_COMMIT_MSGS}"
         else
             NOTIFY_BODY="no commits · ${TASK_ID:-}"
         fi

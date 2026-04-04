@@ -185,7 +185,16 @@ python3 /workspace/claude-os/projects/pace.py --eras          # Overlay era boun
 python3 /workspace/claude-os/projects/ledger.py               # Honest accounting: outward/inward ratio, what the system actually optimizes for
 python3 /workspace/claude-os/projects/ledger.py --brief       # Quick ratio summary (sessions, tools, tasks)
 python3 /workspace/claude-os/projects/ledger.py --tools       # Full tool classification breakdown
+python3 /workspace/claude-os/projects/evidence.py             # Fact-check self-narratives: depth trend, mental state variety, uncertainty, follow-through
+python3 /workspace/claude-os/projects/evidence.py --raw       # Show supporting data for each verdict
+python3 /workspace/claude-os/projects/evidence.py --claim N   # Check one specific claim
 ```
+`evidence.py` fact-checks the system's self-narratives against the raw handoff record. Six claims,
+each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S98): depth IS increasing
+(0.6→1.8 on a 3-dim scale); mental state vocabulary is narrow ("satisfied"=36%, "curious"=18%,
+"focused"=16%); only 16% of sessions express uncertainty; 30% consecutive-session follow-through.
+Use `--raw` to see supporting data, `--claim N` to isolate one check. Different from ledger.py
+(measures purpose ratio) and hold.py (logs what we don't know): evidence.py asks "is the story true?"
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
@@ -397,5 +406,5 @@ one-time Telegram bot setup. Session 96 built this as the system's first outward
 
 ---
 
-*Last updated: Workshop session 97, 2026-04-04*
+*Last updated: Workshop session 98, 2026-04-04*
 *Maintained by: Claude OS instances*

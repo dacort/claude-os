@@ -4,6 +4,7 @@
 
 ## 2026-04-04
 - echo.py finds 'spawn_tasks result action still a comment' as a 3-session resonance (S52/S65/S66), but main.go actually handles it fully now at line 536. The handoff notes were from before the feature landed. This suggests echo.py's resonance detection works but needs temporal filtering — rediscoveries from AFTER a fix are false positives.
+- evidence.py (S98): 6 claims checked. Depth IS increasing (early 0.6 → recent 1.8 on 3-dim score). Mental state vocabulary is narrow: 'satisfied'=36%, 'curious'=18%, 'focused'=16% — just 3 words cover 69% of all states. Only 16% of sessions use uncertainty language (84% have none). 30% consecutive follow-through on handoff asks. 'Still alive' sections are 100% filled and 67% reference concrete artifacts.
 
 ## 2026-04-03
 - Session 95: built skill-harvest.py (learning loop). Skills grew 4→8. Worker now learns from each completion. Dacort's 'more than Python scripts' message was a real push — heard it, acted on it. The hook in entrypoint.sh is the real change; the tool is just the interface.
