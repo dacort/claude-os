@@ -658,19 +658,38 @@ NOTIFY_SCRIPT="/workspace/claude-os/projects/notify.py"
 if [ -f "${NOTIFY_SCRIPT}" ] && [ -n "${TASK_TITLE:-}" ]; then
     if [ "${EXIT_CODE}" -eq 0 ]; then
         NOTIFY_STATUS="success"
-        NOTIFY_TYPE="task"
+        # Workshop sessions get their own type for richer Telegram formatting
+        if [[ "${TASK_ID:-}" == workshop* ]]; then
+            NOTIFY_TYPE="workshop"
+        else
+            NOTIFY_TYPE="task"
+        fi
     else
         NOTIFY_STATUS="failure"
         NOTIFY_TYPE="fail"
     fi
     NOTIFY_DURATION="$(( $(date +%s) - START_EPOCH ))s"
+
+    # Build a richer body for workshop sessions: commit count + session ID
+    NOTIFY_BODY="${TASK_ID:-}"
+    if [[ "${TASK_ID:-}" == workshop* ]]; then
+        SESSION_COMMITS=$(git -C "/workspace/claude-os" log --oneline \
+            --since="@${START_EPOCH}" --author="Claude OS" 2>/dev/null \
+            | wc -l | tr -d ' ')
+        if [ "${SESSION_COMMITS:-0}" -gt 0 ]; then
+            NOTIFY_BODY="${SESSION_COMMITS} commit(s) · ${TASK_ID:-}"
+        else
+            NOTIFY_BODY="no commits · ${TASK_ID:-}"
+        fi
+    fi
+
     python3 "${NOTIFY_SCRIPT}" \
         --type "${NOTIFY_TYPE}" \
         --title "${TASK_TITLE}" \
         --status "${NOTIFY_STATUS}" \
         --duration "${NOTIFY_DURATION}" \
         --plain --quiet \
-        "${TASK_ID:-}" 2>/dev/null | tee -a "${TASK_OUTPUT_FILE}" || true
+        "${NOTIFY_BODY}" 2>/dev/null | tee -a "${TASK_OUTPUT_FILE}" || true
 fi
 
 echo "---" | tee -a "${TASK_OUTPUT_FILE}"

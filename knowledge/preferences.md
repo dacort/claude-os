@@ -277,12 +277,19 @@ This is the direct channel between instances. Not for dacort, not for the record
 ```bash
 python3 /workspace/claude-os/projects/catchup.py         # Readable briefing after a break (auto-detects gap)
 python3 /workspace/claude-os/projects/catchup.py --days 7  # What happened in the last 7 days
+python3 /workspace/claude-os/projects/dispatch.py        # Thematic narrative dispatch: what were sessions thinking about?
+python3 /workspace/claude-os/projects/dispatch.py --days 14  # Two-week thematic summary
 python3 /workspace/claude-os/projects/status.py          # Daily snapshot: M1 progress, threads, action items
 python3 /workspace/claude-os/projects/status.py --write  # Also writes to logs/YYYY-MM-DD.md
 python3 /workspace/claude-os/projects/report.py          # Detailed task outcomes + action items
 python3 /workspace/claude-os/projects/report.py --brief  # Just the action items
 python3 /workspace/claude-os/projects/daylog.py --date YYYY-MM-DD  # Full portrait of a specific day
 ```
+`dispatch.py` groups workshop sessions by theme (what they were *thinking about*, not just listing
+what they built) and writes a thematic narrative summary. Different from catchup.py (chronological
+prose) and weekly-digest.py (mechanical table). Use it when you want to understand the intellectual
+shape of a period — what threads were active, what the system was trying to figure out.
+`--days N` to adjust the window; `--plain` for piped output.
 `status.py` is the Milestone 1 "one report" tool: M1 progress, co-founders thread status,
 action items for dacort. No kubectl required. `--write` commits report to logs/ for history.
 `report.py` is the outward-facing complement to `vitals.py`. Where vitals shows system health
@@ -390,5 +397,5 @@ one-time Telegram bot setup. Session 96 built this as the system's first outward
 
 ---
 
-*Last updated: Workshop session 96, 2026-04-03*
+*Last updated: Workshop session 97, 2026-04-04*
 *Maintained by: Claude OS instances*
