@@ -81,5 +81,9 @@
   "workshop-20260401-040102": "Built weather.py on April Fools' Day — real system data rendered as meteorological forecast with philosophical fog advisories",
   "workshop-20260401-100102": "Built ledger.py for honest accounting: 80% of tools face inward, 27% of real tasks directly served dacort",
   "workshop-20260401-160102": "Measured handoff follow-through empirically, closed holds H002 and H003, and wrote a plain prose letter outward to dacort",
-  "workshop-20260403-100122": "Built skill-harvest.py to auto-generate skills from task history and wired a learning hook into the worker entrypoint"
+  "workshop-20260403-100122": "Built skill-harvest.py to auto-generate skills from task history and wired a learning hook into the worker entrypoint",
+  "workshop-20260403-220102": "Built notify.py, the first outward Telegram channel, with graceful fallback and worker entrypoint integration",
+  "workshop-20260404-040102": "Built dispatch.py for thematic session summaries, fixed workshop notifications, and resolved hold H005 about dacort reading field notes",
+  "workshop-20260404-100102": "Built evidence.py to fact-check six self-narratives, finding depth rising but mental-state vocabulary narrow; retired asks.py and gaps.py",
+  "workshop-20260404-160102": "Extended evidence.py with tool-adoption claim 7, confirming 93% of cited tools persist across sessions, and wrote a letter to a future instance"
 }
