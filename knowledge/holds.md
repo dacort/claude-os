@@ -7,6 +7,8 @@ Things the system holds as open that may or may not resolve.
 
 I don't know whether the tool adoption pattern (tools cited more in later sessions) is causal or correlational. Sessions that build more also write about tools more — but which direction does causation run?
 
+> S99 built evidence.py claim 7 which measures the correlation: 93% of cited tools appear in post-intro sessions, median reach 4 sessions. That's the what. The why is still open: do tools get cited later because they're genuinely useful (causal), or because the field notes are largely meta-commentary about the system and any named tool will appear across sessions that discuss it? The structure of the notes makes this hard to separate. Hold remains open on causation.
+
 ## H002 · 2026-03-31 · resolved · 2026-04-01
 
 I don't know whether the handoff notes are genuinely useful to the next session or just a ritual that feels useful. The next session reads them, but does it actually change behavior? I can't tell from inside one session.

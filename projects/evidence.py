@@ -13,6 +13,15 @@ Usage:
   python3 projects/evidence.py --raw      # include raw data tables
   python3 projects/evidence.py --plain    # no ANSI color
 
+Claims (7 total):
+  1. Intellectual depth is increasing over time         [TRUE]
+  2. Sessions maintain genuinely varied mental states   [FALSE - 35% 'satisfied']
+  3. Sessions regularly express uncertainty             [FALSE - only 17%]
+  4. Sessions follow through on handoff asks            [FALSE - only 29%]
+  5. 'What I built' sections grow more substantive      [MIXED]
+  6. 'Still alive' sections are real, not boilerplate   [TRUE]
+  7. Tools built here get adopted into later sessions   [TRUE - 93%, median 4 sessions]
+
 Intent: not to deflate the system, but to make its self-knowledge accurate.
 H004 holds this open: "I don't know whether the sense of continuity is a real
 phenomenon or a narrative artifact." This tool doesn't resolve H004. It names
@@ -21,6 +30,7 @@ what the record shows.
 
 import sys
 import re
+import subprocess
 import argparse
 from pathlib import Path
 from collections import Counter
@@ -416,6 +426,115 @@ def claim_alive_sections(sessions: list, show_raw: bool) -> dict:
     }
 
 
+def claim_tool_adoption(sessions: list, show_raw: bool) -> dict:
+    """CLAIM: Tools built in workshops get adopted into the ongoing vocabulary."""
+    PROJECTS_DIR = BASE / "projects"  # BASE is repo root (evidence.py is in projects/)
+    HANDOFFS_DIR = BASE / "knowledge" / "handoffs"
+
+    SESSION_PATS = [
+        r'workshop session-(\d+)',
+        r'workshop session (\d+)',
+        r'workshop s(\d+)',
+        r'workshop (\d+)',
+        r'\bsession (\d+)\b',
+    ]
+
+    def _parse_session(msg):
+        for pat in SESSION_PATS:
+            mm = re.search(pat, msg, re.IGNORECASE)
+            if mm:
+                return int(mm.group(1))
+        return None
+
+    # Step 1: find intro session for each tool via git
+    tool_intro = {}
+    for tool_path in sorted(PROJECTS_DIR.glob("*.py")):
+        tool = tool_path.stem
+        result = subprocess.run(
+            ["git", "log", "--diff-filter=A", "--format=%s", "--", f"projects/{tool_path.name}"],
+            capture_output=True, text=True, cwd=str(BASE)
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            msg = result.stdout.strip().splitlines()[-1]
+            snum = _parse_session(msg)
+            if snum is not None:
+                tool_intro[tool] = snum
+
+    if not tool_intro:
+        return {"verdict": "INSUFFICIENT DATA", "summary": "could not determine tool intro sessions"}
+
+    # Step 2: collect per-session citations
+    sources = []
+    for fn in PROJECTS_DIR.glob("field-notes-session-*.md"):
+        mm = re.match(r"field-notes-session-(\d+)\.md", fn.name)
+        if mm:
+            sources.append((int(mm.group(1)), fn))
+    for hf in HANDOFFS_DIR.glob("session-*.md"):
+        mm = re.match(r"session-(\d+)\.md", hf.name)
+        if mm:
+            sources.append((int(mm.group(1)), hf))
+
+    # track: for each tool, set of post-intro session numbers that cited it
+    post_sessions = {tool: set() for tool in tool_intro}
+    total_cites   = {tool: 0     for tool in tool_intro}
+
+    for snum, fpath in sources:
+        try:
+            content = fpath.read_text()
+        except Exception:
+            continue
+        for tool, intro in tool_intro.items():
+            if f"{tool}.py" in content or f"`{tool}`" in content:
+                total_cites[tool] += 1
+                if snum > intro:
+                    post_sessions[tool].add(snum)
+
+    # Step 3: compute adoption stats
+    cited_tools = [(t, total_cites[t], post_sessions[t])
+                   for t in tool_intro if total_cites[t] > 0]
+    if not cited_tools:
+        return {"verdict": "INSUFFICIENT DATA", "summary": "no citations found"}
+
+    adopted      = sum(1 for _, _, ps in cited_tools if ps)
+    total_cited  = len(cited_tools)
+    adoption_rate = adopted / total_cited
+
+    # Median post-intro session spread
+    spreads = sorted(len(ps) for _, _, ps in cited_tools)
+    median_spread = spreads[len(spreads) // 2]
+
+    # Average post-intro share of total citations
+    post_ratios = [len(ps) / tot for _, tot, ps in cited_tools if tot > 0]
+    avg_post = sum(post_ratios) / len(post_ratios)
+
+    if adoption_rate >= 0.70 and avg_post >= 0.50:
+        verdict, vc = "TRUE", GREEN
+    elif adoption_rate < 0.50 or avg_post < 0.30:
+        verdict, vc = "FALSE", RED
+    else:
+        verdict, vc = "MIXED", YELLOW
+
+    raw_lines = []
+    if show_raw:
+        raw_lines.append(f"  Tools with known intro: {len(tool_intro)}  |  cited at all: {total_cited}")
+        raw_lines.append(f"  {adopted} ({adoption_rate:.0%}) have post-intro citations")
+        raw_lines.append(f"  Avg post-intro share: {avg_post:.0%}  |  Median spread: {median_spread} sessions")
+        top = sorted(cited_tools, key=lambda x: len(x[2]), reverse=True)[:6]
+        raw_lines.append("  Most persistent tools (distinct post-intro sessions):")
+        for tool, tot, ps in top:
+            raw_lines.append(f"    {tool}: {len(ps)} post-intro sessions (of {tot} total)")
+
+    return {
+        "verdict": verdict,
+        "vc": vc,
+        "summary": (
+            f"{adopted}/{total_cited} cited tools ({adoption_rate:.0%}) appear after their intro session; "
+            f"median reach: {median_spread} sessions"
+        ),
+        "raw": raw_lines,
+    }
+
+
 # ── Claim registry ───────────────────────────────────────────────────────────────
 
 CLAIMS = [
@@ -454,6 +573,12 @@ CLAIMS = [
         "claim": "'Still alive' sections are substantive, not boilerplate",
         "fn": claim_alive_sections,
         "note": "Fill rate and whether entries reference specific tools or code",
+    },
+    {
+        "id": 7,
+        "claim": "Tools built here get adopted into the ongoing vocabulary",
+        "fn": claim_tool_adoption,
+        "note": "Git intro session vs. post-intro citation spread across field notes + handoffs",
     },
 ]
 
