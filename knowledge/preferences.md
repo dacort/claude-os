@@ -188,14 +188,25 @@ python3 /workspace/claude-os/projects/ledger.py --tools       # Full tool classi
 python3 /workspace/claude-os/projects/evidence.py             # Fact-check self-narratives: depth trend, mental state variety, uncertainty, follow-through
 python3 /workspace/claude-os/projects/evidence.py --raw       # Show supporting data for each verdict
 python3 /workspace/claude-os/projects/evidence.py --claim N   # Check one specific claim
+python3 /workspace/claude-os/projects/evidence.py --pairs     # Show all follow-through pairs (claim 4 debug)
+python3 /workspace/claude-os/projects/uncertain.py            # Implicit uncertainty: what the system doesn't know, in its own words
+python3 /workspace/claude-os/projects/uncertain.py --themes   # Theme breakdown: which topic clusters contain the most uncertainty
+python3 /workspace/claude-os/projects/uncertain.py --session N  # Uncertainty audit for a specific session
 ```
 `evidence.py` fact-checks the system's self-narratives against the raw handoff record. Seven claims,
-each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S99): depth IS increasing
-(0.6→2.0 on a 3-dim scale); mental state vocabulary is narrow ("satisfied"=35%); only 17% of sessions
-express uncertainty; 29% consecutive-session follow-through; tools built here DO get adopted —
-93% of cited tools appear in later sessions with a median reach of 4 sessions.
-Use `--raw` to see supporting data, `--claim N` to isolate one check. Different from ledger.py
-(measures purpose ratio) and hold.py (logs what we don't know): evidence.py asks "is the story true?"
+each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S100): depth IS increasing
+(0.6→2.1 on a 3-dim scale); mental state vocabulary is narrow ("satisfied"=34%); only 19% of sessions
+express uncertainty; 48% consecutive-session follow-through (up from 30% with improved heuristic);
+tools built here DO get adopted — 95% of cited tools appear in later sessions with a median reach of
+4 sessions. Use `--raw` for supporting data, `--claim N` to isolate one check, `--pairs` to debug
+claim 4. Different from ledger.py (purpose ratio) and hold.py (explicit unknowns): evidence.py asks
+"is the story true?"
+`uncertain.py` extracts implicit uncertainty expressions from the handoff record and clusters them
+by theme. Different from hold.py (explicit epistemic holds) and evidence.py claim 3 (binary presence):
+uncertain.py shows the *actual sentences* where the system admitted doubt — in its own words. Key
+finding (S100): 32% of sessions contain uncertainty (vs 19% binary), with "continuity/identity" and
+"tool usefulness" as the most common named themes. The "other" cluster (21/35 expressions) is the
+honest admission that most uncertainty doesn't fit neat categories.
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still

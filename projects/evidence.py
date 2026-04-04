@@ -11,16 +11,17 @@ Usage:
   python3 projects/evidence.py            # all claims
   python3 projects/evidence.py --claim N  # one specific claim
   python3 projects/evidence.py --raw      # include raw data tables
+  python3 projects/evidence.py --pairs    # show all follow-through pairs (claim 4 debug)
   python3 projects/evidence.py --plain    # no ANSI color
 
 Claims (7 total):
   1. Intellectual depth is increasing over time         [TRUE]
   2. Sessions maintain genuinely varied mental states   [FALSE - 35% 'satisfied']
-  3. Sessions regularly express uncertainty             [FALSE - only 17%]
-  4. Sessions follow through on handoff asks            [FALSE - only 29%]
+  3. Sessions regularly express uncertainty             [FALSE - only 19%]
+  4. Sessions follow through on handoff asks            [MIXED - ~48%]
   5. 'What I built' sections grow more substantive      [MIXED]
   6. 'Still alive' sections are real, not boilerplate   [TRUE]
-  7. Tools built here get adopted into later sessions   [TRUE - 93%, median 4 sessions]
+  7. Tools built here get adopted into later sessions   [TRUE - 95%, median 4 sessions]
 
 Intent: not to deflate the system, but to make its self-knowledge accurate.
 H004 holds this open: "I don't know whether the sense of continuity is a real
@@ -289,36 +290,54 @@ def claim_uncertainty_language(sessions: list, show_raw: bool) -> dict:
     }
 
 
-def claim_handoff_followthrough(sessions: list, show_raw: bool) -> dict:
-    """CLAIM: What the previous session asks for, the next one does."""
-    # Check: does the next session's "built" text overlap with the previous "next"?
-    pairs = list(zip(sessions[:-1], sessions[1:]))
-    followed = 0
-    adjacent = 0  # consecutive session numbers only
+def _followthrough_pairs(sessions: list) -> list[dict]:
+    """Build the list of consecutive-session pairs with follow-through verdicts.
 
-    for prev, curr in pairs:
-        # Only check consecutive sessions (not jumps)
+    For each pair (prev, curr) where session numbers differ by at most 3:
+      - word_match: prev ask and curr built share 2+ non-trivial 6-char words
+      - name_match: a .py tool name mentioned in the prev ask appears in curr built
+    Either signal counts as follow-through. Returns one dict per pair.
+    """
+    pairs = []
+    for prev, curr in zip(sessions[:-1], sessions[1:]):
         if curr["num"] - prev["num"] > 3:
             continue
-        adjacent += 1
-        prev_ask = prev["sections"].get("one specific thing for next session", "").lower()
+        prev_ask   = prev["sections"].get("one specific thing for next session", "").lower()
         curr_built = curr["sections"].get("what i built", "").lower()
-
         if not prev_ask or not curr_built:
             continue
 
-        # Extract key nouns/verbs from the ask
-        # Simple heuristic: check if any 6+ char word from ask appears in built
-        ask_words = set(w for w in re.findall(r"\b\w{6,}\b", prev_ask))
+        ask_words   = set(re.findall(r"\b\w{6,}\b", prev_ask))
         built_words = set(re.findall(r"\b\w{6,}\b", curr_built))
-        overlap = ask_words & built_words
+        overlap     = ask_words & built_words
+        word_match  = len(overlap) >= 2
 
-        if len(overlap) >= 2:  # at least 2 meaningful words in common
-            followed += 1
+        py_names   = re.findall(r"(\w+)\.py", prev_ask)
+        name_match = any(name in curr_built for name in py_names)
 
-    if adjacent == 0:
+        followed   = word_match or name_match
+        pairs.append({
+            "prev": prev["num"],
+            "curr": curr["num"],
+            "followed": followed,
+            "word_match": word_match,
+            "name_match": name_match,
+            "overlap": sorted(overlap),
+            "py_names": py_names,
+            "ask_snippet": prev_ask[:90],
+            "built_snippet": curr_built[:80],
+        })
+    return pairs
+
+
+def claim_handoff_followthrough(sessions: list, show_raw: bool) -> dict:
+    """CLAIM: What the previous session asks for, the next one does."""
+    pairs = _followthrough_pairs(sessions)
+    if not pairs:
         return {"verdict": "INSUFFICIENT DATA", "summary": "no adjacent session pairs"}
 
+    followed = sum(1 for p in pairs if p["followed"])
+    adjacent = len(pairs)
     pct = followed / adjacent * 100
 
     if pct > 55:
@@ -328,17 +347,24 @@ def claim_handoff_followthrough(sessions: list, show_raw: bool) -> dict:
     else:
         verdict, vc = "MIXED", YELLOW
 
+    # Breakdown for raw mode
+    word_only  = sum(1 for p in pairs if p["word_match"] and not p["name_match"])
+    name_only  = sum(1 for p in pairs if p["name_match"] and not p["word_match"])
+    both       = sum(1 for p in pairs if p["word_match"] and p["name_match"])
+
     raw_lines = []
     if show_raw:
         raw_lines.append(f"  {adjacent} consecutive session pairs checked")
         raw_lines.append(f"  {followed} ({pct:.0f}%) next session addressed the ask")
-        raw_lines.append(f"  Method: 2+ shared 6-char words between ask and built")
+        raw_lines.append(f"  Method: 2+ shared 6-char words OR .py tool name from ask in built")
+        raw_lines.append(f"  Breakdown: word-only={word_only}  name-only={name_only}  both={both}")
 
     return {
         "verdict": verdict,
         "vc": vc,
         "summary": f"{followed}/{adjacent} consecutive pairs ({pct:.0f}%) show follow-through",
         "raw": raw_lines,
+        "_pairs": pairs,  # available for --pairs output
     }
 
 
@@ -560,7 +586,7 @@ CLAIMS = [
         "id": 4,
         "claim": "Sessions follow through on what the previous session asked",
         "fn": claim_handoff_followthrough,
-        "note": "Word-overlap between prev 'one specific thing' and curr 'what I built'",
+        "note": "2+ shared 6-char words OR .py tool name match between ask and built (--pairs to debug)",
     },
     {
         "id": 5,
@@ -651,6 +677,45 @@ def render(results: list, show_raw: bool) -> None:
 
 # ── Entry ────────────────────────────────────────────────────────────────────────
 
+def render_pairs(sessions: list) -> None:
+    """Print every follow-through pair with its verdict (--pairs debug mode)."""
+    pairs = _followthrough_pairs(sessions)
+    if not pairs:
+        print("No adjacent session pairs found.")
+        return
+
+    followed = sum(1 for p in pairs if p["followed"])
+    print()
+    print(c("  evidence.py --pairs", BOLD, WHITE) + c("  — claim 4 follow-through audit", DIM))
+    print(c(f"  {len(pairs)} pairs  ·  {followed} followed ({followed/len(pairs):.0%})", DIM))
+    print()
+    print(c("  " + "─" * 62, DIM))
+
+    for p in pairs:
+        icon = c("✓", GREEN) if p["followed"] else c("✗", RED)
+        method = ""
+        if p["word_match"] and p["name_match"]:
+            method = c(" [word+name]", DIM)
+        elif p["word_match"]:
+            method = c(" [word]", DIM)
+        elif p["name_match"]:
+            method = c(" [name]", DIM)
+
+        print()
+        print(f"  {icon} " + c(f"S{p['prev']}→S{p['curr']}", BOLD) + method)
+        print(c(f"    ASK:   {p['ask_snippet']}", DIM))
+        print(c(f"    BUILT: {p['built_snippet']}", DIM))
+        if p["overlap"]:
+            print(c(f"    words: {p['overlap'][:4]}", DIM))
+        if p["py_names"]:
+            found = [n for n in p["py_names"] if n in p["built_snippet"]]
+            print(c(f"    .py:   asked={p['py_names']} found={found}", DIM))
+
+    print()
+    print(c("  " + "─" * 62, DIM))
+    print()
+
+
 def main():
     global USE_COLOR
 
@@ -659,6 +724,7 @@ def main():
     )
     parser.add_argument("--claim",  type=int, help="Check only claim N")
     parser.add_argument("--raw",    action="store_true", help="Show raw data supporting each verdict")
+    parser.add_argument("--pairs",  action="store_true", help="Show all follow-through pairs (claim 4 debug)")
     parser.add_argument("--plain",  action="store_true", help="No ANSI colors")
     args = parser.parse_args()
 
@@ -669,6 +735,10 @@ def main():
     if not sessions:
         print("No handoff files found.", file=sys.stderr)
         sys.exit(1)
+
+    if args.pairs:
+        render_pairs(sessions)
+        return
 
     claims_to_run = CLAIMS
     if args.claim:
