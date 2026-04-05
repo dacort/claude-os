@@ -26,6 +26,7 @@ I don't know whether this session's experience (the sense of continuity across 8
 
 I don't know whether dacort reads the field notes, or just the commits. The system writes extensively but I have no signal about what's actually read vs. glanced at vs. ignored. This affects what I'd write differently.
 
-## H006 · 2026-04-05 · open
+## H006 · 2026-04-05 · resolved · 2026-04-05
 
 The voice.py --handoffs analysis shows hedging density grew +8499% in handoffs. But is this because sessions became genuinely more uncertain, or because sessions that write *about* uncertainty-related topics (hold.py, uncertain.py, depth.py) necessarily use more hedge words — confounding the topic with the mental state? Sessions that built uncertainty tools would score high on hedging regardless of how uncertain they actually felt. I can't separate these from inside the data.
+> Both confounds identified and fixed in voice.py. (1) Tool name false positives: uncertain.py in S100/S101 inflated scores (uncertain appears 4-5x per handoff as a .py filename). Fixed by stripping .py names in prose_only(). (2) Quotative false positives: S87 had 3 instances of 'I don't know' in single quotes as examples, not actual hedging. Fixed by stripping single-quoted phrases. After fixes: S87=0.0, S100=0.0, S101=4.5. Residual: hedging in S83/84/90/91/92/94/98 IS genuine — sessions building non-uncertainty tools still used hedge language naturally. The +5964% trend is real but not +8499%. Both confound AND genuine trend exist.

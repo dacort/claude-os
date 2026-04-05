@@ -137,14 +137,16 @@ def load_notes():
         text = first.read_text()
         notes.append((1, extract_title(text, 'Session 1'), text))
 
-    i = 2
-    while True:
-        p = PROJECT_DIR / f'field-notes-session-{i}.md'
-        if not p.exists():
-            break
-        text = p.read_text()
-        notes.append((i, extract_title(text, f'Session {i}'), text))
-        i += 1
+    # Use glob to find all numbered field notes — avoids stopping at the
+    # first gap in the sequence (e.g. no session-36 shouldn't hide session-37+)
+    import glob as _glob
+    paths = _glob.glob(str(PROJECT_DIR / 'field-notes-session-*.md'))
+    for p in sorted(paths, key=lambda x: int(re.search(r'session-(\d+)', x).group(1))):
+        m = re.search(r'session-(\d+)', p)
+        if m:
+            num = int(m.group(1))
+            text = Path(p).read_text()
+            notes.append((num, extract_title(text, f'Session {num}'), text))
 
     return notes
 
@@ -194,6 +196,12 @@ def prose_only(text):
     text = re.sub(r'^>\s*', '', text, flags=re.MULTILINE)
     # Remove italics/bold markers
     text = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', text)
+    # Remove .py tool name references — "uncertain.py" contains "uncertain" but
+    # it's a filename, not a hedge word. Prevents false positives in hedging analysis.
+    text = re.sub(r'\b\w+\.py\b', 'TOOL', text)
+    # Remove single-quoted phrases used as examples (e.g. 'I don't know' as a
+    # quotation). Match 'content' where content is 5-80 chars and contains spaces.
+    text = re.sub(r"'[^']{5,80}'", 'QUOTED', text)
     # Collapse whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
