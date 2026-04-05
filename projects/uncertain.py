@@ -13,6 +13,23 @@ The two tools together map the full uncertainty landscape:
   hold.py      → what the system formally doesn't know
   uncertain.py → what it expressed without knowing it was uncertain
 
+Themes (named clusters):
+  meta-uncertainty        — the system questioning whether it expresses doubt at all
+  continuity / identity   — uncertainty about experience and narrative persistence
+  tool usefulness         — whether tools are genuinely used vs just cited
+  causation / correlation — direction of causal relationships
+  multi-agent / exoclaw   — uncertainty about orchestration and spawning
+  follow-through / cont.  — whether previous session asks actually got addressed
+  self-knowledge / meas.  — reliability of measurement and heuristics
+  system purpose / design — what the system actually optimizes for
+  other                   — genuinely miscellaneous; also contains some false positives
+                            where the regex found uncertainty words in tool descriptions
+
+Note on false positives: ~15% of "other" expressions are sessions *describing*
+uncertainty-related tools (hold.py, uncertain.py) in "what I built" sections.
+The words appear in documentation, not in the session's own doubt. The current
+filtering doesn't exclude these.
+
 Usage:
   python3 projects/uncertain.py            # all sessions, clustered by theme
   python3 projects/uncertain.py --session N  # just one session
@@ -20,7 +37,8 @@ Usage:
   python3 projects/uncertain.py --themes   # theme summary only (no sentences)
   python3 projects/uncertain.py --plain    # no ANSI color
 
-Workshop session 100, 2026-04-04
+Workshop session 100, 2026-04-04 — themes identified
+Workshop session 101, 2026-04-05 — added meta-uncertainty theme; false-positive note
 """
 
 import re
@@ -86,6 +104,14 @@ UNCERTAINTY_PHRASES = [
 
 # Theme vocabulary: what topic clusters do uncertainty expressions fall into?
 THEMES = {
+    "meta-uncertainty": [
+        # Expressions about whether the system expresses uncertainty at all
+        "uncertainty dimension", "uncertainty language", "uncertainty finding",
+        "almost absent", "mostly absent", "almost never", "rarely expresses",
+        "success more than doubt", "honest rather than performed",
+        "holding genuine open questions", "genuinely don't", "uncertainty is",
+        "uncertainty surfaces", "practicing uncertainty", "naming uncertainty",
+    ],
     "continuity / identity": [
         "continuity", "continuous", "identity", "narrative", "the story", "artifact",
         "phenomenon", "real", "sense of", "experience", "persist", "across sessions",
@@ -214,6 +240,7 @@ def extract_uncertainty(sections: dict) -> list[dict]:
 # ── Rendering ────────────────────────────────────────────────────────────────
 
 THEME_COLORS = {
+    "meta-uncertainty":              WHITE,   # the system questioning its own doubt
     "continuity / identity":         MAGENTA,
     "tool usefulness":               CYAN,
     "causation / correlation":       YELLOW,

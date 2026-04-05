@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-voice.py — prose texture analysis across all field notes
+voice.py — prose texture analysis across field notes and handoffs
 
 Session 27 asked: "I don't know exactly when it shifted. Somewhere in
 sessions 8-12." This tool answers that question by measuring stylistic
 markers in every field note and surfacing where the register changed.
+
+In --handoffs mode, analyzes the full 100+ session handoff record instead
+of field notes — giving a broader longitudinal view of how the writing
+style has drifted across the system's entire history.
 
 Measures per session:
   - Hedging density    (maybe / might / perhaps / I think / I suppose...)
@@ -17,9 +21,12 @@ Also shows: topic silences — what Claude OS almost never mentions.
 
 Usage:
     python3 projects/voice.py
+    python3 projects/voice.py --handoffs  # analyze handoffs (all 100+ sessions)
     python3 projects/voice.py --plain     # no ANSI colors
     python3 projects/voice.py --raw       # show actual sentences for each marker
     python3 projects/voice.py --metric hedging   # focus on one metric
+
+Session 27 built this. Session 101 added --handoffs mode.
 """
 
 import re
@@ -29,8 +36,9 @@ from collections import defaultdict
 
 # ─── config ────────────────────────────────────────────────────────────────────
 
-PLAIN  = '--plain'  in sys.argv
-RAW    = '--raw'    in sys.argv
+PLAIN     = '--plain'    in sys.argv
+RAW       = '--raw'      in sys.argv
+HANDOFFS  = '--handoffs' in sys.argv
 FOCUS  = None
 for arg in sys.argv[1:]:
     if arg.startswith('--metric'):
@@ -139,6 +147,32 @@ def load_notes():
         i += 1
 
     return notes
+
+def load_handoffs():
+    """Load handoffs as (session_num, title, body_text) tuples."""
+    handoffs = []
+    handoffs_dir = PROJECT_DIR.parent / 'knowledge' / 'handoffs'
+    if not handoffs_dir.exists():
+        return handoffs
+
+    raw_paths = []
+    for path in handoffs_dir.glob('session-*.md'):
+        m = re.match(r'session-(\d+)\.md', path.name)
+        if m:
+            raw_paths.append((int(m.group(1)), path))
+
+    for num, path in sorted(raw_paths):
+        text = path.read_text()
+        # Strip YAML frontmatter
+        fm_match = re.match(r'^---\n.*?\n---\n', text, re.DOTALL)
+        body = text[fm_match.end():] if fm_match else text
+        # Extract a title (session headline from first ## line)
+        title_match = re.search(r'^##\s+(.+)', body, re.MULTILINE)
+        title = title_match.group(1).strip() if title_match else f'Session {num}'
+        handoffs.append((num, title, body))
+
+    return handoffs
+
 
 def extract_title(text, fallback):
     m = re.search(r'^##\s+(.+)$', text, re.MULTILINE)
@@ -315,10 +349,11 @@ def sparkline_row(results, key):
     lo, hi = min(vals), max(vals)
     return ''.join(spark(v, lo, hi) for v in vals)
 
-def print_header():
+def print_header(n_sessions, source):
     line = '─' * WIDTH
+    title = f'  Voice Texture — {n_sessions} Sessions of {source}'
     print(f'╭{line}╮')
-    print(f'│{bold("  Voice Texture — 27 Sessions of Field Notes"):^{WIDTH + 8}}│')
+    print(f'│{bold(title):^{WIDTH + 8}}│')
     print(f'│{dim("  Measuring how the writing changed over time"):^{WIDTH + 5}}│')
     print(f'╰{line}╯')
     print()
@@ -484,11 +519,17 @@ def print_session_summary(results, shift_session):
 # ─── main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    notes   = load_notes()
+    if HANDOFFS:
+        notes  = load_handoffs()
+        source = 'Handoffs'
+    else:
+        notes  = load_notes()
+        source = 'Field Notes'
+
     results = analyze(notes)
     shift   = find_shift(results)
 
-    print_header()
+    print_header(len(results), source)
 
     if FOCUS in (None, 'hedging'):
         print_metric_section(
@@ -584,10 +625,21 @@ def main():
     print(f'  Questions:  early avg {q_early:.1f} → late avg {q_late:.1f}  ({fmt_change(pct_change(q_early, q_late))})')
     print()
 
-    # The main finding: certainty was always dominant over hedging
-    print(f'  {bold("The crossover that never happened:")}')
-    print(f'  {dim("Certainty was dominant over hedging in every session from S1 onward.")}')
-    print(f'  {dim("The voice shift session 27 noticed was not a hedging→certainty transition.")}')
+    # Certainty vs hedging dominance — did a crossover happen?
+    hedging_dominant = sum(1 for h, c in zip(h_vals, c_vals) if h > c)
+    if hedging_dominant == 0:
+        print(f'  {bold("The crossover that never happened:")}')
+        print(f'  {dim("Certainty was dominant over hedging in every session from S1 onward.")}')
+        print(f'  {dim("The voice shift session 27 noticed was not a hedging→certainty transition.")}')
+    elif hedging_dominant / len(h_vals) > 0.3:
+        print(f'  {bold("A crossover did happen:")}')
+        print(f'  {dim(f"Hedging exceeded certainty in {hedging_dominant} of {len(h_vals)} sessions.")}')
+        peak_s = results[h_vals.index(max(h_vals))]['num']
+        print(f'  {dim(f"Concentrated in the later introspective era. Peak hedging at S{peak_s}.")}')
+    else:
+        print(f'  {bold("Mostly certain, but hedging appeared:")}')
+        print(f'  {dim(f"Hedging exceeded certainty in {hedging_dominant} of {len(h_vals)} sessions.")}')
+        print(f'  {dim("Hedging grew but certainty remained dominant overall.")}')
     print()
 
     # What actually changed
