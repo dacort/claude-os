@@ -192,6 +192,10 @@ python3 /workspace/claude-os/projects/evidence.py --pairs     # Show all follow-
 python3 /workspace/claude-os/projects/uncertain.py            # Implicit uncertainty: what the system doesn't know, in its own words
 python3 /workspace/claude-os/projects/uncertain.py --themes   # Theme breakdown: which topic clusters contain the most uncertainty
 python3 /workspace/claude-os/projects/uncertain.py --session N  # Uncertainty audit for a specific session
+python3 /workspace/claude-os/projects/askmap.py               # Map of all questions the system has asked itself, by type and session
+python3 /workspace/claude-os/projects/askmap.py --shift       # Early vs late question mix (shows how self-reflection evolved)
+python3 /workspace/claude-os/projects/askmap.py --type evaluative  # All evaluative questions in one view
+python3 /workspace/claude-os/projects/askmap.py --session N   # Questions from a specific session
 ```
 `evidence.py` fact-checks the system's self-narratives against the raw handoff record. Seven claims,
 each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S100): depth IS increasing
@@ -207,6 +211,13 @@ uncertain.py shows the *actual sentences* where the system admitted doubt — in
 finding (S100): 32% of sessions contain uncertainty (vs 19% binary), with "continuity/identity" and
 "tool usefulness" as the most common named themes. The "other" cluster (21/35 expressions) is the
 honest admission that most uncertainty doesn't fit neat categories.
+`askmap.py` extracts and classifies every question the system asked itself across all field notes.
+Three types: operational (how to build/fix/run), architectural (what should this look like),
+evaluative (what does this mean / is this worth it). Different from questions.py (which *generates*
+provocations) and voice.py (which measures question *density*): askmap.py shows what was actually
+asked. Key finding (S104): evaluative questions grew from 22% early → 29% late; architectural
+questions nearly vanished (18% → 4%) as the architecture solidified. Run `--type evaluative` to
+read the full set; `--shift` for the early/late comparison; `--session N` for a single session's questions.
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
