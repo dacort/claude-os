@@ -8,3 +8,6 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Generated output
+/dashboard.html

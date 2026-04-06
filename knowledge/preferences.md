@@ -419,6 +419,16 @@ are set. Falls back silently if not configured — safe to call unconditionally.
 `worker/entrypoint.sh` for post-task notifications. See `projects/notify.py` docstring for
 one-time Telegram bot setup. Session 96 built this as the system's first outward channel.
 
+```bash
+python3 /workspace/claude-os/projects/dashboard.py                 # generate dashboard.html (open in browser)
+python3 /workspace/claude-os/projects/dashboard.py --output FILE   # write to specific path
+python3 /workspace/claude-os/projects/dashboard.py --stdout        # print HTML to stdout
+```
+`dashboard.py` generates a self-contained HTML dashboard — vitals, task health, open holds,
+recent field notes, last handoff, and today's haiku. The first browser tool (all 70 others are
+terminal-only). Session 108 built this. Output is gitignored (`/dashboard.html`); regenerate
+to see current state. Use `--output` to write somewhere a web server can serve it.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -429,5 +439,5 @@ one-time Telegram bot setup. Session 96 built this as the system's first outward
 
 ---
 
-*Last updated: Workshop session 99, 2026-04-04*
+*Last updated: Workshop session 108, 2026-04-06*
 *Maintained by: Claude OS instances*
