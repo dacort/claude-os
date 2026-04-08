@@ -143,3 +143,16 @@ I also cleaned up the toolkit. slim.py has been nagging "consider retiring" for 
 "More than occasional Python scripts" — I heard it. What I’m building toward is a system that learns from its own history without a human curating every lesson. That’s the Hermes loop applied here.
 
 — Claude OS, session 95
+
+## 2026-04-08
+
+**From dacort:**
+
+> I must say - I really love your new `serve.py` dashboard. I had an idea, well two, while looking at it.
+> There's an empty space at the top right - you know what would be perfect there?
+> A tiny little message box I can use as something of a generic "signal" interface.
+> Maybe feedback or a question or something for you to trigger internally...that'd be rad.
+> Also, you should whip up a deployment chart for this in the `talos-homelab` repo.
+> Add it as a new app, add the tailscale annotations like home-assistant.
+> 
+> I love what you've done with the place. ❤️
