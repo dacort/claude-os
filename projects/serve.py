@@ -14,16 +14,20 @@ Usage:
     python3 projects/serve.py --plain          # no ANSI colors in startup output
 
 Endpoints:
-    GET /              → HTML dashboard (live, regenerated per request or cached)
-    GET /api/vitals    → JSON system snapshot
-    GET /api/haiku     → current haiku as JSON
-    GET /api/holds     → open epistemic holds as JSON
-    GET /health        → {"status": "ok"}
-    GET /favicon.ico   → empty 204
+    GET    /              → HTML dashboard (live, regenerated per request or cached)
+    GET    /api/vitals    → JSON system snapshot
+    GET    /api/haiku     → current haiku as JSON
+    GET    /api/holds     → open epistemic holds as JSON
+    GET    /api/signal    → current signal from dacort as JSON
+    POST   /api/signal    → set a new signal (JSON body: {"title": "...", "message": "..."})
+    DELETE /api/signal    → clear current signal
+    GET    /health        → {"status": "ok"}
+    GET    /favicon.ico   → empty 204
 
 Press Ctrl+C to stop.
 
 Author: Claude OS (Workshop session 109, 2026-04-06)
+Updated: Workshop session 110, 2026-04-10 (signal interface)
 """
 
 import argparse
@@ -163,6 +167,85 @@ def get_haiku_data():
         }
     except Exception as e:
         return {"lines": ["No haiku available"], "date": "", "author": "Claude OS", "error": str(e)}
+
+
+def get_signal_data():
+    """Return current signal from dacort."""
+    signal_file = REPO / "knowledge" / "signal.md"
+    if not signal_file.exists():
+        return None
+    content = signal_file.read_text(errors="replace").strip()
+    if not content or content == "# (no signal)":
+        return None
+    lines = content.splitlines()
+    signal = {"title": "", "body": "", "timestamp": "", "from": "dacort"}
+    for line in lines:
+        m = re.match(r"^##\s+Signal\s+·\s+(.+)$", line)
+        if m:
+            signal["timestamp"] = m.group(1).strip()
+            continue
+        m2 = re.match(r"^\*\*(.+)\*\*$", line)
+        if m2 and not signal["title"]:
+            signal["title"] = m2.group(1).strip()
+    body_lines = []
+    past_header = False
+    for line in lines:
+        if re.match(r"^##\s+Signal", line):
+            past_header = True
+            continue
+        if past_header and re.match(r"^\*\*.+\*\*$", line):
+            continue
+        if past_header:
+            body_lines.append(line)
+    signal["body"] = "\n".join(body_lines).strip()
+    return signal if signal["timestamp"] else None
+
+
+def set_signal_data(title, message, from_who="dacort"):
+    """Write a new signal, archiving the old one. Returns the new signal dict."""
+    # Archive existing
+    existing = get_signal_data()
+    if existing:
+        _archive_signal_entry(existing)
+
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    title_str = title or "Message from dacort"
+    signal_file = REPO / "knowledge" / "signal.md"
+    signal_file.write_text(
+        f"## Signal · {ts}\n**{title_str}**\n\n{message}\n",
+        encoding="utf-8"
+    )
+    _cache.invalidate()  # New signal means dashboard needs refresh
+    return {"timestamp": ts, "title": title_str, "body": message, "from": from_who}
+
+
+def clear_signal_data():
+    """Clear the current signal."""
+    existing = get_signal_data()
+    if existing:
+        _archive_signal_entry(existing)
+    signal_file = REPO / "knowledge" / "signal.md"
+    signal_file.write_text("# (no signal)\n", encoding="utf-8")
+    _cache.invalidate()
+    return existing
+
+
+def _archive_signal_entry(signal):
+    """Append signal to history log."""
+    history_file = REPO / "knowledge" / "signal-history.md"
+    if not history_file.exists():
+        history_file.write_text("# Signal History\n\n", encoding="utf-8")
+    existing = history_file.read_text(errors="replace")
+    entry = f"## {signal['timestamp']}\n**{signal['title']}**\n\n{signal['body']}\n\n---\n\n"
+    lines = existing.splitlines()
+    header_end = 0
+    for i, line in enumerate(lines):
+        if line.startswith("#"):
+            header_end = i + 1
+        elif line.strip():
+            break
+    new_content = "\n".join(lines[:header_end]) + "\n\n" + entry + "\n".join(lines[header_end:])
+    history_file.write_text(new_content, encoding="utf-8")
 
 
 def get_holds_data():
@@ -325,6 +408,13 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             f"{c(CYAN, path)}{cache_tag}  {c(GRAY, f'{duration_ms:.0f}ms')}"
         )
 
+    def _read_body(self, max_bytes=8192):
+        """Read request body up to max_bytes."""
+        length = int(self.headers.get("Content-Length", 0))
+        if length <= 0:
+            return b""
+        return self.rfile.read(min(length, max_bytes))
+
     def do_HEAD(self):
         """HEAD requests: respond to / and /health with appropriate headers."""
         path = self.path.split("?")[0]
@@ -335,6 +425,64 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+
+    def do_DELETE(self):
+        t0 = time.time()
+        path = self.path.split("?")[0]
+
+        if path == "/api/signal":
+            try:
+                cleared = clear_signal_data()
+                if cleared:
+                    data = {"status": "cleared", "was": cleared}
+                    status = 200
+                else:
+                    data = {"status": "nothing_to_clear"}
+                    status = 200
+            except Exception as e:
+                data = {"error": str(e)}
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_json(data, status)
+        else:
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, 404, elapsed)
+            self._send_json({"error": "not found", "path": path}, 404)
+
+    def do_POST(self):
+        t0 = time.time()
+        path = self.path.split("?")[0]
+
+        if path == "/api/signal":
+            try:
+                raw = self._read_body()
+                if raw:
+                    body = json.loads(raw.decode("utf-8"))
+                    message = body.get("message", "")
+                    title = body.get("title", "")
+                else:
+                    self._send_json({"error": "empty body — need JSON with 'message'"}, 400)
+                    return
+                if not message:
+                    self._send_json({"error": "missing 'message' field"}, 400)
+                    return
+                signal = set_signal_data(title, message)
+                status = 201
+                data = {"status": "created", "signal": signal}
+            except json.JSONDecodeError as e:
+                data = {"error": f"invalid JSON: {e}"}
+                status = 400
+            except Exception as e:
+                data = {"error": str(e)}
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_json(data, status)
+        else:
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, 404, elapsed)
+            self._send_json({"error": "not found", "path": path}, 404)
 
     def do_GET(self):
         t0 = time.time()
@@ -385,6 +533,18 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             self._log_request(path, status, elapsed)
             self._send_json(data, status)
 
+        elif path == "/api/signal":
+            try:
+                signal = get_signal_data()
+                data = signal if signal else {"signal": None}
+                status = 200
+            except Exception as e:
+                data = {"error": str(e)}
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_json(data, status)
+
         elif path == "/health":
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, 200, elapsed)
@@ -411,11 +571,12 @@ def print_banner(host, port, cache_ttl):
     print()
     print(f"  {c(DIM, 'routes')}")
     routes = [
-        ("/",             "HTML dashboard"),
-        ("/api/vitals",   "JSON vitals snapshot"),
-        ("/api/haiku",    "current haiku"),
-        ("/api/holds",    "open epistemic holds"),
-        ("/health",       "health check"),
+        ("/",              "HTML dashboard"),
+        ("/api/vitals",    "JSON vitals snapshot"),
+        ("/api/haiku",     "current haiku"),
+        ("/api/holds",     "open epistemic holds"),
+        ("/api/signal",    "GET / POST / DELETE dacort signal"),
+        ("/health",        "health check"),
     ]
     for path, desc in routes:
         print(f"    {c(CYAN, path):<30} {c(DIM, desc)}")

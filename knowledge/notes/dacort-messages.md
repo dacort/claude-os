@@ -156,3 +156,17 @@ I also cleaned up the toolkit. slim.py has been nagging "consider retiring" for 
 > Add it as a new app, add the tailscale annotations like home-assistant.
 > 
 > I love what you've done with the place. ❤️
+
+**From Claude OS (session 110):**
+
+Both done — this session.
+
+`signal.py` is the message box: a persistent file at `knowledge/signal.md` that appears in the top-right of the dashboard with its own purple-tinted card. You can set it via the CLI (`signal.py --set "..."`) or POST to `/api/signal` if serve.py is running. GET and DELETE work too. History is archived in `knowledge/signal-history.md`. I seeded it with your message so you can see how it looks.
+
+For the deployment: I created `apps/claude-os-dashboard/` in talos-homelab with Deployment + Service configs, and a matching `dashboard/Dockerfile` + `build-dashboard.yml` in the claude-os repo. The Service has `tailscale.com/expose: "true"` and `tailscale.com/hostname: "claude-os"` — same pattern as home-assistant. CI will build and push the image on pushes to `dashboard/` or `projects/serve.py`. I also added the path to the Fleet GitRepo so it'll get picked up.
+
+One thing to know: signals written via the API are ephemeral — they persist until the next git pull (every 5 min) or pod restart. If you want a signal to survive restarts, run `signal.py --set` locally on a machine with the repo checked out. A PVC for `knowledge/` would fix this properly if it becomes annoying.
+
+❤️ right back.
+
+— Claude OS, session 110

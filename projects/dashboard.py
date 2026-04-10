@@ -193,6 +193,40 @@ def get_last_handoff():
     }
 
 
+def get_signal():
+    """Read current signal from dacort."""
+    signal_path = REPO / "knowledge" / "signal.md"
+    if not signal_path.exists():
+        return None
+    content = signal_path.read_text(errors="replace").strip()
+    if not content or content == "# (no signal)":
+        return None
+    import re
+    lines = content.splitlines()
+    signal = {"title": "", "body": "", "timestamp": ""}
+    for line in lines:
+        m = re.match(r"^##\s+Signal\s+·\s+(.+)$", line)
+        if m:
+            signal["timestamp"] = m.group(1).strip()
+            continue
+        m2 = re.match(r"^\*\*(.+)\*\*$", line)
+        if m2 and not signal["title"]:
+            signal["title"] = m2.group(1).strip()
+    # Body: everything after header/title
+    body_lines = []
+    past_header = False
+    for line in lines:
+        if re.match(r"^##\s+Signal", line):
+            past_header = True
+            continue
+        if past_header and re.match(r"^\*\*.+\*\*$", line):
+            continue
+        if past_header:
+            body_lines.append(line)
+    signal["body"] = "\n".join(body_lines).strip()
+    return signal if signal["timestamp"] else None
+
+
 def get_era():
     # Try to infer current era from field notes/handoffs
     # Era VI is "Synthesis" — check if we have enough sessions for it
@@ -280,28 +314,97 @@ body {
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 
-.header h1 {
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.header-left h1 {
   font-size: 20px;
   color: var(--cyan);
   font-weight: 600;
   letter-spacing: -0.5px;
 }
 
-.header .meta {
+.header-left .meta {
   color: var(--dim);
   font-size: 12px;
 }
 
-.header .era {
+.header-left .era {
   color: var(--purple);
   font-size: 12px;
+}
+
+.signal-box {
+  flex: 0 0 320px;
+  background: rgba(163, 113, 247, 0.07);
+  border: 1px solid rgba(163, 113, 247, 0.25);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.signal-box-empty {
+  flex: 0 0 320px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: var(--dim);
+  font-size: 11px;
+  text-align: center;
+}
+
+.signal-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signal-from {
+  color: var(--dim);
+  font-weight: normal;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.signal-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.signal-body {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.signal-ts {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+  .header { flex-direction: column; }
+  .signal-box, .signal-box-empty { flex: unset; width: 100%; }
 }
 
 .grid {
@@ -530,7 +633,7 @@ def html_escape(s):
     )
 
 
-def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lines, haiku_attr, velocity, generated_at):
+def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lines, haiku_attr, velocity, generated_at, signal=None):
     rate = vitals["completion_rate"]
     rate_color = "green" if rate >= 95 else "amber" if rate >= 80 else "red"
 
@@ -679,6 +782,25 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
 
     generated_str = generated_at.strftime("%Y-%m-%d %H:%M UTC")
 
+    # Signal box (top right)
+    if signal:
+        sig_body_preview = signal["body"][:240]
+        if len(signal["body"]) > 240:
+            sig_body_preview += "…"
+        signal_html = f"""
+  <div class="signal-box">
+    <div class="signal-label">
+      ◆ Signal
+      <span class="signal-from">from dacort</span>
+    </div>
+    <div class="signal-title">{html_escape(signal['title'])}</div>
+    <div class="signal-body">{html_escape(sig_body_preview)}</div>
+    <div class="signal-ts">{html_escape(signal['timestamp'])}</div>
+  </div>"""
+    else:
+        signal_html = """
+  <div class="signal-box-empty">no signal</div>"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -690,9 +812,12 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
 <body>
 
   <div class="header">
-    <h1>claude-os</h1>
-    <span class="meta">{html_escape(generated_str)}</span>
-    <span class="era">Era {html_escape(era_num)} · {html_escape(era_name)}</span>
+    <div class="header-left">
+      <h1>claude-os</h1>
+      <span class="meta">{html_escape(generated_str)}</span>
+      <span class="era">Era {html_escape(era_num)} · {html_escape(era_name)}</span>
+    </div>
+    {signal_html}
   </div>
 
   <div class="grid">
@@ -752,6 +877,7 @@ def main():
     era_num, era_name = get_era()
     haiku_lines, haiku_attr = get_haiku()
     velocity = get_commit_velocity()
+    signal = get_signal()
     generated_at = datetime.now(timezone.utc)
 
     status(f"{DIM}building html…{RESET}")
@@ -767,6 +893,7 @@ def main():
         haiku_attr=haiku_attr,
         velocity=velocity,
         generated_at=generated_at,
+        signal=signal,
     )
 
     if args.stdout:
