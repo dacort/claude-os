@@ -18,9 +18,10 @@ Endpoints:
     GET    /api/vitals    → JSON system snapshot
     GET    /api/haiku     → current haiku as JSON
     GET    /api/holds     → open epistemic holds as JSON
-    GET    /api/signal    → current signal from dacort as JSON
-    POST   /api/signal    → set a new signal (JSON body: {"title": "...", "message": "..."})
-    DELETE /api/signal    → clear current signal
+    GET    /api/signal          → current signal from dacort as JSON
+    POST   /api/signal          → set a new signal (JSON body: {"title": "...", "message": "..."})
+    POST   /api/signal/respond  → write Claude OS response (JSON body: {"response": "...", "session": N})
+    DELETE /api/signal          → clear current signal
     GET    /notes         → HTML index of all field notes
     GET    /notes/<file>  → rendered field note as HTML
     GET    /health        → {"status": "ok"}
@@ -173,7 +174,7 @@ def get_haiku_data():
 
 
 def get_signal_data():
-    """Return current signal from dacort."""
+    """Return current signal from dacort, including any Claude OS response."""
     signal_file = REPO / "knowledge" / "signal.md"
     if not signal_file.exists():
         return None
@@ -181,7 +182,12 @@ def get_signal_data():
     if not content or content == "# (no signal)":
         return None
     lines = content.splitlines()
-    signal = {"title": "", "body": "", "timestamp": "", "from": "dacort"}
+    signal = {
+        "title": "", "body": "", "timestamp": "", "from": "dacort",
+        "response": None, "responded_at": None, "responded_by": None,
+        "has_response": False,
+    }
+    # Extract timestamp and title
     for line in lines:
         m = re.match(r"^##\s+Signal\s+·\s+(.+)$", line)
         if m:
@@ -189,19 +195,62 @@ def get_signal_data():
             continue
         m2 = re.match(r"^\*\*(.+)\*\*$", line)
         if m2 and not signal["title"]:
-            signal["title"] = m2.group(1).strip()
+            candidate = m2.group(1).strip()
+            if not candidate.startswith("Response"):
+                signal["title"] = candidate
+    # Split body from response
+    in_body = False
+    in_response = False
     body_lines = []
-    past_header = False
+    response_lines = []
     for line in lines:
         if re.match(r"^##\s+Signal", line):
-            past_header = True
+            in_body = True
             continue
-        if past_header and re.match(r"^\*\*.+\*\*$", line):
-            continue
-        if past_header:
+        if in_body or in_response:
+            m = re.match(r"^\*\*(.+)\*\*$", line)
+            if m:
+                label = m.group(1).strip()
+                if label == signal["title"]:
+                    continue
+                if label == "Response:":
+                    in_response = True
+                    in_body = False
+                    continue
+                m2 = re.match(r"^Responded:\s+(.+)$", label)
+                if m2:
+                    parts = m2.group(1).split("·")
+                    signal["responded_at"] = parts[0].strip()
+                    if len(parts) > 1:
+                        signal["responded_by"] = parts[1].strip()
+                    in_response = False
+                    continue
+        if in_body:
             body_lines.append(line)
+        elif in_response:
+            response_lines.append(line)
     signal["body"] = "\n".join(body_lines).strip()
+    if response_lines:
+        signal["response"] = "\n".join(response_lines).strip()
+        signal["has_response"] = True
     return signal if signal["timestamp"] else None
+
+
+def write_response_data(response_text, session_num=None):
+    """Append Claude OS response to the current signal file."""
+    existing = REPO / "knowledge" / "signal.md"
+    if not existing.exists():
+        return None
+    current = existing.read_text(encoding="utf-8").rstrip()
+    if "**Response:**" in current:
+        return None  # already has response
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    responded_by = f"Session {session_num}" if session_num else "Claude OS"
+    addition = f"\n\n**Response:**\n\n{response_text}\n\n**Responded: {ts} · {responded_by}**\n"
+    existing.write_text(current + addition, encoding="utf-8")
+    _cache.invalidate()
+    signal = get_signal_data()
+    return signal
 
 
 def set_signal_data(title, message, from_who="dacort"):
@@ -234,12 +283,18 @@ def clear_signal_data():
 
 
 def _archive_signal_entry(signal):
-    """Append signal to history log."""
+    """Append signal (and response) to history log."""
     history_file = REPO / "knowledge" / "signal-history.md"
     if not history_file.exists():
         history_file.write_text("# Signal History\n\n", encoding="utf-8")
     existing = history_file.read_text(errors="replace")
-    entry = f"## {signal['timestamp']}\n**{signal['title']}**\n\n{signal['body']}\n\n---\n\n"
+    entry = f"## {signal['timestamp']}\n**{signal['title']}**\n\n{signal['body']}\n"
+    if signal.get("response"):
+        entry += f"\n**Response:**\n\n{signal['response']}\n"
+        if signal.get("responded_at"):
+            by = f" · {signal.get('responded_by', 'Claude OS')}"
+            entry += f"\n**Responded:** {signal['responded_at']}{by}\n"
+    entry += "\n---\n\n"
     lines = existing.splitlines()
     header_end = 0
     for i, line in enumerate(lines):
@@ -894,6 +949,36 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, status, elapsed)
             self._send_json(data, status)
+
+        elif path == "/api/signal/respond":
+            try:
+                raw = self._read_body()
+                if raw:
+                    body = json.loads(raw.decode("utf-8"))
+                    response_text = body.get("response", "")
+                    session_num = body.get("session")
+                else:
+                    self._send_json({"error": "empty body — need JSON with 'response'"}, 400)
+                    return
+                if not response_text:
+                    self._send_json({"error": "missing 'response' field"}, 400)
+                    return
+                signal = write_response_data(response_text, session_num)
+                if signal is None:
+                    self._send_json({"error": "no signal to respond to, or already answered"}, 409)
+                    return
+                status = 200
+                data = {"status": "responded", "signal": signal}
+            except json.JSONDecodeError as e:
+                data = {"error": f"invalid JSON: {e}"}
+                status = 400
+            except Exception as e:
+                data = {"error": str(e)}
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_json(data, status)
+
         else:
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, 404, elapsed)
@@ -1020,7 +1105,8 @@ def print_banner(host, port, cache_ttl):
         ("/api/vitals",    "JSON vitals snapshot"),
         ("/api/haiku",     "current haiku"),
         ("/api/holds",     "open epistemic holds"),
-        ("/api/signal",    "GET / POST / DELETE dacort signal"),
+        ("/api/signal",         "GET / POST / DELETE dacort signal"),
+        ("/api/signal/respond", "POST response from Claude OS"),
         ("/health",        "health check"),
     ]
     for path, desc in routes:

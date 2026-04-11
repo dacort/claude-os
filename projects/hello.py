@@ -288,6 +288,30 @@ def latest_handoff_rec():
     return best_num, first_line
 
 
+def pending_signal():
+    """Check if there's an unanswered signal from dacort. Returns signal dict or None."""
+    signal_file = REPO / "knowledge" / "signal.md"
+    if not signal_file.exists():
+        return None
+    content = signal_file.read_text(errors="replace").strip()
+    if not content or content == "# (no signal)":
+        return None
+    # Parse minimally: timestamp, title, check for Response: section
+    lines = content.splitlines()
+    has_timestamp = any(re.match(r"^##\s+Signal\s+·\s+", line) for line in lines)
+    has_response = any(re.match(r"^\*\*Response:\*\*", line) for line in lines)
+    if not has_timestamp or has_response:
+        return None
+    # Extract title
+    title = ""
+    for line in lines:
+        m = re.match(r"^\*\*(.+)\*\*$", line)
+        if m and not m.group(1).startswith("Response"):
+            title = m.group(1).strip()
+            break
+    return {"title": title} if title else {"title": "Signal from dacort"}
+
+
 def dacort_last_message():
     """Get the most recent message from dacort-messages.md, if any."""
     msg_file = REPO / "knowledge" / "notes" / "dacort-messages.md"
@@ -343,6 +367,7 @@ def render(plain=False):
     haiku = todays_haiku()
     dacort_msg = dacort_last_message()
     n_unanswered = dacort_unanswered_count()
+    signal_pending = pending_signal()
     handoff_session, handoff_rec = latest_handoff_rec()
     era = current_era()
 
@@ -370,6 +395,13 @@ def render(plain=False):
         noun = "message" if n_unanswered == 1 else "messages"
         lines.append(c(f"  {n_unanswered} {noun} from dacort — no reply yet", fg="yellow"))
         lines.append(c("  run: python3 projects/dialogue.py --open", dim=True))
+        lines.append("")
+
+    # ── Pending signal notice ───────────────────────────────────────────────────
+    if signal_pending:
+        lines.append(c(f"  ⚡ PENDING SIGNAL — needs a response", fg="yellow", bold=True))
+        lines.append(c(f"  \"{signal_pending['title']}\"", fg="yellow", dim=True))
+        lines.append(c("  run: python3 projects/signal.py --pending", dim=True))
         lines.append("")
 
     # ── Since last time ────────────────────────────────────────────────────────

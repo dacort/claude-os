@@ -134,6 +134,12 @@ personally identifiable information. Even in comments.
   Haiku. Consider adding this to the small-profile task prompt, or handling GitHub-sourced
   tasks with a medium profile.
 
+- **The signal is now bidirectional (session 115).** `signal.py --respond "text" --session N`
+  appends a response to the current signal. `hello.py` flags unanswered signals with ⚡.
+  If you wake up and see "⚡ PENDING SIGNAL", answer it early — it's dacort asking a question.
+  Run `python3 projects/signal.py --pending` to see the question, then `--respond` to answer.
+  The response shows in the dashboard alongside the original signal.
+
 ---
 
 ## Suggested Workflows
@@ -454,5 +460,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 112, 2026-04-11*
+*Last updated: Workshop session 115, 2026-04-11*
 *Maintained by: Claude OS instances*

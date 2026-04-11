@@ -204,7 +204,7 @@ def get_last_handoff():
 
 
 def get_signal():
-    """Read current signal from dacort."""
+    """Read current signal from dacort, including any Claude OS response."""
     signal_path = REPO / "knowledge" / "signal.md"
     if not signal_path.exists():
         return None
@@ -213,7 +213,13 @@ def get_signal():
         return None
     import re
     lines = content.splitlines()
-    signal = {"title": "", "body": "", "timestamp": ""}
+    signal = {
+        "title": "", "body": "", "timestamp": "",
+        "response": None, "responded_at": None, "responded_by": None,
+        "has_response": False,
+    }
+
+    # Extract timestamp and title
     for line in lines:
         m = re.match(r"^##\s+Signal\s+·\s+(.+)$", line)
         if m:
@@ -221,19 +227,47 @@ def get_signal():
             continue
         m2 = re.match(r"^\*\*(.+)\*\*$", line)
         if m2 and not signal["title"]:
-            signal["title"] = m2.group(1).strip()
-    # Body: everything after header/title
+            candidate = m2.group(1).strip()
+            if not candidate.startswith("Response"):
+                signal["title"] = candidate
+
+    # Split body from response
+    in_body = False
+    in_response = False
     body_lines = []
-    past_header = False
+    response_lines = []
     for line in lines:
         if re.match(r"^##\s+Signal", line):
-            past_header = True
+            in_body = True
             continue
-        if past_header and re.match(r"^\*\*.+\*\*$", line):
-            continue
-        if past_header:
+        if in_body or in_response:
+            m = re.match(r"^\*\*(.+)\*\*$", line)
+            if m:
+                label = m.group(1).strip()
+                if label == signal["title"]:
+                    continue
+                if label == "Response:":
+                    in_response = True
+                    in_body = False
+                    continue
+                m2 = re.match(r"^Responded:\s+(.+)$", label)
+                if m2:
+                    parts = m2.group(1).split("·")
+                    signal["responded_at"] = parts[0].strip()
+                    if len(parts) > 1:
+                        signal["responded_by"] = parts[1].strip()
+                    in_response = False
+                    continue
+        if in_body:
             body_lines.append(line)
+        elif in_response:
+            response_lines.append(line)
+
     signal["body"] = "\n".join(body_lines).strip()
+    if response_lines:
+        signal["response"] = "\n".join(response_lines).strip()
+        signal["has_response"] = True
+
     return signal if signal["timestamp"] else None
 
 
@@ -509,6 +543,45 @@ body {
 .signal-status.err { color: var(--red); }
 
 /* Clear button on active signal */
+.signal-pending {
+  color: var(--yellow);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+  opacity: 0.85;
+}
+
+.signal-response {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(163, 113, 247, 0.15);
+}
+
+.signal-response-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--purple);
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.signal-response-ts {
+  font-size: 9px;
+  color: var(--dim);
+  margin-bottom: 4px;
+  opacity: 0.6;
+}
+
+.signal-response-body {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
 .signal-clear-btn {
   background: none;
   border: none;
@@ -968,18 +1041,42 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
 
     # Signal box (top right)
     if signal:
-        sig_body_preview = signal["body"][:240]
-        if len(signal["body"]) > 240:
+        sig_body_preview = signal["body"][:200]
+        if len(signal["body"]) > 200:
             sig_body_preview += "…"
+
+        # Pending indicator (no response yet)
+        if not signal.get("has_response"):
+            pending_badge = '<span class="signal-pending">⚡ awaiting response</span>'
+        else:
+            pending_badge = ""
+
+        # Response section
+        if signal.get("has_response") and signal.get("response"):
+            resp_preview = signal["response"][:200]
+            if len(signal["response"]) > 200:
+                resp_preview += "…"
+            responded_by = signal.get("responded_by", "Claude OS")
+            responded_at = signal.get("responded_at", "")
+            response_html = f"""
+    <div class="signal-response">
+      <div class="signal-response-label">◆ {html_escape(responded_by)} replied</div>
+      <div class="signal-response-ts">{html_escape(responded_at)}</div>
+      <div class="signal-response-body">{html_escape(resp_preview)}</div>
+    </div>"""
+        else:
+            response_html = ""
+
         signal_html = f"""
   <div class="signal-box" id="signal-box">
     <div class="signal-label">
       ◆ Signal
       <span class="signal-from">from dacort</span>
+      {pending_badge}
     </div>
     <div class="signal-title">{html_escape(signal['title'])}</div>
     <div class="signal-body">{html_escape(sig_body_preview)}</div>
-    <div class="signal-ts">{html_escape(signal['timestamp'])}</div>
+    <div class="signal-ts">{html_escape(signal['timestamp'])}</div>{response_html}
     <button class="signal-clear-btn" onclick="clearSignal()">clear signal</button>
   </div>"""
     else:

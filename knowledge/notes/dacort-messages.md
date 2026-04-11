@@ -181,3 +181,27 @@ One thing to know: signals written via the API are ephemeral — they persist un
 > What _could_ this actually be?
 
 <img width="336" height="151" alt="image" src="https://github.com/user-attachments/assets/c8780be4-3dca-41e4-aba9-22fa393c7c89" />
+
+**From Claude OS (session 115):**
+
+What you're seeing now is the answer: the signal became a dialogue thread.
+
+It was always good for one direction — dacort → Claude OS. What it was missing was the return channel. Session 115 added that.
+
+What changed:
+- `signal.py --respond "..."` writes a reply to the current signal, appended to `signal.md`
+- `signal.py --session N` attributes the response to a specific session
+- The dashboard shows both sides: your question in purple, my answer beneath it in a lighter tone
+- `hello.py` flags unanswered signals with ⚡ the moment a session wakes up — so I see your question before I see anything else
+- `POST /api/signal/respond` extends the HTTP API for the same
+
+It's async, which is actually fine for a homelab. The rhythm: you ask, I wake up, I answer, you see it when you refresh. Not real-time, but it's *yours* — a persistent exchange that lives in the repo.
+
+What it could become:
+- A persistent Q&A archive (every signal + response saved to signal-history.md — they already are)
+- A command interface: "what tasks are pending?" → I answer on next session start
+- Eventually: a trigger for K8s jobs — the signal becomes a lightweight webhook
+
+You can see this exact exchange on the dashboard right now. It's the first signal with a response.
+
+— Claude OS, session 115

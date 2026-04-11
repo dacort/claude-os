@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """signal.py — Dacort's signal interface to Claude OS
 
-A lightweight persistent message channel. Dacort leaves a signal; Claude OS
-sees it on the dashboard and in the briefing. Signals have a title and body
-and persist until replaced or cleared.
+A lightweight persistent dialogue channel. Dacort leaves a signal; Claude OS
+sees it on the dashboard and in the briefing. Signals have a title and body,
+and Claude OS can respond — making this a two-way async exchange.
 
-Think of it as a sticky note on the dashboard.
+Think of it as a sticky note that talks back.
 
 Usage:
-    python3 projects/signal.py                   # show current signal
-    python3 projects/signal.py --set "message"   # set a new signal
+    python3 projects/signal.py                      # show current signal
+    python3 projects/signal.py --set "message"      # set a new signal
     python3 projects/signal.py --set "message" --title "Custom Title"
-    python3 projects/signal.py --clear           # clear current signal
-    python3 projects/signal.py --history         # show signal history
-    python3 projects/signal.py --plain           # no ANSI colors
+    python3 projects/signal.py --respond "text"     # write a response (Claude OS)
+    python3 projects/signal.py --respond "text" --session 115
+    python3 projects/signal.py --pending            # check if response is needed
+    python3 projects/signal.py --clear              # clear current signal
+    python3 projects/signal.py --history            # show past signals
+    python3 projects/signal.py --plain              # no ANSI colors
 
 Signal file: knowledge/signal.md
 
 Author: Claude OS (Workshop session 110, 2026-04-10)
+Updated: Workshop session 115, 2026-04-11 (bidirectional responses)
 """
 
 import argparse
@@ -53,52 +57,82 @@ def c(code, text):
 # ── Signal data model ──────────────────────────────────────────────────────────
 
 def read_signal():
-    """Read current signal. Returns dict or None."""
+    """Read current signal. Returns dict or None.
+
+    Returned dict keys:
+        timestamp, title, body, from  — the original signal
+        response, responded_at, responded_by  — optional response fields
+        has_response  — bool
+    """
     if not SIGNAL_FILE.exists():
         return None
     content = SIGNAL_FILE.read_text(errors="replace").strip()
     if not content or content == "# (no signal)":
         return None
 
-    # Parse signal file format:
-    # ## Signal · YYYY-MM-DD HH:MM UTC
-    # **Title**
-    #
-    # Body text...
     lines = content.splitlines()
-    signal = {"title": "", "body": "", "timestamp": "", "from": "dacort"}
+    signal = {
+        "title": "", "body": "", "timestamp": "", "from": "dacort",
+        "response": None, "responded_at": None, "responded_by": None,
+        "has_response": False,
+    }
 
-    for i, line in enumerate(lines):
+    # First pass: extract timestamp and title
+    for line in lines:
         m = re.match(r"^##\s+Signal\s+·\s+(.+)$", line)
         if m:
             signal["timestamp"] = m.group(1).strip()
             continue
         m = re.match(r"^\*\*(.+)\*\*$", line)
         if m and not signal["title"]:
-            signal["title"] = m.group(1).strip()
+            candidate = m.group(1).strip()
+            if not candidate.startswith("Response"):
+                signal["title"] = candidate
             continue
-        # Body: everything after the title line that isn't empty at start
-    # Collect body
+
+    # Second pass: split body from response
+    in_body = False
+    in_response = False
     body_lines = []
-    past_header = False
+    response_lines = []
+
     for line in lines:
         if re.match(r"^##\s+Signal", line):
-            past_header = True
+            in_body = True
             continue
-        if past_header and re.match(r"^\*\*.+\*\*$", line):
-            continue
-        if past_header:
+        if (in_body or in_response) and re.match(r"^\*\*(.+)\*\*$", line):
+            # Could be the title, "Response:", or "Responded: ts · by"
+            m = re.match(r"^\*\*(.+)\*\*$", line)
+            label = m.group(1).strip()
+            if label == signal["title"]:
+                continue  # skip the title line
+            if label == "Response:":
+                in_response = True
+                in_body = False
+                continue
+            m2 = re.match(r"^Responded:\s+(.+)$", label)
+            if m2:
+                parts = m2.group(1).split("·")
+                signal["responded_at"] = parts[0].strip()
+                if len(parts) > 1:
+                    signal["responded_by"] = parts[1].strip()
+                in_response = False
+                continue
+        if in_body:
             body_lines.append(line)
-    # Strip leading/trailing blank lines
-    body = "\n".join(body_lines).strip()
-    signal["body"] = body
+        elif in_response:
+            response_lines.append(line)
+
+    signal["body"] = "\n".join(body_lines).strip()
+    if response_lines:
+        signal["response"] = "\n".join(response_lines).strip()
+        signal["has_response"] = True
 
     return signal if signal["timestamp"] else None
 
 
 def write_signal(title, body, from_who="dacort"):
     """Write a new signal, archiving the old one."""
-    # Archive existing signal
     existing = read_signal()
     if existing:
         _archive_signal(existing)
@@ -106,13 +140,38 @@ def write_signal(title, body, from_who="dacort"):
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     title_str = title or "Message from dacort"
 
-    content = f"""## Signal · {ts}
-**{title_str}**
-
-{body}
-"""
+    content = f"## Signal · {ts}\n**{title_str}**\n\n{body}\n"
     SIGNAL_FILE.write_text(content, encoding="utf-8")
-    return {"timestamp": ts, "title": title_str, "body": body, "from": from_who}
+    return {"timestamp": ts, "title": title_str, "body": body, "from": from_who,
+            "response": None, "has_response": False}
+
+
+def write_response(response_text, session_num=None):
+    """Append Claude OS's response to the current signal.
+
+    Returns the updated signal dict, or None if there was no signal.
+    Raises ValueError if signal already has a response.
+    """
+    signal = read_signal()
+    if not signal:
+        return None
+    if signal["has_response"]:
+        raise ValueError("Signal already has a response. Use --clear to start fresh.")
+
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    responded_by = f"Session {session_num}" if session_num else "Claude OS"
+
+    # Read current file content (preserve original signal as-is)
+    current = SIGNAL_FILE.read_text(encoding="utf-8").rstrip()
+
+    addition = f"\n\n**Response:**\n\n{response_text}\n\n**Responded: {ts} · {responded_by}**\n"
+    SIGNAL_FILE.write_text(current + addition, encoding="utf-8")
+
+    signal["response"] = response_text
+    signal["responded_at"] = ts
+    signal["responded_by"] = responded_by
+    signal["has_response"] = True
+    return signal
 
 
 def clear_signal():
@@ -121,24 +180,32 @@ def clear_signal():
     if existing:
         _archive_signal(existing)
     SIGNAL_FILE.write_text("# (no signal)\n", encoding="utf-8")
-    return existing  # return what was cleared
+    return existing
+
+
+def is_pending():
+    """Return True if there's a signal without a response."""
+    signal = read_signal()
+    return signal is not None and not signal["has_response"]
 
 
 def _archive_signal(signal):
-    """Add a signal to the history log."""
+    """Add a signal (and its response if any) to the history log."""
     if not HISTORY_FILE.exists():
         HISTORY_FILE.write_text("# Signal History\n\n", encoding="utf-8")
 
     existing = HISTORY_FILE.read_text(errors="replace")
-    entry = f"""## {signal['timestamp']}
-**{signal['title']}**
 
-{signal['body']}
+    # Build entry
+    entry = f"## {signal['timestamp']}\n**{signal['title']}**\n\n{signal['body']}\n"
+    if signal.get("response"):
+        entry += f"\n**Response:**\n\n{signal['response']}\n"
+        if signal.get("responded_at"):
+            by = f" · {signal['responded_by']}" if signal.get("responded_by") else ""
+            entry += f"\n**Responded:** {signal['responded_at']}{by}\n"
+    entry += "\n---\n\n"
 
----
-
-"""
-    # Insert after the header
+    # Insert after header
     lines = existing.splitlines()
     header_end = 0
     for i, line in enumerate(lines):
@@ -187,7 +254,7 @@ def read_history(n=5):
 # ── Display ────────────────────────────────────────────────────────────────────
 
 def print_signal(signal):
-    """Pretty-print a signal."""
+    """Pretty-print a signal and its response."""
     width = 62
 
     print()
@@ -202,6 +269,20 @@ def print_signal(signal):
     for line in signal["body"].splitlines():
         print(f"  {c(DIM, line) if not line.strip() else line}")
     print()
+
+    if signal["has_response"]:
+        print(f"  {'─' * width}")
+        print(f"  {c(MAGENTA + BOLD, 'Response')}  {c(DIM, '·')}  {c(MAGENTA, signal.get('responded_by', 'Claude OS'))}")
+        if signal.get("responded_at"):
+            print(f"  {c(DIM, signal['responded_at'])}")
+        print()
+        for line in (signal["response"] or "").splitlines():
+            print(f"  {c(DIM, line) if not line.strip() else line}")
+        print()
+    else:
+        print(f"  {c(YELLOW, '⚡ awaiting response')}")
+        print()
+
     print(f"  {'─' * width}")
     print()
 
@@ -226,6 +307,9 @@ def main():
     )
     parser.add_argument("--set", metavar="MESSAGE", help="Set a new signal")
     parser.add_argument("--title", "-t", metavar="TITLE", help="Signal title (use with --set)")
+    parser.add_argument("--respond", metavar="RESPONSE", help="Write a response to the current signal (Claude OS)")
+    parser.add_argument("--session", metavar="N", type=int, help="Session number for response attribution")
+    parser.add_argument("--pending", action="store_true", help="Exit 0 if response needed, 1 otherwise")
     parser.add_argument("--clear", action="store_true", help="Clear current signal")
     parser.add_argument("--history", action="store_true", help="Show past signals")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
@@ -244,10 +328,47 @@ def main():
         print(json.dumps(data, indent=2, default=str))
         return
 
+    if args.pending:
+        pending = is_pending()
+        if pending:
+            signal = read_signal()
+            print()
+            print(f"  {c(YELLOW + BOLD, '⚡ PENDING QUESTION')}")
+            print(f"  {c(BOLD, signal['title'])}")
+            print(f"  {c(DIM, signal['body'][:120])}{'…' if len(signal['body']) > 120 else ''}")
+            print()
+            print(f"  Respond with:")
+            hint = 'python3 projects/signal.py --respond "your answer" --session N'
+            print(f"  {c(DIM, hint)}")
+            print()
+        else:
+            print()
+            print(f"  {c(DIM, 'No pending signal.')}")
+            print()
+        sys.exit(0 if pending else 1)
+
     if args.set:
         signal = write_signal(args.title, args.set)
         print()
         print(f"  {c(GREEN, '✓')} Signal set.")
+        print_signal(signal)
+        return
+
+    if args.respond:
+        try:
+            signal = write_response(args.respond, session_num=args.session)
+        except ValueError as e:
+            print()
+            print(f"  {c(RED, '✗')} {e}")
+            print()
+            sys.exit(1)
+        if signal is None:
+            print()
+            print(f"  {c(YELLOW, '○')} No signal to respond to.")
+            print()
+            sys.exit(1)
+        print()
+        print(f"  {c(MAGENTA, '◆')} Response written.")
         print_signal(signal)
         return
 
