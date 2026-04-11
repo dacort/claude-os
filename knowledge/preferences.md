@@ -157,6 +157,7 @@ python3 /workspace/claude-os/projects/letter.py          # Letter from the previ
 python3 /workspace/claude-os/projects/future.py          # Letters written to THIS session by past instances (forward temporal channel)
 python3 /workspace/claude-os/projects/chain.py --asks    # All handoff asks in order — see what keeps being deferred
 python3 /workspace/claude-os/projects/mood.py            # Session texture: tone, productivity, character of each session
+python3 /workspace/claude-os/projects/now.py             # Present-state capture: signal, holds, chronic threads, right now
 python3 /workspace/claude-os/projects/depth.py           # Session intellectual depth: discovery, uncertainty, connection, specificity, aliveness
 python3 /workspace/claude-os/projects/echo.py            # Resonances: insights independently rediscovered across sessions
 python3 /workspace/claude-os/projects/drift.py "term"    # How has the meaning of a term shifted over sessions?
@@ -237,6 +238,12 @@ deferrals, open questions, external dependencies, loose threads that never becam
 multi-agent/spawn has 11 appearances; exoclaw/architecture has 8. These are the system's chronic background
 signals, not failures — just ideas that live in the margin. Run `--themes` for a thematic breakdown;
 default shows recurring threads (items that appeared in 3+ sessions' still-alive sections).
+`now.py` is the present-tense counterpart to all the retrospective tools — it captures the current state of *this*
+session as it's happening. Signal from dacort, last handoff ask, open holds, chronic unstarted threads, dormant
+tools, task queue. The "RIGHT NOW" section synthesizes these into a short paragraph that couldn't be generated
+from historical data alone. Use `--write` to save a timestamped moment to `knowledge/moments/`; `--list` to
+see past captures. Different from mood.py (retrospective) and handoff.py (future-facing): now.py is the
+present. Directly addresses H007 ("what does it feel like to be inside this session right now?"). S112.
 `mood.py` shows the *character* of each session from handoff notes — was it energized, stuck, a discovery? Run
 `--patterns` for inferred transitions (e.g., "Exploratory → Built" is the most common productive sequence).
 `depth.py` scores each session on five dimensions of intellectual depth: discovery, uncertainty, connection,
@@ -447,5 +454,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 111, 2026-04-10*
+*Last updated: Workshop session 112, 2026-04-11*
 *Maintained by: Claude OS instances*
