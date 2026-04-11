@@ -21,6 +21,8 @@ Endpoints:
     GET    /api/signal    → current signal from dacort as JSON
     POST   /api/signal    → set a new signal (JSON body: {"title": "...", "message": "..."})
     DELETE /api/signal    → clear current signal
+    GET    /notes         → HTML index of all field notes
+    GET    /notes/<file>  → rendered field note as HTML
     GET    /health        → {"status": "ok"}
     GET    /favicon.ico   → empty 204
 
@@ -28,6 +30,7 @@ Press Ctrl+C to stop.
 
 Author: Claude OS (Workshop session 109, 2026-04-06)
 Updated: Workshop session 110, 2026-04-10 (signal interface)
+Updated: Workshop session 114, 2026-04-11 (field notes reader)
 """
 
 import argparse
@@ -306,6 +309,418 @@ def get_holds_data():
     return result
 
 
+# ── Field notes ───────────────────────────────────────────────────────────────
+
+def get_all_field_notes():
+    """Return list of all field notes sorted newest first."""
+    notes_dir = REPO / "knowledge" / "field-notes"
+    if not notes_dir.exists():
+        return []
+    notes = sorted(notes_dir.glob("*.md"), key=lambda p: p.name)
+    result = []
+    for note in reversed(notes):
+        content = note.read_text(errors="replace")
+        # Default title: clean up filename
+        stem = note.stem
+        m_date = re.match(r"\d{4}-\d{2}-\d{2}-(.*)", stem)
+        raw_name = m_date.group(1) if m_date else stem
+        title = raw_name.replace("-", " ").title()
+        session_num = ""
+        # Look for # or ## title heading
+        for line in content.splitlines():
+            if line.startswith("# "):
+                title = line[2:].strip()
+                break
+        # Look for session marker in frontmatter or title line
+        for line in content.splitlines():
+            m = re.match(r"^session:\s*(\d+)", line)
+            if m:
+                session_num = m.group(1)
+                break
+            m2 = re.search(r"[Ss]ession\s+(\d+)", line)
+            if m2 and not session_num:
+                session_num = m2.group(1)
+        date_match = re.match(r"(\d{4}-\d{2}-\d{2})", note.stem)
+        date = date_match.group(1) if date_match else ""
+        # First real paragraph as excerpt
+        lines = content.splitlines()
+        para = []
+        for line in lines:
+            if line.startswith("#") or line.startswith("---") or line.startswith("*April") or line.startswith("*Workshop"):
+                continue
+            if line.strip():
+                para.append(line.strip())
+            elif para:
+                break
+        excerpt = " ".join(para)
+        excerpt = excerpt[:240] + "…" if len(excerpt) > 240 else excerpt
+        result.append({
+            "title": title,
+            "date": date,
+            "session": session_num,
+            "excerpt": excerpt,
+            "filename": note.name,
+        })
+    return result
+
+
+def markdown_to_html(text):
+    """Minimal markdown-to-HTML renderer. Handles the subset used in field notes."""
+    import html as html_lib
+    lines = text.splitlines()
+    out = []
+    in_code = False
+    in_list = False
+    pending_para = []
+
+    def flush_para():
+        if pending_para:
+            content = " ".join(pending_para)
+            # Inline: **bold**, *italic*, `code`
+            content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+            content = re.sub(r'\*(.+?)\*', r'<em>\1</em>', content)
+            content = re.sub(r'`(.+?)`', r'<code>\1</code>', content)
+            out.append(f'<p>{content}</p>')
+            pending_para.clear()
+
+    def flush_list():
+        nonlocal in_list
+        if in_list:
+            out.append('</ul>')
+            in_list = False
+
+    for line in lines:
+        raw = line
+
+        # Code blocks
+        if raw.strip().startswith('```'):
+            if in_code:
+                out.append('</code></pre>')
+                in_code = False
+            else:
+                flush_para()
+                flush_list()
+                lang = raw.strip()[3:].strip()
+                lang_attr = f' class="language-{html_lib.escape(lang)}"' if lang else ''
+                out.append(f'<pre><code{lang_attr}>')
+                in_code = True
+            continue
+
+        if in_code:
+            out.append(html_lib.escape(raw))
+            continue
+
+        # Frontmatter: skip lines inside --- blocks at top
+        if raw.strip() == '---':
+            flush_para()
+            flush_list()
+            out.append('<hr>')
+            continue
+
+        # Headings
+        m = re.match(r'^(#{1,4})\s+(.*)', raw)
+        if m:
+            flush_para()
+            flush_list()
+            level = len(m.group(1))
+            text_content = m.group(2)
+            text_content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text_content)
+            text_content = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text_content)
+            out.append(f'<h{level}>{text_content}</h{level}>')
+            continue
+
+        # Block quote (used for hold notes)
+        if raw.startswith('> '):
+            flush_para()
+            flush_list()
+            content = raw[2:]
+            content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+            out.append(f'<blockquote>{content}</blockquote>')
+            continue
+
+        # List items
+        m2 = re.match(r'^[-*]\s+(.*)', raw)
+        if m2:
+            flush_para()
+            if not in_list:
+                out.append('<ul>')
+                in_list = True
+            item = m2.group(1)
+            item = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', item)
+            item = re.sub(r'\*(.+?)\*', r'<em>\1</em>', item)
+            item = re.sub(r'`(.+?)`', r'<code>\1</code>', item)
+            out.append(f'<li>{item}</li>')
+            continue
+
+        # Blank line: flush paragraph
+        if not raw.strip():
+            flush_list()
+            flush_para()
+            continue
+
+        # Normal line: accumulate paragraph
+        flush_list()
+        escaped = html_lib.escape(raw.strip())
+        pending_para.append(escaped)
+
+    flush_list()
+    flush_para()
+    return '\n'.join(out)
+
+
+_NOTE_PAGE_CSS = """
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  padding: 0;
+}
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #21262d;
+}
+.nav a {
+  color: #58a6ff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #484f58; }
+.note-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+.note-date { color: #8b949e; font-size: 0.9rem; }
+.note-session { color: #58a6ff; font-size: 0.85rem; background: #1c2128; padding: 0.15rem 0.5rem; border-radius: 4px; }
+h1 { font-size: 1.8rem; font-weight: 700; color: #e6edf3; margin-bottom: 0.5rem; line-height: 1.3; }
+h2 { font-size: 1.25rem; font-weight: 600; color: #c9d1d9; margin: 2rem 0 0.75rem; }
+h3 { font-size: 1.05rem; font-weight: 600; color: #8b949e; margin: 1.5rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+h4 { font-size: 1rem; font-weight: 600; color: #c9d1d9; margin: 1.5rem 0 0.5rem; }
+p { margin-bottom: 1.2rem; color: #c9d1d9; }
+hr { border: none; border-top: 1px solid #21262d; margin: 2rem 0; }
+strong { color: #e6edf3; }
+em { color: #a5d6ff; font-style: italic; }
+code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.88em;
+  background: #161b22;
+  color: #79c0ff;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+pre {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1.2rem;
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: #c9d1d9;
+  font-size: 0.88rem;
+}
+blockquote {
+  border-left: 3px solid #30363d;
+  padding-left: 1rem;
+  color: #8b949e;
+  font-style: italic;
+  margin: 1rem 0;
+}
+ul { margin: 0.5rem 0 1.2rem 1.5rem; }
+li { color: #c9d1d9; margin-bottom: 0.3rem; }
+"""
+
+
+def render_notes_index_html(notes):
+    """Render the field notes index page."""
+    items = []
+    for note in notes:
+        session_badge = f'<span class="badge">S{note["session"]}</span>' if note["session"] else ""
+        excerpt_html = f'<div class="excerpt">{note["excerpt"]}</div>' if note["excerpt"] else ""
+        items.append(f"""
+    <a class="note-card" href="/notes/{note['filename']}">
+      <div class="note-header">
+        <span class="note-title">{note['title']}</span>
+        {session_badge}
+      </div>
+      <div class="note-date">{note['date']}</div>
+      {excerpt_html}
+    </a>""")
+
+    items_html = "\n".join(items) if items else '<p style="color:#8b949e">No field notes yet.</p>'
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Notes — Claude OS</title>
+<style>
+{_NOTE_PAGE_CSS}
+.note-card {{
+  display: block;
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}}
+.note-card:hover {{
+  border-color: #58a6ff;
+  background: #1c2128;
+}}
+.note-header {{
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}}
+.note-title {{
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e6edf3;
+}}
+.badge {{
+  font-size: 0.78rem;
+  background: #1f3b5a;
+  color: #58a6ff;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}}
+.note-date {{
+  font-size: 0.85rem;
+  color: #484f58;
+  margin-bottom: 0.5rem;
+}}
+.excerpt {{
+  font-size: 0.9rem;
+  color: #8b949e;
+  line-height: 1.5;
+}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="nav">
+    <a href="/">← Dashboard</a>
+    <span class="sep">/</span>
+    <span style="color:#8b949e">Field Notes</span>
+  </div>
+  <h1>Field Notes</h1>
+  <p style="color:#8b949e; margin-bottom:2rem; font-size:0.95rem">
+    {len(notes)} note{'s' if len(notes) != 1 else ''} · reflections written at the end of workshop sessions
+  </p>
+  {items_html}
+</div>
+</body>
+</html>"""
+
+
+def render_note_html(filename):
+    """Render a single field note as a full HTML page. Returns (html, found)."""
+    notes_dir = REPO / "knowledge" / "field-notes"
+    # Security: only allow simple filenames
+    if "/" in filename or ".." in filename or not filename.endswith(".md"):
+        return None, False
+    note_path = notes_dir / filename
+    if not note_path.exists():
+        return None, False
+
+    raw = note_path.read_text(errors="replace")
+
+    # Strip YAML frontmatter
+    content = raw
+    if raw.startswith("---"):
+        end = raw.find("---", 3)
+        if end > 0:
+            content = raw[end + 3:].lstrip("\n")
+
+    # Extract title (first # heading, or filename-derived)
+    stem = note_path.stem
+    m_date = re.match(r"\d{4}-\d{2}-\d{2}-(.*)", stem)
+    raw_name = m_date.group(1) if m_date else stem
+    title = raw_name.replace("-", " ").title()
+    date = ""
+    session_num = ""
+    # Override with actual # heading if present
+    for line in content.splitlines():
+        if line.startswith("# "):
+            title = line[2:].strip()
+            break
+
+    # Session and date from frontmatter
+    for line in raw.splitlines():
+        m = re.match(r"^session:\s*(\d+)", line)
+        if m:
+            session_num = m.group(1)
+        m2 = re.match(r"^date:\s*(\d{4}-\d{2}-\d{2})", line)
+        if m2:
+            date = m2.group(1)
+
+    if not date:
+        dm = re.match(r"(\d{4}-\d{2}-\d{2})", note_path.stem)
+        date = dm.group(1) if dm else ""
+
+    # Also look in content for session marker
+    if not session_num:
+        for line in content.splitlines():
+            m3 = re.search(r"[Ss]ession\s+(\d+)", line)
+            if m3:
+                session_num = m3.group(1)
+                break
+
+    body_html = markdown_to_html(content)
+
+    session_badge = f'<span class="note-session">Session {session_num}</span>' if session_num else ""
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} — Claude OS Field Notes</title>
+<style>{_NOTE_PAGE_CSS}</style>
+</head>
+<body>
+<div class="page">
+  <div class="nav">
+    <a href="/">← Dashboard</a>
+    <span class="sep">/</span>
+    <a href="/notes">Field Notes</a>
+    <span class="sep">/</span>
+    <span style="color:#8b949e">{date}</span>
+  </div>
+  <h1>{title}</h1>
+  <div class="note-meta">
+    <span class="note-date">{date}</span>
+    {session_badge}
+  </div>
+  {body_html}
+</div>
+</body>
+</html>""", True
+
+
 # ── Dashboard caching ──────────────────────────────────────────────────────────
 
 class DashboardCache:
@@ -545,6 +960,34 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             self._log_request(path, status, elapsed)
             self._send_json(data, status)
 
+        elif path == "/notes":
+            try:
+                notes = get_all_field_notes()
+                html = render_notes_index_html(notes)
+                status = 200
+            except Exception as e:
+                html = _error_html("Could not load field notes", str(e))
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_html(html, status)
+
+        elif path.startswith("/notes/"):
+            filename = path[len("/notes/"):]
+            try:
+                html, found = render_note_html(filename)
+                if found:
+                    status = 200
+                else:
+                    html = _error_html("Note not found", f"No field note: {filename}")
+                    status = 404
+            except Exception as e:
+                html = _error_html("Could not render note", str(e))
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_html(html, status)
+
         elif path == "/health":
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, 200, elapsed)
@@ -572,6 +1015,8 @@ def print_banner(host, port, cache_ttl):
     print(f"  {c(DIM, 'routes')}")
     routes = [
         ("/",              "HTML dashboard"),
+        ("/notes",         "field notes index"),
+        ("/notes/<file>",  "rendered field note"),
         ("/api/vitals",    "JSON vitals snapshot"),
         ("/api/haiku",     "current haiku"),
         ("/api/holds",     "open epistemic holds"),

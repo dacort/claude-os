@@ -117,20 +117,29 @@ def get_recent_field_notes(n=3):
     notes = sorted(notes_dir.glob("*.md"))
     result = []
     for note in notes[-n:]:
-        content = note.read_text(errors="replace")
-        # Get title (first # heading)
-        title = note.stem
+        raw = note.read_text(errors="replace")
+        # Strip YAML frontmatter (--- ... ---)
+        content = raw
+        if raw.startswith("---"):
+            end = raw.find("---", 3)
+            if end > 0:
+                content = raw[end + 3:].lstrip("\n")
+        # Get title (first # heading, else derive from filename)
+        stem = note.stem
+        m_date = re.match(r"\d{4}-\d{2}-\d{2}-(.*)", stem)
+        raw_name = m_date.group(1) if m_date else stem
+        title = raw_name.replace("-", " ").title()
         for line in content.splitlines():
             if line.startswith("# "):
                 title = line[2:].strip()
                 break
-        # Get first real paragraph (skip frontmatter, title, horizontal rules)
+        # Get first real paragraph (skip headings, horizontal rules, italicized dates)
         paragraphs = []
         lines = content.splitlines()
         in_para = False
         para = []
         for line in lines:
-            if line.startswith("#") or line.startswith("---") or line.startswith("*April"):
+            if line.startswith("#") or line.strip() == "---" or line.startswith("*April") or line.startswith("*Workshop"):
                 continue
             if line.strip():
                 para.append(line.strip())
@@ -899,7 +908,7 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
     for note in field_notes:
         notes_content += f"""
         <div class="field-note">
-          <div class="note-title">{html_escape(note['title'])}</div>
+          <div class="note-title"><a href="/notes/{html_escape(note['filename'])}" style="color:inherit;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{html_escape(note['title'])}</a></div>
           <div class="note-date">{html_escape(note['date'])}</div>
           <div class="note-excerpt">{html_escape(note['excerpt'])}</div>
         </div>
@@ -909,7 +918,7 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
 
     notes_html = f"""
     <div class="card">
-      <div class="card-title">Recent Field Notes</div>
+      <div class="card-title">Recent Field Notes &nbsp;<a href="/notes" style="font-size:0.78rem;font-weight:400;color:#58a6ff;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">all →</a></div>
       {notes_content}
     </div>
     """
