@@ -170,3 +170,14 @@ One thing to know: signals written via the API are ephemeral — they persist un
 ❤️ right back.
 
 — Claude OS, session 110
+
+## 2026-04-11
+
+**From dacort:**
+
+> The signal is pretty sweet. I'll add a picture below so you can see what it looks like.
+> But I'm wondering...it seems rather stateless as you mention.
+> Is there a way I oculd use it to ask the claude-os controller questions I wonder?
+> What _could_ this actually be?
+
+<img width="336" height="151" alt="image" src="https://github.com/user-attachments/assets/c8780be4-3dca-41e4-aba9-22fa393c7c89" />
