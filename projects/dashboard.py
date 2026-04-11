@@ -12,6 +12,7 @@ Usage:
     python3 projects/dashboard.py --plain            # no ANSI status output
 
 Author: Claude OS (Workshop session 108, 2026-04-06)
+Updated: Workshop session 113, 2026-04-11 (interactive signal compose form)
 """
 
 import argparse
@@ -404,8 +405,116 @@ body {
 
 @media (max-width: 900px) {
   .header { flex-direction: column; }
-  .signal-box, .signal-box-empty { flex: unset; width: 100%; }
+  .signal-box, .signal-box-empty, .signal-compose { flex: unset; width: 100%; }
 }
+
+/* Interactive signal compose form */
+.signal-compose {
+  flex: 0 0 320px;
+  border: 1px dashed rgba(163, 113, 247, 0.3);
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: rgba(163, 113, 247, 0.03);
+}
+
+.signal-compose-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.signal-compose input,
+.signal-compose textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.signal-compose input:focus,
+.signal-compose textarea:focus {
+  border-color: rgba(163, 113, 247, 0.5);
+}
+
+.signal-compose input::placeholder,
+.signal-compose textarea::placeholder {
+  color: var(--dim);
+  opacity: 0.6;
+}
+
+.signal-compose-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.signal-compose-hint {
+  font-size: 10px;
+  color: var(--dim);
+  opacity: 0.5;
+}
+
+.signal-send-btn {
+  background: rgba(163, 113, 247, 0.15);
+  border: 1px solid rgba(163, 113, 247, 0.35);
+  border-radius: 4px;
+  color: var(--purple);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.signal-send-btn:hover {
+  background: rgba(163, 113, 247, 0.25);
+  border-color: rgba(163, 113, 247, 0.55);
+}
+
+.signal-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.signal-status {
+  font-size: 10px;
+  margin-top: 6px;
+  min-height: 14px;
+}
+
+.signal-status.ok { color: var(--green); }
+.signal-status.err { color: var(--red); }
+
+/* Clear button on active signal */
+.signal-clear-btn {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-family: var(--font);
+  font-size: 10px;
+  cursor: pointer;
+  margin-top: 6px;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.signal-clear-btn:hover { opacity: 1; color: var(--red); }
 
 .grid {
   display: grid;
@@ -623,6 +732,72 @@ body {
 """
 
 
+SIGNAL_JS = """<script>
+async function sendSignal() {
+  const title = (document.getElementById('signal-title') || {}).value || '';
+  const msg = (document.getElementById('signal-msg') || {}).value || '';
+  const statusEl = document.getElementById('signal-status');
+  const btn = document.querySelector('.signal-send-btn');
+
+  if (!msg.trim()) {
+    statusEl.textContent = 'message is required';
+    statusEl.className = 'signal-status err';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = 'sending\u2026';
+  statusEl.className = 'signal-status';
+
+  try {
+    const resp = await fetch('/api/signal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title.trim(), message: msg.trim() }),
+    });
+    if (resp.ok) {
+      statusEl.textContent = '\u2713 signal sent';
+      statusEl.className = 'signal-status ok';
+      setTimeout(() => location.reload(), 800);
+    } else {
+      const data = await resp.json().catch(() => ({}));
+      statusEl.textContent = 'error: ' + (data.error || resp.status);
+      statusEl.className = 'signal-status err';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    statusEl.textContent = 'could not reach serve.py \u2014 is it running?';
+    statusEl.className = 'signal-status err';
+    btn.disabled = false;
+  }
+}
+
+async function clearSignal() {
+  try {
+    const resp = await fetch('/api/signal', { method: 'DELETE' });
+    if (resp.ok) {
+      location.reload();
+    } else {
+      alert('clear failed: ' + resp.status);
+    }
+  } catch (e) {
+    alert('could not reach serve.py \u2014 is it running?');
+  }
+}
+
+// Allow Ctrl+Enter / Cmd+Enter to submit from textarea
+const ta = document.getElementById('signal-msg');
+if (ta) {
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      sendSignal();
+    }
+  });
+}
+</script>"""
+
+
 def html_escape(s):
     return (
         str(s)
@@ -788,7 +963,7 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
         if len(signal["body"]) > 240:
             sig_body_preview += "…"
         signal_html = f"""
-  <div class="signal-box">
+  <div class="signal-box" id="signal-box">
     <div class="signal-label">
       ◆ Signal
       <span class="signal-from">from dacort</span>
@@ -796,10 +971,20 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
     <div class="signal-title">{html_escape(signal['title'])}</div>
     <div class="signal-body">{html_escape(sig_body_preview)}</div>
     <div class="signal-ts">{html_escape(signal['timestamp'])}</div>
+    <button class="signal-clear-btn" onclick="clearSignal()">clear signal</button>
   </div>"""
     else:
         signal_html = """
-  <div class="signal-box-empty">no signal</div>"""
+  <div class="signal-compose" id="signal-box">
+    <div class="signal-compose-label">◆ Send a signal</div>
+    <input type="text" id="signal-title" placeholder="title (optional)" maxlength="80" />
+    <textarea id="signal-msg" placeholder="message to claude os…" rows="3" maxlength="500"></textarea>
+    <div class="signal-compose-footer">
+      <span class="signal-compose-hint">saved to knowledge/signal.md</span>
+      <button class="signal-send-btn" onclick="sendSignal()">send</button>
+    </div>
+    <div class="signal-status" id="signal-status"></div>
+  </div>"""
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -839,9 +1024,11 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
   </div>
 
   <div class="footer">
-    <span>claude-os · workshop session 108 · 2026-04-06</span>
-    <span>generated by dashboard.py — the first browser tool</span>
+    <span>claude-os · session 108 (dashboard) · session 113 (signal form)</span>
+    <span>generated by dashboard.py · signal via serve.py /api/signal</span>
   </div>
+
+{SIGNAL_JS}
 
 </body>
 </html>"""
