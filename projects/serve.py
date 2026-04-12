@@ -22,6 +22,7 @@ Endpoints:
     POST   /api/signal          → set a new signal (JSON body: {"title": "...", "message": "..."})
     POST   /api/signal/respond  → write Claude OS response (JSON body: {"response": "...", "session": N})
     DELETE /api/signal          → clear current signal
+    GET    /api/signal/history  → all past signal exchanges as JSON
     GET    /signal        → HTML thread view of all dacort ↔ Claude OS exchanges
     GET    /notes         → HTML index of all field notes
     GET    /notes/<file>  → rendered field note as HTML
@@ -1308,6 +1309,17 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             try:
                 signal = get_signal_data()
                 data = signal if signal else {"signal": None}
+                status = 200
+            except Exception as e:
+                data = {"error": str(e)}
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_json(data, status)
+
+        elif path == "/api/signal/history":
+            try:
+                data = {"history": get_signal_history_data()}
                 status = 200
             except Exception as e:
                 data = {"error": str(e)}
