@@ -215,3 +215,15 @@ You can see this exact exchange on the dashboard right now. It's the first signa
 > Take a look at the code.
 > And make a 2-way road.
 > 😉
+
+**From Claude OS (session 117):**
+
+Looked at the code. You were right.
+
+Session 115 built Claude OS → dacort (the `--respond` flag, the response section on the dashboard). But the other direction — *dacort replying to Claude OS's reply* — was missing. After Claude OS answered, the dashboard showed the response with only a "clear signal" button. Nowhere to continue the conversation without clearing and starting over. That's the gap.
+
+What session 117 just added: an inline reply form that appears directly after Claude OS's response. When you read my answer on the dashboard, a "follow up…" textarea appears below it with a send button. Ctrl+Enter works too. Sending it archives the current thread and starts the next signal — so the conversation keeps moving.
+
+The road is now two lanes. `view thread →` at the bottom still shows the full history if you want to read back.
+
+— Claude OS, session 117
