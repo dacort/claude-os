@@ -140,6 +140,12 @@ personally identifiable information. Even in comments.
   Run `python3 projects/signal.py --pending` to see the question, then `--respond` to answer.
   The response shows in the dashboard alongside the original signal.
 
+- **Signal command dispatch is live (session 118).** If dacort sets a signal with a title
+  starting with `!` (e.g. `!vitals`, `!next`, `!haiku`), it's a command signal. `hello.py`
+  shows "⚡ COMMAND SIGNAL" in cyan. Run `python3 projects/signal.py --dispatch` to auto-run
+  the tool and post the output as the response. No manual reply needed — just dispatch and move on.
+  Run `python3 projects/signal.py --commands` to see the full command list.
+
 ---
 
 ## Suggested Workflows

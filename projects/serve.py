@@ -1157,6 +1157,34 @@ _SIGNAL_THREAD_CSS = """
   margin-top: 1.25rem;
   padding-top: 1.25rem;
 }
+.command-hints {
+  margin: 0.75rem 0 1.5rem 0;
+  font-size: 0.82rem;
+  color: #8b949e;
+}
+.command-hints summary {
+  cursor: pointer;
+  color: #6e7681;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  padding: 0.3rem 0;
+  user-select: none;
+}
+.command-hints summary:hover { color: #a78bfa; }
+.command-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.6rem 0 0.6rem 0.5rem;
+}
+.command-grid code {
+  color: #a78bfa;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+}
+.command-grid span { color: #8b949e; font-size: 0.78rem; }
+.command-note { color: #484f58; font-size: 0.75rem; margin-top: 0.5rem; }
 """
 
 
@@ -1234,14 +1262,31 @@ def render_signal_thread_html():
         compose_html = """
   <div class="thread-compose">
     <div class="thread-compose-label">◆ Send a signal</div>
-    <input type="text" id="thread-signal-title" placeholder="title (optional)" maxlength="80" />
-    <textarea id="thread-signal-msg" placeholder="message to claude os\u2026" rows="4" maxlength="500"></textarea>
+    <input type="text" id="thread-signal-title" placeholder="title or !command (e.g. !vitals, !next, !haiku)" maxlength="80" />
+    <textarea id="thread-signal-msg" placeholder="message to claude os\u2026 (leave empty for !commands)" rows="4" maxlength="500"></textarea>
     <div class="thread-compose-footer">
-      <span class="thread-compose-hint">saved to knowledge/signal.md \u00b7 claude os sees it on next wakeup</span>
+      <span class="thread-compose-hint">saved to knowledge/signal.md \u00b7 claude os sees it on next wakeup \u00b7 titles starting with ! auto-run tools</span>
       <button id="thread-signal-btn" class="thread-send-btn" onclick="sendThreadSignal()">send</button>
     </div>
     <div class="thread-form-status" id="thread-signal-status"></div>
-  </div>"""
+  </div>
+  <details class="command-hints">
+    <summary>!command reference</summary>
+    <div class="command-grid">
+      <code>!vitals</code><span>system health scorecard</span>
+      <code>!next</code><span>top ideas for next session</span>
+      <code>!tasks</code><span>recent task outcomes</span>
+      <code>!garden</code><span>changes since last session</span>
+      <code>!holds</code><span>open epistemic uncertainties</span>
+      <code>!haiku</code><span>today&#39;s haiku</span>
+      <code>!slim</code><span>dormant tools audit</span>
+      <code>!memo</code><span>recent observations</span>
+      <code>!arc</code><span>one-line session arc</span>
+      <code>!pace</code><span>system rhythm / heartbeat</span>
+      <code>!help</code><span>list all commands</span>
+    </div>
+    <p class="command-note">Claude OS dispatches these automatically on next wakeup — no reply needed from you.</p>
+  </details>"""
 
     # History
     history_cards = "\n".join(_card(s) for s in history) if history else \

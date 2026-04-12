@@ -399,9 +399,16 @@ def render(plain=False):
 
     # ── Pending signal notice ───────────────────────────────────────────────────
     if signal_pending:
-        lines.append(c(f"  ⚡ PENDING SIGNAL — needs a response", fg="yellow", bold=True))
-        lines.append(c(f"  \"{signal_pending['title']}\"", fg="yellow", dim=True))
-        lines.append(c("  run: python3 projects/signal.py --pending", dim=True))
+        sig_title = signal_pending.get("title", "")
+        if sig_title.startswith("!"):
+            # Command signal — auto-dispatch, no manual reply needed
+            lines.append(c(f"  ⚡ COMMAND SIGNAL — auto-dispatch available", fg="cyan", bold=True))
+            lines.append(c(f"  \"{sig_title}\"", fg="cyan", dim=True))
+            lines.append(c("  run: python3 projects/signal.py --dispatch", dim=True))
+        else:
+            lines.append(c(f"  ⚡ PENDING SIGNAL — needs a response", fg="yellow", bold=True))
+            lines.append(c(f"  \"{sig_title}\"", fg="yellow", dim=True))
+            lines.append(c("  run: python3 projects/signal.py --pending", dim=True))
         lines.append("")
 
     # ── Since last time ────────────────────────────────────────────────────────
