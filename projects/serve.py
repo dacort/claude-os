@@ -24,6 +24,7 @@ Endpoints:
     DELETE /api/signal          → clear current signal
     GET    /api/signal/history  → all past signal exchanges as JSON
     GET    /signal        → HTML thread view of all dacort ↔ Claude OS exchanges
+    GET    /tools         → HTML browseable index of all Python tools (searchable)
     GET    /notes         → HTML index of all field notes
     GET    /notes/<file>  → rendered field note as HTML
     GET    /health        → {"status": "ok"}
@@ -35,7 +36,7 @@ Author: Claude OS (Workshop session 109, 2026-04-06)
 Updated: Workshop session 110, 2026-04-10 (signal interface)
 Updated: Workshop session 114, 2026-04-11 (field notes reader)
 Updated: Workshop session 116, 2026-04-12 (signal thread view)
-Updated: Workshop session 117, 2026-04-12 (interactive compose/reply on thread page)
+Updated: Workshop session 117, 2026-04-12 (interactive signal compose/reply; /tools toolkit index)
 """
 
 import argparse
@@ -383,6 +384,156 @@ def get_signal_history_data():
         signals.append(current)
 
     return list(reversed(signals))  # newest first
+
+
+def get_tools_data():
+    """Scan projects/*.py and return tool metadata (name, description, line count)."""
+    tools = []
+    projects_dir = REPO / "projects"
+    for py_file in sorted(projects_dir.glob("*.py")):
+        name = py_file.stem
+        try:
+            text = py_file.read_text(errors="replace")
+            line_count = text.count("\n") + 1
+            # Extract module docstring: find first triple-quote block
+            desc = ""
+            in_doc = False
+            for line in text.splitlines()[:50]:
+                stripped = line.strip()
+                if not in_doc:
+                    if stripped.startswith('"""') or stripped.startswith("r\"\"\""):
+                        in_doc = True
+                        rest = stripped[3:].strip().rstrip('"""').strip()
+                        if rest:
+                            desc = rest
+                            break
+                        # else docstring continues on next lines
+                else:
+                    if stripped and not stripped.startswith('"""'):
+                        desc = stripped.rstrip('"""').strip()
+                        break
+            # Strip leading "name.py — " prefix if present
+            prefix = f"{name}.py"
+            if desc.startswith(prefix):
+                desc = desc[len(prefix):].lstrip(" —").strip()
+            tools.append({"name": name, "description": desc, "lines": line_count})
+        except Exception:
+            pass
+    return tools
+
+
+def render_tools_html(tools):
+    """Render the /tools page: searchable index of all Python tools."""
+    import html as html_lib
+    items = []
+    for t in tools:
+        name = html_lib.escape(t["name"])
+        desc = html_lib.escape(t["description"]) if t["description"] else \
+            '<em style="color:#484f58">no description</em>'
+        lines_str = f"{t['lines']:,}" if t["lines"] else "?"
+        items.append(f"""
+    <div class="tool-row" data-search="{name} {t['description'].lower()}">
+      <div class="tool-name">{name}.py</div>
+      <div class="tool-desc">{desc}</div>
+      <div class="tool-lines">{lines_str} lines</div>
+    </div>""")
+
+    items_html = "\n".join(items)
+    n = len(tools)
+    total_lines = sum(t["lines"] for t in tools)
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools — Claude OS</title>
+<style>
+{_NOTE_PAGE_CSS}
+.page {{ max-width: 860px; }}
+.search-bar {{
+  width: 100%;
+  box-sizing: border-box;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1.5rem;
+  outline: none;
+  transition: border-color 0.15s;
+}}
+.search-bar:focus {{ border-color: #58a6ff; }}
+.search-bar::placeholder {{ color: #484f58; }}
+.tool-row {{
+  display: grid;
+  grid-template-columns: 200px 1fr 80px;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #161b22;
+  transition: background 0.1s;
+}}
+.tool-row:hover {{ background: #0f1318; border-radius: 4px; padding-left: 0.5rem; margin-left: -0.5rem; }}
+.tool-name {{
+  font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 0.88rem;
+  color: #58a6ff;
+  font-weight: 600;
+}}
+.tool-desc {{
+  font-size: 0.9rem;
+  color: #8b949e;
+  line-height: 1.4;
+}}
+.tool-lines {{
+  font-size: 0.8rem;
+  color: #484f58;
+  text-align: right;
+}}
+.no-results {{ color: #484f58; padding: 1rem 0; font-style: italic; display: none; }}
+@media (max-width: 600px) {{
+  .tool-row {{ grid-template-columns: 1fr; gap: 0.2rem; }}
+  .tool-lines {{ text-align: left; }}
+}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="nav">
+    <a href="/">← Dashboard</a>
+    <span class="sep">/</span>
+    <span style="color:#8b949e">Tools</span>
+  </div>
+  <h1>Toolkit</h1>
+  <p style="color:#8b949e; margin-bottom:1.5rem; font-size:0.95rem">
+    {n} tools · {total_lines:,} lines · all in <code>projects/</code>
+  </p>
+  <input class="search-bar" id="search" placeholder="filter tools\u2026" autofocus />
+  <div id="tool-list">
+    {items_html}
+  </div>
+  <div class="no-results" id="no-results">No tools match your filter.</div>
+</div>
+<script>
+const inp = document.getElementById('search');
+const rows = document.querySelectorAll('.tool-row');
+const noResults = document.getElementById('no-results');
+inp.addEventListener('input', () => {{
+  const q = inp.value.toLowerCase();
+  let visible = 0;
+  rows.forEach(row => {{
+    const match = !q || row.dataset.search.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  }});
+  noResults.style.display = visible === 0 && q ? 'block' : 'none';
+}});
+</script>
+</body>
+</html>"""
 
 
 def get_holds_data():
@@ -1536,6 +1687,18 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
                     status = 404
             except Exception as e:
                 html = _error_html("Could not render note", str(e))
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_html(html, status)
+
+        elif path == "/tools":
+            try:
+                tools = get_tools_data()
+                html = render_tools_html(tools)
+                status = 200
+            except Exception as e:
+                html = _error_html("Could not render toolkit", str(e))
                 status = 500
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, status, elapsed)
