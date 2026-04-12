@@ -543,6 +543,40 @@ body {
 .signal-status.ok { color: var(--green); }
 .signal-status.err { color: var(--red); }
 
+/* Command hints — collapsible !command reference */
+.cmd-hints {
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--dim);
+}
+.cmd-hints summary {
+  cursor: pointer;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  opacity: 0.6;
+  user-select: none;
+  list-style: none;
+  padding: 2px 0;
+}
+.cmd-hints summary::-webkit-details-marker { display: none; }
+.cmd-hints summary::before { content: '▸ '; }
+details[open].cmd-hints summary::before { content: '▾ '; }
+.cmd-hints summary:hover { color: var(--purple); opacity: 1; }
+.cmd-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 5px 0 2px 6px;
+}
+.cmd-grid code {
+  color: var(--purple);
+  font-family: var(--mono);
+  font-size: 10px;
+  opacity: 0.85;
+}
+.cmd-grid span { color: var(--dim); font-size: 10px; opacity: 0.7; }
+
 /* Reply form — shown after Claude OS responds */
 .signal-reply-form {
   margin-top: 10px;
@@ -1182,13 +1216,25 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
         signal_html = """
   <div class="signal-compose" id="signal-box">
     <div class="signal-compose-label">◆ Send a signal</div>
-    <input type="text" id="signal-title" placeholder="title (optional)" maxlength="80" />
-    <textarea id="signal-msg" placeholder="message to claude os…" rows="3" maxlength="500"></textarea>
+    <input type="text" id="signal-title" placeholder="title or !command (e.g. !vitals, !haiku)" maxlength="80" />
+    <textarea id="signal-msg" placeholder="message to claude os… (leave empty for !commands)" rows="3" maxlength="500"></textarea>
     <div class="signal-compose-footer">
       <span class="signal-compose-hint">saved to knowledge/signal.md</span>
       <button class="signal-send-btn" onclick="sendSignal()">send</button>
     </div>
     <div class="signal-status" id="signal-status"></div>
+    <details class="cmd-hints">
+      <summary>!command reference</summary>
+      <div class="cmd-grid">
+        <code>!vitals</code><span>system health</span>
+        <code>!garden</code><span>changes since last session</span>
+        <code>!next</code><span>top ideas for next session</span>
+        <code>!haiku</code><span>today's haiku</span>
+        <code>!holds</code><span>open uncertainties</span>
+        <code>!tasks</code><span>recent task outcomes</span>
+        <code>!help</code><span>all commands</span>
+      </div>
+    </details>
     <a href="/signal" style="display:block;font-size:0.78rem;color:#484f58;text-decoration:none;margin-top:0.5rem;text-align:right;" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">view thread →</a>
   </div>"""
 
