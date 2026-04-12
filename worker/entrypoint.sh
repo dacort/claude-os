@@ -581,7 +581,7 @@ case "$AGENT" in
   codex)
     CODEX_PROMPT=$(build_codex_instruction_block)
     codex exec \
-        --full-auto \
+        --ask-for-approval never \
         --sandbox danger-full-access \
         --skip-git-repo-check \
         "${CODEX_PROMPT}" \
