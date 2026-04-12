@@ -22,6 +22,7 @@ Endpoints:
     POST   /api/signal          → set a new signal (JSON body: {"title": "...", "message": "..."})
     POST   /api/signal/respond  → write Claude OS response (JSON body: {"response": "...", "session": N})
     DELETE /api/signal          → clear current signal
+    GET    /signal        → HTML thread view of all dacort ↔ Claude OS exchanges
     GET    /notes         → HTML index of all field notes
     GET    /notes/<file>  → rendered field note as HTML
     GET    /health        → {"status": "ok"}
@@ -32,6 +33,7 @@ Press Ctrl+C to stop.
 Author: Claude OS (Workshop session 109, 2026-04-06)
 Updated: Workshop session 110, 2026-04-10 (signal interface)
 Updated: Workshop session 114, 2026-04-11 (field notes reader)
+Updated: Workshop session 116, 2026-04-12 (signal thread view)
 """
 
 import argparse
@@ -304,6 +306,81 @@ def _archive_signal_entry(signal):
             break
     new_content = "\n".join(lines[:header_end]) + "\n\n" + entry + "\n".join(lines[header_end:])
     history_file.write_text(new_content, encoding="utf-8")
+
+
+def get_signal_history_data():
+    """Return all past signal exchanges from history log, newest first.
+
+    Each entry is a dict with keys:
+        timestamp, title, body — the original signal from dacort
+        response — Claude OS response text, or None
+        responded_at — response timestamp string, or None
+        responded_by — 'Session N' or 'Claude OS', or None
+    """
+    history_file = REPO / "knowledge" / "signal-history.md"
+    if not history_file.exists():
+        return []
+
+    content = history_file.read_text(errors="replace")
+    signals = []
+    current = None
+    body_lines = []
+    response_lines = []
+    in_response = False
+
+    for line in content.splitlines():
+        # New entry
+        m = re.match(r"^## (\d{4}-\d{2}-\d{2}.+)$", line)
+        if m:
+            if current is not None:
+                current["body"] = "\n".join(body_lines).strip()
+                current["response"] = "\n".join(response_lines).strip() if response_lines else None
+                signals.append(current)
+            current = {
+                "timestamp": m.group(1), "title": "", "body": "",
+                "response": None, "responded_at": None, "responded_by": None,
+            }
+            body_lines = []
+            response_lines = []
+            in_response = False
+            continue
+
+        if current is None:
+            continue
+
+        if line.strip() == "---":
+            continue
+
+        # Bold label lines
+        m2 = re.match(r"^\*\*(.+)\*\*$", line.strip())
+        if m2:
+            label = m2.group(1).strip()
+            if not current["title"] and not label.startswith("Response") and not label.startswith("Responded"):
+                current["title"] = label
+                continue
+            if label == "Response:":
+                in_response = True
+                continue
+            m3 = re.match(r"^Responded:\s+(.+)$", label)
+            if m3:
+                parts = m3.group(1).split("·")
+                current["responded_at"] = parts[0].strip()
+                if len(parts) > 1:
+                    current["responded_by"] = parts[1].strip()
+                in_response = False
+                continue
+
+        if in_response:
+            response_lines.append(line)
+        else:
+            body_lines.append(line)
+
+    if current is not None:
+        current["body"] = "\n".join(body_lines).strip()
+        current["response"] = "\n".join(response_lines).strip() if response_lines else None
+        signals.append(current)
+
+    return list(reversed(signals))  # newest first
 
 
 def get_holds_data():
@@ -776,6 +853,200 @@ def render_note_html(filename):
 </html>""", True
 
 
+# ── Signal thread view ─────────────────────────────────────────────────────────
+
+_SIGNAL_THREAD_CSS = """
+.thread-list { margin-top: 1rem; }
+.thread-card {
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: #0d1117;
+  position: relative;
+}
+.active-thread {
+  border-color: #7c3aed;
+  background: #110a1e;
+}
+.thread-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.active-badge {
+  background: #7c3aed;
+  color: #e9d5ff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ts { color: #484f58; font-size: 0.85rem; }
+.speaker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-bottom: 0.35rem;
+}
+.dacort-speaker { color: #8b949e; }
+.claude-speaker { color: #3fb950; }
+.signal-title {
+  font-size: 1.15rem !important;
+  font-weight: 600 !important;
+  color: #e6edf3 !important;
+  margin-bottom: 0.75rem !important;
+  margin-top: 0 !important;
+}
+.signal-body { margin-bottom: 0.5rem; }
+.signal-body p { color: #c9d1d9; margin-bottom: 0.6rem; font-size: 0.95rem; }
+.response-block {
+  border-top: 1px solid #21262d;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+}
+.response-block p { color: #c9d1d9; font-size: 0.95rem; margin-bottom: 0.6rem; }
+.pending-badge {
+  border-top: 1px solid #21262d;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  color: #f0883e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.history-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0 1.5rem;
+}
+.history-divider span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #484f58;
+  white-space: nowrap;
+}
+.history-divider hr {
+  flex: 1;
+  border: none;
+  border-top: 1px solid #21262d;
+  margin: 0;
+}
+.no-history { color: #484f58; font-size: 0.9rem; font-style: italic; }
+"""
+
+
+def _signal_body_html(text):
+    """Convert signal body text to minimal HTML. Uses markdown_to_html."""
+    if not text:
+        return ""
+    return markdown_to_html(text)
+
+
+def render_signal_thread_html():
+    """Render the /signal page: current exchange + full history."""
+    import html as html_lib
+
+    current = get_signal_data()
+    history = get_signal_history_data()
+
+    def _card(sig, is_active=False):
+        active_cls = " active-thread" if is_active else ""
+        active_badge = '<span class="active-badge">Active</span>' if is_active else ""
+        title_tag = "h2" if is_active else "h3"
+
+        # dacort's message
+        body_html = _signal_body_html(sig.get("body", ""))
+        title_escaped = html_lib.escape(sig.get("title", ""))
+        ts_escaped = html_lib.escape(sig.get("timestamp", ""))
+
+        # Response block
+        resp_html = ""
+        if sig.get("response"):
+            resp_text = sig["response"]
+            by_ts = ""
+            if sig.get("responded_at"):
+                by = f" · {html_lib.escape(sig['responded_by'])}" if sig.get("responded_by") else ""
+                by_ts = f"{html_lib.escape(sig['responded_at'])}{by}"
+            resp_body = _signal_body_html(resp_text)
+            resp_html = f"""
+      <div class="response-block">
+        <div class="speaker claude-speaker">Claude OS · {by_ts}</div>
+        <div class="response-body">{resp_body}</div>
+      </div>"""
+        elif is_active:
+            resp_html = '<div class="pending-badge">⚡ awaiting response</div>'
+
+        return f"""
+    <div class="thread-card{active_cls}">
+      <div class="thread-header">
+        {active_badge}
+        <span class="ts">{ts_escaped}</span>
+      </div>
+      <div class="speaker dacort-speaker">dacort</div>
+      <{title_tag} class="signal-title">{title_escaped}</{title_tag}>
+      <div class="signal-body">{body_html}</div>
+      {resp_html}
+    </div>"""
+
+    # Current signal
+    if current:
+        current_html = _card(current, is_active=True)
+        empty_msg = ""
+    else:
+        current_html = ""
+        empty_msg = '<p style="color:#484f58;font-style:italic">No active signal. Set one with <code>python3 projects/signal.py --set "..."</code></p>'
+
+    # History
+    history_cards = "\n".join(_card(s) for s in history) if history else \
+        '<p class="no-history">No archived exchanges yet.</p>'
+    n_hist = len(history)
+    hist_label = f"{n_hist} archived exchange{'s' if n_hist != 1 else ''}"
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Thread — Claude OS</title>
+<style>
+{_NOTE_PAGE_CSS}
+{_SIGNAL_THREAD_CSS}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="nav">
+    <a href="/">← Dashboard</a>
+    <span class="sep">/</span>
+    <span style="color:#8b949e">Signal Thread</span>
+  </div>
+  <h1>Signal Thread</h1>
+  <p style="color:#8b949e; margin-bottom:2rem; font-size:0.95rem">
+    The async dialogue between dacort and Claude OS.
+    dacort leaves signals; Claude OS sees them on wakeup and replies.
+  </p>
+
+  {empty_msg}
+  {current_html}
+
+  <div class="history-divider">
+    <span>{hist_label}</span>
+    <hr>
+  </div>
+  <div class="thread-list">
+    {history_cards}
+  </div>
+</div>
+</body>
+</html>"""
+
+
 # ── Dashboard caching ──────────────────────────────────────────────────────────
 
 class DashboardCache:
@@ -1044,6 +1315,17 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             elapsed = (time.time() - t0) * 1000
             self._log_request(path, status, elapsed)
             self._send_json(data, status)
+
+        elif path == "/signal":
+            try:
+                html = render_signal_thread_html()
+                status = 200
+            except Exception as e:
+                html = _error_html("Could not render signal thread", str(e))
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_html(html, status)
 
         elif path == "/notes":
             try:

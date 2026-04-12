@@ -1077,7 +1077,10 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
     <div class="signal-title">{html_escape(signal['title'])}</div>
     <div class="signal-body">{html_escape(sig_body_preview)}</div>
     <div class="signal-ts">{html_escape(signal['timestamp'])}</div>{response_html}
-    <button class="signal-clear-btn" onclick="clearSignal()">clear signal</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;">
+      <button class="signal-clear-btn" onclick="clearSignal()">clear signal</button>
+      <a href="/signal" style="font-size:0.78rem;color:#484f58;text-decoration:none;" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">view thread →</a>
+    </div>
   </div>"""
     else:
         signal_html = """
@@ -1090,6 +1093,7 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
       <button class="signal-send-btn" onclick="sendSignal()">send</button>
     </div>
     <div class="signal-status" id="signal-status"></div>
+    <a href="/signal" style="display:block;font-size:0.78rem;color:#484f58;text-decoration:none;margin-top:0.5rem;text-align:right;" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">view thread →</a>
   </div>"""
 
     return f"""<!DOCTYPE html>
