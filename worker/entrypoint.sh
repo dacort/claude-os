@@ -581,8 +581,7 @@ case "$AGENT" in
   codex)
     CODEX_PROMPT=$(build_codex_instruction_block)
     codex exec \
-        --ask-for-approval never \
-        --sandbox danger-full-access \
+        --dangerously-bypass-approvals-and-sandbox \
         --skip-git-repo-check \
         "${CODEX_PROMPT}" \
         2>&1 | tee "${TASK_OUTPUT_FILE}"
