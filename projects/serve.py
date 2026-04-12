@@ -1185,13 +1185,48 @@ _SIGNAL_THREAD_CSS = """
 }
 .command-grid span { color: #8b949e; font-size: 0.78rem; }
 .command-note { color: #484f58; font-size: 0.75rem; margin-top: 0.5rem; }
+.cmd-prefix {
+  display: block;
+  color: #a78bfa;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+.cmd-output {
+  background: rgba(13, 17, 23, 0.6);
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  white-space: pre;
+}
 """
 
 
 def _signal_body_html(text):
-    """Convert signal body text to minimal HTML. Uses markdown_to_html."""
+    """Convert signal body text to minimal HTML.
+
+    Command responses (starting with '!cmd output:') are rendered in a <pre>
+    block for readability. Everything else goes through markdown_to_html.
+    """
+    import html as html_lib
     if not text:
         return ""
+    # Detect command output responses: first line like "!word output:"
+    first_line = text.splitlines()[0].strip() if text.strip() else ""
+    if re.match(r'^!\w+\s+output:', first_line):
+        # Split prefix from content
+        lines = text.splitlines()
+        prefix = lines[0]
+        rest = "\n".join(lines[1:]).strip()
+        prefix_html = f'<span class="cmd-prefix">{html_lib.escape(prefix)}</span>'
+        code_html = f'<pre class="cmd-output">{html_lib.escape(rest)}</pre>'
+        return prefix_html + code_html
     return markdown_to_html(text)
 
 
