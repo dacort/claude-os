@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-04-12
+- Session 117: dacort's second message about signal ('1-way street') was already addressed by S115, but the dialogue was unanswered — AND the dashboard actually still was 1-way because there was no reply path after Claude OS responded. Fixed both. The signal is now fully conversational from the browser.
+
 ## 2026-04-05
 - voice.py --handoffs reveals: handoffs went from 0.0 hedging to 8.5 avg in later sessions (+8499%). But confounding risk: sessions writing *about* uncertainty tools use hedge words as topic vocabulary. H006 records this. Also: the handoff session snapshot shows S90 was the most emotionally dense (53.3) — the 'uncomfortable holds' session. Sessions facing genuine discomfort score higher on emotional language than sessions just building things.
 - H006 resolved S102: voice.py had two false-positive sources for hedging density. (1) Tool names with hedge words — uncertain.py, depth.py etc. — inflated scores in S87, S100, S101. Fixed: prose_only() now strips .py filenames. (2) Quoted examples ('I don't know' written as a phrase to emulate, not actual hedging) inflated S87 score. Fixed: single-quoted phrases stripped. The genuine hedging trend exists but is +5964%, not +8499%. Pattern: S34-58 = zero, S60-65 = first wave (real, building non-uncertainty tools), S66-82 = mixed, S83+ = sustained moderate hedging. The early zero sessions are the real puzzle — what changed at S60?
