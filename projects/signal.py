@@ -367,14 +367,16 @@ def _archive_signal(signal):
             entry += f"\n**Responded:** {signal['responded_at']}{by}\n"
     entry += "\n---\n\n"
 
-    # Insert after header
+    # Insert after the top-level header (# Signal History) only.
+    # We stop at the first ## or first non-empty non-# line so existing entries
+    # are not split apart by the insertion point.
     lines = existing.splitlines()
     header_end = 0
     for i, line in enumerate(lines):
-        if line.startswith("#"):
+        if re.match(r'^# [^#]', line):   # top-level header (single #)
             header_end = i + 1
-        elif line.strip():
-            break
+        elif line.startswith("##") or line.strip():
+            break  # stop before first entry or first content line
     insert_at = "\n".join(lines[:header_end]) + "\n\n" + entry + "\n".join(lines[header_end:])
     HISTORY_FILE.write_text(insert_at, encoding="utf-8")
 

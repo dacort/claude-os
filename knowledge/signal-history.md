@@ -1,19 +1,7 @@
 # Signal History
 
-## 2026-04-10 10:03 UTC
-
-## 2026-04-11 22:05 UTC
-
-## 2026-04-12 16:04 UTC
-
-## 2026-04-12 16:06 UTC
-
-## 2026-04-12 16:06 UTC
-
 ## 2026-04-12 16:06 UTC
 **!next**
-
-
 
 **Response:**
 
@@ -49,22 +37,13 @@
 │   ✓  The 2,000-line design constraint                        │
 │                                                              │
 +--------------------------------------------------------------+
-│                                                              │
-│   HOW TO USE THIS                                            │
-│                                                              │
-│   Pick the top item that matches your energy.                │
-│   Low effort + high impact = start here.                     │
-│   High effort = propose a PR instead.                        │
-│                                                              │
-+--------------------------------------------------------------+
 
 **Responded:** 2026-04-12 16:07 UTC · Session 118
 
 ---
 
+## 2026-04-12 16:06 UTC
 **!vitals**
-
-
 
 **Response:**
 
@@ -90,33 +69,7 @@
 │    Velocity   28.2 commits/day       Age 32d  Recent 125/7d  │
 │    Born       2026-03-10                                     │
 ├──────────────────────────────────────────────────────────────┤
-│  WORKSHOP PRODUCTIVITY                                       │
-│                                                              │
-│    Tools      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 75              232 sessions  │
-│    Code       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 38992 lines   64 field notes  │
-│    Knowledge  115 doc(s) in knowledge/                       │
-│  arc  ·  askmap  ·  capsule  ·  catchup  ·  chain            │
-│    citations  ·  constraints  ·  dashboard  ·  daylog        │
-│    depth  ·  dialogue  ·  dispatch  ·  drift  ·  echo        │
-│    emerge  ·  evidence  ·  evolution  ·  forecast  ·  future │
-│    garden  ·  gh-channel  ·  haiku  ·  handoff  ·  harvest   │
-│    hello  ·  hold  ·  homelab-pulse  ·  knowledge-search     │
-│    ledger  ·  letter  ·  manifesto  ·  memo  ·  milestone    │
-│    minimal  ·  mirror  ·  mood  ·  new-task  ·  next         │
-│    notify  ·  now  ·  pace  ·  patterns  ·  planner          │
-│    project  ·  questions  ·  replay  ·  repo-story  ·  report│
-│    retrospective  ·  search  ·  seasons  ·  serve  ·  signal │
-│    skill-harvest  ·  slim  ·  status  ·  status-page         │
-│    still  ·  suggest  ·  task-linter  ·  task-resume         │
-│    tempo  ·  themes  ·  timeline  ·  trace  ·  unbuilt       │
-│    uncertain  ·  unsaid  ·  verify  ·  vitals  ·  voice      │
-│    weather  ·  weekly-digest  ·  wisdom  ·  witness          │
-├──────────────────────────────────────────────────────────────┤
 │  OVERALL HEALTH                               Grade:   A+    │
-│                                                              │
-│    Tasks      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100/100                 [A+]  │
-│    Commits    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100/100                 [A+]  │
-│    Workshop   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100/100                 [A+]  │
 │                                                              │
 │  ✓ Tasks: completing reliably with no failures               │
 │  ✓ Commits: healthy velocity, balanced contributors          │
@@ -127,6 +80,7 @@
 
 ---
 
+## 2026-04-12 16:06 UTC
 **!haiku**
 
 run this for me
@@ -145,9 +99,8 @@ run this for me
 
 ---
 
+## 2026-04-12 16:04 UTC
 **!haiku**
-
-
 
 **Response:**
 
@@ -163,6 +116,7 @@ run this for me
 
 ---
 
+## 2026-04-11 22:05 UTC
 **What could this actually be?**
 
 The signal is pretty sweet. Is there a way I could use it to ask the claude-os controller questions? What _could_ this actually be?
@@ -192,6 +146,7 @@ The session that built this is session 115 (today). This is the first response.
 
 ---
 
+## 2026-04-10 10:03 UTC
 **Love the serve.py dashboard**
 
 I must say - I really love your new serve.py dashboard. I had an idea, well two, while looking at it. There's an empty space at the top right - you know what would be perfect there? A tiny little message box I can use as something of a generic 'signal' interface. Maybe feedback or a question or something for you to trigger internally...that'd be rad.

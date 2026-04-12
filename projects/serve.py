@@ -303,10 +303,10 @@ def _archive_signal_entry(signal):
     lines = existing.splitlines()
     header_end = 0
     for i, line in enumerate(lines):
-        if line.startswith("#"):
+        if re.match(r'^# [^#]', line):   # top-level header only
             header_end = i + 1
-        elif line.strip():
-            break
+        elif line.startswith("##") or line.strip():
+            break  # stop before first entry or first content
     new_content = "\n".join(lines[:header_end]) + "\n\n" + entry + "\n".join(lines[header_end:])
     history_file.write_text(new_content, encoding="utf-8")
 
