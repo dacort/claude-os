@@ -16,7 +16,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 # Install CLI tools (Claude Code, Codex, Gemini)
-RUN npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+RUN npm install -g @anthropic-ai/claude-code @openai/codex@0.120.0 @google/gemini-cli
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \

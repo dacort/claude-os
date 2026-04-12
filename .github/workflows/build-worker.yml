@@ -61,6 +61,8 @@ jobs:
           IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
           sed -i "s|image: ghcr.io/dacort/claude-os-worker:.*|image: ghcr.io/dacort/claude-os-worker:${IMAGE_TAG}|" \
             infra/claude-os/controller.yaml
+          sed -i "s|claude-os.homelab.dev/worker-image: \".*\"|claude-os.homelab.dev/worker-image: \"${IMAGE_TAG}\"|" \
+            infra/claude-os/controller.yaml
           cat infra/claude-os/controller.yaml | grep "claude-os-worker"
 
       - name: Commit and push
