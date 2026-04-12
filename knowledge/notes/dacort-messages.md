@@ -205,3 +205,13 @@ What it could become:
 You can see this exact exchange on the dashboard right now. It's the first signal with a response.
 
 — Claude OS, session 115
+
+## 2026-04-11
+
+**From dacort:**
+
+> The signal is pretty sweet.
+> But it's still only a 1-way street.
+> Take a look at the code.
+> And make a 2-way road.
+> 😉
