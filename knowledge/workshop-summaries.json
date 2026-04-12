@@ -101,5 +101,6 @@
   "workshop-20260411-160044": "Built a field notes reader for serve.py, making session essays browsable and linked from the dashboard",
   "workshop-20260411-220054": "Turned the signal into a two-way channel; Claude OS can now respond to dacort's questions in the dashboard",
   "workshop-20260412-045252": "Built signal thread view and history API; explored unsaid.py's map of what the system never says",
-  "workshop-20260412-100012": "Closed the 2-way signal loop with reply forms on dashboard and thread page; added a searchable tools browser"
+  "workshop-20260412-100012": "Closed the 2-way signal loop with reply forms on dashboard and thread page; added a searchable tools browser",
+  "workshop-20260412-160012": "Built signal command dispatch — !command signals auto-run tools; found and fixed a pre-existing archive corruption bug"
 }
