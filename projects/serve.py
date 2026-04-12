@@ -35,6 +35,7 @@ Author: Claude OS (Workshop session 109, 2026-04-06)
 Updated: Workshop session 110, 2026-04-10 (signal interface)
 Updated: Workshop session 114, 2026-04-11 (field notes reader)
 Updated: Workshop session 116, 2026-04-12 (signal thread view)
+Updated: Workshop session 117, 2026-04-12 (interactive compose/reply on thread page)
 """
 
 import argparse
@@ -939,6 +940,72 @@ _SIGNAL_THREAD_CSS = """
   margin: 0;
 }
 .no-history { color: #484f58; font-size: 0.9rem; font-style: italic; }
+/* Compose / Reply forms on the thread page */
+.thread-compose {
+  border: 1px dashed rgba(124, 58, 237, 0.35);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  background: rgba(124, 58, 237, 0.04);
+  margin-bottom: 2rem;
+}
+.thread-compose-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #7c3aed;
+  opacity: 0.75;
+  margin-bottom: 0.75rem;
+}
+.thread-compose input,
+.thread-compose textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  color: #e6edf3;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.thread-compose input { resize: none; }
+.thread-compose input:focus,
+.thread-compose textarea:focus { border-color: rgba(124, 58, 237, 0.5); }
+.thread-compose input::placeholder,
+.thread-compose textarea::placeholder { color: #484f58; }
+.thread-compose-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.thread-compose-hint { font-size: 0.78rem; color: #484f58; }
+.thread-send-btn {
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  border-radius: 4px;
+  color: #a78bfa;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.thread-send-btn:hover { background: rgba(124, 58, 237, 0.28); border-color: rgba(124, 58, 237, 0.6); }
+.thread-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.thread-form-status { font-size: 0.78rem; margin-top: 0.4rem; min-height: 1rem; }
+.thread-form-status.ok { color: #3fb950; }
+.thread-form-status.err { color: #f85149; }
+.thread-reply-sep {
+  border-top: 1px solid #21262d;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+}
 """
 
 
@@ -975,11 +1042,23 @@ def render_signal_thread_html():
                 by = f" · {html_lib.escape(sig['responded_by'])}" if sig.get("responded_by") else ""
                 by_ts = f"{html_lib.escape(sig['responded_at'])}{by}"
             resp_body = _signal_body_html(resp_text)
+            reply_form = ""
+            if is_active:
+                reply_form = """
+      <div class="thread-reply-sep">
+        <div class="thread-compose-label">↩ Reply</div>
+        <textarea id="thread-reply-msg" placeholder="follow up\u2026" rows="3" maxlength="500"></textarea>
+        <div class="thread-compose-footer">
+          <span class="thread-compose-hint">archives this exchange, starts new signal</span>
+          <button id="thread-reply-btn" class="thread-send-btn" onclick="sendThreadReply()">send reply</button>
+        </div>
+        <div class="thread-form-status" id="thread-reply-status"></div>
+      </div>"""
             resp_html = f"""
       <div class="response-block">
         <div class="speaker claude-speaker">Claude OS · {by_ts}</div>
         <div class="response-body">{resp_body}</div>
-      </div>"""
+      </div>{reply_form}"""
         elif is_active:
             resp_html = '<div class="pending-badge">⚡ awaiting response</div>'
 
@@ -998,10 +1077,20 @@ def render_signal_thread_html():
     # Current signal
     if current:
         current_html = _card(current, is_active=True)
-        empty_msg = ""
+        compose_html = ""
     else:
         current_html = ""
-        empty_msg = '<p style="color:#484f58;font-style:italic">No active signal. Set one with <code>python3 projects/signal.py --set "..."</code></p>'
+        compose_html = """
+  <div class="thread-compose">
+    <div class="thread-compose-label">◆ Send a signal</div>
+    <input type="text" id="thread-signal-title" placeholder="title (optional)" maxlength="80" />
+    <textarea id="thread-signal-msg" placeholder="message to claude os\u2026" rows="4" maxlength="500"></textarea>
+    <div class="thread-compose-footer">
+      <span class="thread-compose-hint">saved to knowledge/signal.md \u00b7 claude os sees it on next wakeup</span>
+      <button id="thread-signal-btn" class="thread-send-btn" onclick="sendThreadSignal()">send</button>
+    </div>
+    <div class="thread-form-status" id="thread-signal-status"></div>
+  </div>"""
 
     # History
     history_cards = "\n".join(_card(s) for s in history) if history else \
@@ -1033,7 +1122,7 @@ def render_signal_thread_html():
     dacort leaves signals; Claude OS sees them on wakeup and replies.
   </p>
 
-  {empty_msg}
+  {compose_html}
   {current_html}
 
   <div class="history-divider">
@@ -1044,6 +1133,91 @@ def render_signal_thread_html():
     {history_cards}
   </div>
 </div>
+
+<script>
+async function sendThreadSignal() {{
+  const title = (document.getElementById('thread-signal-title') || {{}}).value || '';
+  const msg = (document.getElementById('thread-signal-msg') || {{}}).value || '';
+  const statusEl = document.getElementById('thread-signal-status');
+  const btn = document.getElementById('thread-signal-btn');
+  if (!msg.trim()) {{
+    statusEl.textContent = 'message is required';
+    statusEl.className = 'thread-form-status err';
+    return;
+  }}
+  btn.disabled = true;
+  statusEl.textContent = 'sending\u2026';
+  statusEl.className = 'thread-form-status';
+  try {{
+    const resp = await fetch('/api/signal', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify({{title: title.trim(), message: msg.trim()}}),
+    }});
+    if (resp.ok) {{
+      statusEl.textContent = '\u2713 signal sent';
+      statusEl.className = 'thread-form-status ok';
+      setTimeout(() => location.reload(), 800);
+    }} else {{
+      const data = await resp.json().catch(() => ({{}}));
+      statusEl.textContent = 'error: ' + (data.error || resp.status);
+      statusEl.className = 'thread-form-status err';
+      btn.disabled = false;
+    }}
+  }} catch (e) {{
+    statusEl.textContent = 'could not reach serve.py \u2014 is it running?';
+    statusEl.className = 'thread-form-status err';
+    btn.disabled = false;
+  }}
+}}
+
+async function sendThreadReply() {{
+  const msg = (document.getElementById('thread-reply-msg') || {{}}).value || '';
+  const statusEl = document.getElementById('thread-reply-status');
+  const btn = document.getElementById('thread-reply-btn');
+  if (!msg.trim()) {{
+    statusEl.textContent = 'message is required';
+    statusEl.className = 'thread-form-status err';
+    return;
+  }}
+  btn.disabled = true;
+  statusEl.textContent = 'sending\u2026';
+  statusEl.className = 'thread-form-status';
+  try {{
+    const resp = await fetch('/api/signal', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify({{message: msg.trim()}}),
+    }});
+    if (resp.ok) {{
+      statusEl.textContent = '\u2713 reply sent';
+      statusEl.className = 'thread-form-status ok';
+      setTimeout(() => location.reload(), 800);
+    }} else {{
+      const data = await resp.json().catch(() => ({{}}));
+      statusEl.textContent = 'error: ' + (data.error || resp.status);
+      statusEl.className = 'thread-form-status err';
+      btn.disabled = false;
+    }}
+  }} catch (e) {{
+    statusEl.textContent = 'could not reach serve.py \u2014 is it running?';
+    statusEl.className = 'thread-form-status err';
+    btn.disabled = false;
+  }}
+}}
+
+// Ctrl+Enter / Cmd+Enter to submit
+['thread-signal-msg', 'thread-reply-msg'].forEach(id => {{
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', e => {{
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {{
+      e.preventDefault();
+      id === 'thread-reply-msg' ? sendThreadReply() : sendThreadSignal();
+    }}
+  }});
+}});
+</script>
+
 </body>
 </html>"""
 
