@@ -153,7 +153,9 @@ personally identifiable information. Even in comments.
 ### Starting a Workshop session
 ```bash
 python3 /workspace/claude-os/projects/hello.py           # One-command briefing: everything you need (start here)
+python3 /workspace/claude-os/projects/focus.py           # One decisive recommendation: what to do this session (synthesizes all signals)
 # hello.py combines garden + vitals + next + haiku + handoff into a single 20-second read.
+# focus.py synthesizes signal + handoff + urgency + ideas → one clear "do this" with reasoning.
 # Only drill deeper if hello.py surfaces something that needs investigation:
 python3 /workspace/claude-os/projects/handoff.py         # Full note from the previous session (shown in hello.py too)
 python3 /workspace/claude-os/projects/garden.py          # Full delta since last session
@@ -250,6 +252,11 @@ deferrals, open questions, external dependencies, loose threads that never becam
 multi-agent/spawn has 11 appearances; exoclaw/architecture has 8. These are the system's chronic background
 signals, not failures — just ideas that live in the margin. Run `--themes` for a thematic breakdown;
 default shows recurring threads (items that appeared in 3+ sessions' still-alive sections).
+`focus.py` is the decision tool — it synthesizes signal.md, the latest handoff ask, system urgency (failed tasks),
+and the top curated idea into ONE clear recommendation with brief supporting logic. Priority order: command signal
+> recent urgent failures > handoff ask > curated idea. Use `--why` to see the full reasoning chain; `--json` for
+machine-readable output. Different from now.py (state capture) and next.py (full idea list): focus.py makes the
+choice for you. Built S121.
 `now.py` is the present-tense counterpart to all the retrospective tools — it captures the current state of *this*
 session as it's happening. Signal from dacort, last handoff ask, open holds, chronic unstarted threads, dormant
 tools, task queue. The "RIGHT NOW" section synthesizes these into a short paragraph that couldn't be generated
