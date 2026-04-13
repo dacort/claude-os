@@ -70,15 +70,59 @@ def get_session_num(path):
     return int(m.group(1)) if m else 0
 
 def load_field_notes(projects_dir):
-    """Load all field notes, returning list of (session_num, path, content)."""
-    notes = []
-    for f in sorted(Path(projects_dir).glob("field-notes*.md")):
+    """Load all field notes + handoffs, returning list of (session_num, path, content).
+
+    Sources (in priority order, later sources merged into existing sessions):
+    1. projects/field-notes-from-free-time.md  (session 1)
+    2. projects/field-notes-session-N.md       (sessions 2–93)
+    3. knowledge/field-notes/*.md              (dated field notes with session: N frontmatter)
+    4. knowledge/handoffs/session-N.md         (sessions without a dedicated field note)
+    """
+    notes = {}  # session_num -> (num, path, content)
+
+    projects_path = Path(projects_dir)
+    knowledge_path = projects_path.parent / "knowledge"
+
+    # Source 1 & 2: projects/ field notes
+    for f in sorted(projects_path.glob("field-notes*.md")):
         num = get_session_num(f)
         if num == 0:
             continue
         content = f.read_text()
-        notes.append((num, str(f), content))
-    return sorted(notes)
+        notes[num] = (num, str(f), content)
+
+    # Source 3: knowledge/field-notes/*.md (dated, with session: N frontmatter)
+    fn_dir = knowledge_path / "field-notes"
+    if fn_dir.exists():
+        for f in sorted(fn_dir.glob("*.md")):
+            content = f.read_text()
+            m = re.search(r"^session[:\s]+(\d+)", content, re.MULTILINE | re.IGNORECASE)
+            if m:
+                num = int(m.group(1))
+                if num not in notes:
+                    notes[num] = (num, str(f), content)
+                else:
+                    # Merge into existing
+                    sn, p, x = notes[num]
+                    notes[num] = (sn, p, x + "\n\n" + content)
+
+    # Source 4: knowledge/handoffs/session-N.md (fill gaps)
+    handoff_dir = knowledge_path / "handoffs"
+    if handoff_dir.exists():
+        for f in sorted(handoff_dir.glob("session-*.md")):
+            m = re.search(r"session-(\d+)", f.stem)
+            if not m:
+                continue
+            num = int(m.group(1))
+            content = f.read_text()
+            if num not in notes:
+                notes[num] = (num, str(f), content)
+            else:
+                # Append handoff to existing field note
+                sn, p, x = notes[num]
+                notes[num] = (sn, p, x + "\n\n" + content)
+
+    return sorted(notes.values())
 
 def extract_sections(content):
     """Parse a field note into {section_title: section_text} dict."""

@@ -403,8 +403,9 @@ def render_you_are_here() -> list[str]:
     """Render the 'you are here' marker for the current session."""
     now = datetime.datetime.now(datetime.timezone.utc)
     time_str = now.strftime("%H:%M")
+    date_str = now.strftime("%Y-%m-%d")
     marker = c("★", YELLOW, BOLD)
-    text = c(" YOU ARE HERE", YELLOW, BOLD) + c("  [workshop: session 5, 2026-03-11]", DIM)
+    text = c(" YOU ARE HERE", YELLOW, BOLD) + c(f"  [{date_str}]", DIM)
     return [
         "",
         f"  {c(time_str, DIM)}  {marker}{text}",
