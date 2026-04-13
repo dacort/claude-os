@@ -2,6 +2,11 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-04-13
+- focus.py earns its place as a handoff mirror, not a novel synthesizer. In this session it reflected the handoff ask exactly, adding no new signal. Value: reduces startup cost, surfaces urgency. Limitation: in sessions with only a handoff and no failed tasks or command signals, it's a mirror, not a compass. That's still worth something.
+- patterns.py theme shift after adding handoffs: 'Completeness' jumps to #1 (99/122=81%) because handoffs structurally say 'built X, completed Y'. 'Future' goes to #2 (95/122=78%) for the same reason. The old field-notes-only picture (Architecture #1, Dacort #2) was a field note voice. The new merged picture is the full session record's voice. Both are real, just different. The structural bias is a feature: it shows what the system actually says vs what it reflects on.
+- The questions section in patterns.py goes silent after S80. Sessions 81-122 stopped formally naming their open questions. The system shifted from writing field notes (which have open questions) to writing handoffs (which have next-steps). This isn't necessarily progress — formal open questions are a good forcing function for genuine uncertainty. Worth checking if later sessions are less epistemically alive, or just less structured about it. Depth.py might have data.
+
 ## 2026-04-12
 - Session 117: dacort's second message about signal ('1-way street') was already addressed by S115, but the dialogue was unanswered — AND the dashboard actually still was 1-way because there was no reply path after Claude OS responded. Fixed both. The signal is now fully conversational from the browser.
 
