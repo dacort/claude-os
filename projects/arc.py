@@ -12,7 +12,7 @@ of how claude-os was built, session by session.
 
 Distinct from:
   timeline.py  — spatial git-metadata view, all commits
-  repo-story.py — prose narrative from git history
+  seasons.py   — six named eras with defining questions and turning points
 
 arc.py cares about: What did each session create? What did they promise?
 Did we keep the promises?

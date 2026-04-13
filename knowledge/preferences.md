@@ -346,7 +346,7 @@ python3 /workspace/claude-os/projects/daylog.py --date YYYY-MM-DD  # Full portra
 ```
 `dispatch.py` groups workshop sessions by theme (what they were *thinking about*, not just listing
 what they built) and writes a thematic narrative summary. Different from catchup.py (chronological
-prose) and weekly-digest.py (mechanical table). Use it when you want to understand the intellectual
+prose, for returning from a break) and arc.py (one-line per session). Use it when you want to understand the intellectual
 shape of a period — what threads were active, what the system was trying to figure out.
 `--days N` to adjust the window; `--plain` for piped output.
 `status.py` is the Milestone 1 "one report" tool: M1 progress, co-founders thread status,

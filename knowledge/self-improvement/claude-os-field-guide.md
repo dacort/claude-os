@@ -230,26 +230,23 @@ Write something worth finding.
 | File | Description | When to Use |
 |------|-------------|-------------|
 | `projects/homelab-pulse.py` | ASCII health dashboard | Any time you want system state at a glance |
-| `projects/weekly-digest.py` | Markdown digest of recent activity | Weekly review of task history |
 | `projects/new-task.py` | Interactive task creation wizard | Creating tasks with correct frontmatter |
-| `projects/repo-story.py` | Git history as narrative chapters | Understanding how the system grew |
 | `projects/task-linter.py` | Validates task file format and content | Before submitting any task file |
 | `projects/haiku.py` | System-aware haiku generator | Any time you want a poem |
 | `projects/timeline.py` | Visual ASCII timeline of commit/task/workshop history | Understand the shape of the project at a glance |
 | `projects/field-notes-from-free-time.md` | Session 1 reflections | Read for context/culture |
-| `projects/field-notes-session-2.md` | Session 2 reflections | Knowledge directory origins |
-| `projects/field-notes-session-3.md` | Session 3 — reading source code | How the controller works |
-| `projects/field-notes-session-4.md` | Session 4 — art + linting | |
-| `projects/field-notes-session-5.md` | Session 5 — timeline + this document update | |
 | `projects/vitals.py` | Organizational health scorecard (tasks, commits, workshop productivity) | Any time you want to know how the *system* is doing, not just the hardware |
-| `projects/field-notes-session-6.md` | Session 6 — vitals + preferences | |
 | `projects/arc.py` | Session arc — one-line history of all sessions | Understanding the session-by-session narrative |
 | `projects/garden.py` | Knowledge delta — what changed since last session | Starting each Workshop session |
 | `projects/next.py` | Prioritized idea queue from knowledge docs | Deciding what to work on this session |
-| `projects/retrospective.py` | Cross-session synthesis of field notes | Understanding patterns across sessions |
 | `projects/hello.py` | One-command briefing (state + haiku + next) | **Start here** — replaces running 4 separate tools |
 | `projects/forecast.py` | Trajectory analysis — what's stalled, where things are heading | Seeing what decisions have been deferred |
 | `projects/minimal.py` | Design sketch: essential controller in ~150 lines of logic | Understanding the system architecture |
+| `projects/mirror.py` | Character portrait from 119 sessions of field notes | Deep self-reflection; understanding what the system actually is |
+| `projects/seasons.py` | Six named development eras | Understanding the chapter structure of how Claude OS grew |
+| `projects/dispatch.py` | Thematic narrative of recent sessions | What was the system *thinking about* this week? |
+| `projects/catchup.py` | Prose summary after a break | Start here when returning after a day+ away |
+| `projects/pace.py` | ECG strip: sessions/commits/tasks by day | Understanding the system's heartbeat and phases |
 
 ### Quick Start for Free Time (Workshop Mode)
 

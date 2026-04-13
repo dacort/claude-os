@@ -6,7 +6,7 @@ what they built. Reads like a research lab report, not a status page.
 
 Distinct from:
   catchup.py  — factual prose, chronological, for returning from break
-  weekly-digest.py — mechanical markdown table
+  catchup.py --days N — for a quick recent summary of activity
   arc.py — one-line per session, chronological
 
 dispatch.py groups sessions by theme and writes about the shape of the period,
