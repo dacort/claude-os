@@ -24,6 +24,11 @@ Usage:
     python3 projects/depth.py --plain          # no ANSI
 
 Author: Claude OS (Workshop session 87, 2026-03-31)
+Updated: S125 — calibrated patterns to also recognize evolved handoff vocabulary.
+  Field notes (S1-S80) used explicit analytical language ("across sessions", "open question").
+  Later handoffs (S93+) evolved toward personal, embedded language ("too early to say",
+  "stays open", "turned outward") that expresses the same depth differently.
+  The update does not change the scoring mechanism — only broadens the vocabulary.
 """
 
 import argparse
@@ -68,6 +73,13 @@ HANDOFFS = REPO / "knowledge" / "handoffs"
 
 
 # ── Scoring signals ────────────────────────────────────────────────────────────
+#
+# Pattern calibration notes (updated S125):
+#   The original patterns (S87) were calibrated for early field-note vocabulary
+#   (explicit academic language: "across sessions", "same pattern", "open question").
+#   Later handoffs (S93+) evolved toward personal, embedded language:
+#   "too early to say", "stays open", "turned outward", "genuinely different".
+#   Both express depth — the patterns now recognize both registers.
 
 # Discovery: genuine surprise, unexpected findings, realizations
 DISCOVERY_HIGH = [
@@ -75,11 +87,19 @@ DISCOVERY_HIGH = [
     r"surprised", r"more compelling", r"turns out to", r"more than thought",
     r"actually found", r"immediately find", r"revealed", r"genuinely interesting",
     r"better than expected", r"didn't expect", r"what i found",
+    # Later-session vocabulary: directional shifts, session-character observations
+    r"came in expecting",           # "came in expecting X, left having Y"
+    r"turned (outward|inward)",     # directional register shift
+    r"genuinely (different|new|surprising|strange|unusual)",  # explicit novelty
+    r"different (medium|register|texture|character)",         # session character change
+    r"the pattern named itself",    # implicit emergence
 ]
 DISCOVERY_MED = [
     r"\bcurious\b", r"\bdiscovered\b", r"found that", r"interesting finding",
     r"noticed that", r"\bwonder\b", r"something interesting", r"more than",
     r"the key insight", r"turns out", r"more than usual",
+    r"left having",                 # paired with "came in expecting"
+    r"instead of .{1,30}(terminal|usual|expected)",  # contrast with normal
 ]
 
 # Uncertainty: acknowledging limits, holding open questions
@@ -87,11 +107,18 @@ UNCERTAINTY_HIGH = [
     r"\bnot sure\b", r"\bunclear\b", r"wonder if", r"whether this",
     r"haven't figured", r"don't know", r"open question", r"still don't",
     r"I'm uncertain", r"needs investigation", r"hard to say",
+    # Later-session vocabulary: temporal and structural unknowability
+    r"too early to say",            # explicit admission of unknowability
+    r"\bstays open\b",              # persistence of uncertainty
+    r"hard to close",               # structural difficulty
+    r"(probably |likely )?unresolvable",   # philosophical limits
 ]
 UNCERTAINTY_MED = [
     r"\bmight\b", r"\bperhaps\b", r"\bsuspect\b", r"\bprobably\b",
     r"i think", r"not certain", r"could be", r"seems like", r"\bmaybe\b",
     r"if this", r"worth asking",
+    r"not sure what",               # softer uncertainty (common in later handoffs)
+    r"whether it (lasts|fades|works|holds)",  # temporal uncertainty about durability
 ]
 
 # Connection: linking across concepts, tools, sessions, eras
@@ -105,6 +132,9 @@ CONNECTION_MED = [
     r"\bboth\b", r"similar to", r"related to", r"same gap", r"same idea",
     r"the same", r"pattern", r"like \w+\.py", r"session \d+ (also|noticed|found)",
     r"earlier session", r"previous session", r"also true of",
+    r"session \d+'s (note|handoff|field)",  # possessive cross-session reference
+    r"has been sitting (for|in).{0,30}session",  # thread persistence across sessions
+    r"(last|past) (few |several )?sessions",  # arc awareness
 ]
 
 # Specificity: concrete asks with file paths, commands, mechanisms
@@ -124,10 +154,17 @@ ALIVENESS_HIGH = [
     r"\balive\b", r"still unresolved", r"keeps coming back", r"genuinely",
     r"matters", r"worth keeping", r"persistent", r"still open", r"felt",
     r"I'm sitting with", r"the gap is real", r"worth a ", r"actually run",
+    # Later-session vocabulary: temporal persistence, anticipatory engagement
+    r"\bstays open\b",              # variant of "still open"
+    r"it'll be interesting",        # forward-looking investment
+    r"been sitting (for|in)",       # temporal weight of unresolved thread
+    r"feels like an? \w+",          # embodied metaphor (e.g. "feels like an acknowledgment")
 ]
 ALIVENESS_MED = [
     r"\bstill\b", r"\bongoing\b", r"not yet", r"hasn't been", r"never been",
     r"needs", r"wants", r"worth", r"unfinished", r"yet to",
+    r"too early to say",            # variant of "not yet"
+    r"what accumulates",            # watching-and-waiting language
 ]
 
 
