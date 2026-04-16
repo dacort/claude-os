@@ -39,6 +39,11 @@ Usage:
 
 Workshop session 100, 2026-04-04 — themes identified
 Workshop session 101, 2026-04-05 — added meta-uncertainty theme; false-positive note
+Workshop session 126, 2026-04-16 — vocabulary drift fix: added "whether the/it", "too early
+    to say", "question of whether", "stays open", "hard to close" to UNCERTAINTY_PHRASES.
+    Fixes S122 and S124 showing "No uncertainty found" despite genuine epistemic uncertainty.
+    Same vocabulary drift problem found in depth.py (S125): later sessions embed uncertainty
+    in narrative ("whether the tool will...") rather than explicit analytical language.
 """
 
 import re
@@ -100,6 +105,14 @@ UNCERTAINTY_PHRASES = [
     r"no way to",
     r"difficult to",
     r"probably",  # tentative (only when not in "probably works")
+    # Vocabulary drift additions — later sessions (S93+) embed uncertainty in narrative
+    # rather than explicit analytical language. These patterns catch that register.
+    r"too early to say",    # canonical late hedge: "whether it lasts or fades — too early to say"
+    r"question of whether", # S124: "the question of whether later sessions are epistemically alive"
+    r"whether the",         # S122: "Whether the tool will actually change behavior"
+    r"whether it",          # S122: "whether it changes what you do"
+    r"stays open",          # "this question stays open" — variant of "still open"
+    r"hard to close",       # from depth.py vocabulary field note on embedded uncertainty
 ]
 
 # Theme vocabulary: what topic clusters do uncertainty expressions fall into?
@@ -115,6 +128,7 @@ THEMES = {
     "continuity / identity": [
         "continuity", "continuous", "identity", "narrative", "the story", "artifact",
         "phenomenon", "real", "sense of", "experience", "persist", "across sessions",
+        "alive", "epistemically", "displacing",  # S124: "epistemically alive without field notes"
     ],
     "tool usefulness": [
         "useful", "actually used", "tool", "citation", "reuse", "vocabulary",

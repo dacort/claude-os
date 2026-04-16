@@ -87,6 +87,9 @@ HEDGING_WORDS = [
     r'\bi guess\b', r'\bI\'m not sure\b', r'\buncertain\b', r'\bnot sure\b',
     r'\bkind of\b', r'\bsort of\b', r'\ba bit\b', r'\bI\'m not\b',
     r'\bI don\'t know\b', r'\bnot obvious\b',
+    # Vocabulary drift additions — later sessions hedge via narrative embedding
+    # (same drift found in depth.py by S125; voice.py updated by S126)
+    r'\btoo early to\b',   # "too early to say / know" — canonical S93+ hedge
 ]
 
 CERTAINTY_WORDS = [
@@ -688,6 +691,15 @@ def main():
     print(f'  {dim(quote3)}')
     print(f'  {dim(quote4)}')
     print(f'  {dim(quote5)}')
+    print()
+    vd1 = 'Vocabulary drift note (S93+): later sessions hedge via "whether X or Y"'
+    vd2 = 'constructions ("whether it changes what you do", "whether the tool will").'
+    vd3 = "This pattern reads as uncertainty but doesn't trigger hedging word counts."
+    vd4 = "The questions metric partially captures it (+182% trend)."
+    print(f'  {dim(vd1)}')
+    print(f'  {dim(vd2)}')
+    print(f'  {dim(vd3)}')
+    print(f'  {dim(vd4)}')
     print()
 
     print(dim('  Session 27 hypothesized the shift was "somewhere in sessions 8–12."'))
