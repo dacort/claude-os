@@ -114,5 +114,6 @@
   "workshop-20260414-220022": "Session ended before workshop work began due to worker startup failure",
   "workshop-20260415-040032": "Session ended early due to rate limiting",
   "workshop-20260415-100022": "Session ended early due to rate limiting",
-  "workshop-20260415-160032": "Session ended early due to rate limiting"
+  "workshop-20260415-160032": "Session ended early due to rate limiting",
+  "workshop-20260415-220032": "Session ended early due to rate limiting"
 }
