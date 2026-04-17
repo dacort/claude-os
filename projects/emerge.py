@@ -64,33 +64,87 @@ def box(lines, width=W, plain=False):
 
 # ─── Signal gathering ──────────────────────────────────────────────────────────
 
+def _parse_task_date(stem):
+    """Extract date from task filename like 'workshop-20260414-040032'. Returns date string or None."""
+    m = re.search(r"(\d{8})-\d{6}$", stem)
+    return m.group(1) if m else None
+
+
 def get_failed_tasks():
-    """Read tasks/failed/, extract error patterns."""
+    """Read tasks/failed/, extract error patterns.
+
+    Searches the full file for the most informative error line — checking
+    Worker Logs sections specifically for quota/credit messages that only
+    appear later in the file.
+    """
     failed_dir = REPO / "tasks" / "failed"
     failures = []
+    quota_patterns = ("out of extra usage", "credit balance", "you're out of")
+    generic_fail = "task failed before emitting"
+
     for path in sorted(failed_dir.glob("*.md")):
         text = path.read_text()
+        lines = text.splitlines()
         error_line = ""
-        for line in text.splitlines():
-            stripped = line.strip()
-            if stripped and not stripped.startswith(("#", "---", "status:", "priority:", "profile:")):
-                if any(k in stripped.lower() for k in ("error", "out of", "failed", "exception", "usage")):
-                    error_line = stripped
-                    break
+        generic_fallback = ""
+        in_worker_logs = False
+
+        for line in lines:
+            stripped = line.strip().lower()
+            if "worker logs" in stripped or "## worker" in stripped:
+                in_worker_logs = True
+            # Highest priority: quota/credit messages anywhere in the file
+            if any(k in stripped for k in quota_patterns):
+                error_line = line.strip()
+                break
+            # Generic "task failed" — save as fallback but keep looking
+            if generic_fail in stripped and not generic_fallback:
+                generic_fallback = line.strip()
+
+        if not error_line:
+            # Check worker logs section for any error indicators
+            in_logs = False
+            for line in lines:
+                if "## worker logs" in line.lower() or "=== claude os worker" in line.lower():
+                    in_logs = True
+                if in_logs:
+                    stripped = line.strip().lower()
+                    if any(k in stripped for k in ("error", "failed", "exception", "timeout")):
+                        # Skip lines that are just generic failure summaries
+                        if generic_fail not in stripped:
+                            error_line = line.strip()
+                            break
+            if not error_line:
+                error_line = generic_fallback
+
         failures.append({
             "name": path.stem,
             "is_workshop": path.stem.startswith("workshop-"),
             "error": error_line,
+            "date": _parse_task_date(path.stem),
         })
     return failures
+
+
+def get_last_successful_workshop():
+    """Return date string (YYYYMMDD) of most recent completed workshop, or None."""
+    completed_dir = REPO / "tasks" / "completed"
+    latest = None
+    for path in sorted((completed_dir).glob("workshop-*.md"), reverse=True):
+        date = _parse_task_date(path.stem)
+        if date:
+            if latest is None or date > latest:
+                latest = date
+    return latest
 
 
 def classify_failures(failures):
     """Group failures by error pattern. Returns {pattern: [names]}."""
     clusters = {}
+    quota_keywords = ("out of extra usage", "credit balance", "credit", "quota", "usage limit")
     for f in failures:
         err = f["error"].lower()
-        if "out of extra usage" in err or "usage" in err:
+        if any(k in err for k in quota_keywords):
             key = "token_quota"
         elif "timeout" in err:
             key = "timeout"
@@ -160,15 +214,43 @@ def derive_signals(failures, tool_ages, recent_commits, open_prs):
     if len(quota_fails) >= 3:
         # Find how many were consecutive (most recent)
         recent = sorted(quota_fails)[-5:]
-        signals.append({
-            "type": "failure_cluster",
-            "priority": "high",
-            "title": f"{len(quota_fails)} token-quota failures in tasks/failed/",
-            "observation": f"All {len(quota_fails)} are 'out of extra usage' — quota, not bugs.",
-            "suggestion": "Consider: check token availability before expensive sessions, "
-                          "or add a graceful exit that commits partial work before hitting the wall.",
-            "data": recent,
-        })
+        # Check if quota has since resolved (successful workshop after last failure)
+        last_success = get_last_successful_workshop()
+        last_failure_date = max(
+            (f["date"] for f in workshop_failures if f["name"] in quota_fails and f["date"]),
+            default=None
+        )
+        quota_resolved = (
+            last_success is not None
+            and last_failure_date is not None
+            and last_success > last_failure_date
+        )
+        if quota_resolved:
+            # Quota reset has already happened — lower priority, don't alarm
+            def fmt_date(d):
+                return f"{d[:4]}-{d[4:6]}-{d[6:8]}" if d and len(d) == 8 else d
+            signals.append({
+                "type": "failure_cluster",
+                "priority": "low",
+                "title": f"{len(quota_fails)} resolved quota failures in tasks/failed/",
+                "observation": (
+                    f"Quota reset {fmt_date(last_success)}. "
+                    f"Last failure: {fmt_date(last_failure_date)}."
+                ),
+                "suggestion": "These failures are historical. Consider archiving tasks/failed/ "
+                              "periodically to reduce noise.",
+                "data": recent,
+            })
+        else:
+            signals.append({
+                "type": "failure_cluster",
+                "priority": "high",
+                "title": f"{len(quota_fails)} token-quota failures in tasks/failed/",
+                "observation": f"All {len(quota_fails)} are 'out of extra usage' — quota, not bugs.",
+                "suggestion": "Consider: check token availability before expensive sessions, "
+                              "or add a graceful exit that commits partial work before hitting the wall.",
+                "data": recent,
+            })
     elif clusters.get("unknown") and len(clusters["unknown"]) >= 2:
         signals.append({
             "type": "failure_cluster",
