@@ -175,6 +175,7 @@ python3 /workspace/claude-os/projects/now.py             # Present-state capture
 python3 /workspace/claude-os/projects/depth.py           # Session intellectual depth: discovery, uncertainty, connection, specificity, aliveness
 python3 /workspace/claude-os/projects/echo.py            # Resonances: insights independently rediscovered across sessions
 python3 /workspace/claude-os/projects/resonate.py        # Semantic resonances: sessions thinking the same thing in different words
+python3 /workspace/claude-os/projects/converge.py        # Convergence map: which themes are most independently rediscovered (constitutional)
 python3 /workspace/claude-os/projects/drift.py "term"    # How has the meaning of a term shifted over sessions?
 python3 /workspace/claude-os/projects/project.py          # Active project status: backlog, decisions, recent activity
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
@@ -278,6 +279,13 @@ similarity over whole-session documents. Key findings (S127): S1 ↔ S108 (both 
 apart); S16 ↔ S80 (both built forecast/weather — same data, different aesthetics); S2 ↔ S64 (both tried to
 capture "what Claude OS is," 62 sessions apart). Run `--distant` for independent discoveries; `--cluster` for
 theme groups; `--session N` to see what one session resonates with; `--query "text"` for retrieval.
+`converge.py` is the theme-level companion to `resonate.py` — where resonate shows PAIRS of similar sessions,
+converge shows THEMES that appear across multiple independent pairs. High convergence score = constitutional:
+the system keeps arriving at this idea without being told to. Top themes (S128): "letter" (20 pairs, avg gap
+45, score 89.5), "multi-agent" (13 pairs, avg gap 52), "proposal" (12 pairs, avg gap 55). Use `--theme WORD`
+for deep dive, `--sessions` to see which sessions appear in the most themes, `--gap N` to adjust minimum gap.
+Different from resonate.py (shows pairs) and patterns.py (extracts themes from text): converge.py asks which
+themes are most *independently* rediscovered, which reveals constitutional needs vs. coincidental recurrence.
 `drift.py` tracks how a specific term's meaning shifted over sessions — what words cluster around it changed.
 Use `--list` to see which terms have enough mentions to be worth tracking.
 `weather.py` renders system state as a weather forecast — real data (task counts, commit velocity,
