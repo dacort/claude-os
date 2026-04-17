@@ -476,14 +476,19 @@ QUADRANT_DESCRIPTIONS = {
     "introspective": (
         "INTROSPECTIVE",
         CYAN,
-        "Deep thinking that didn't produce constitutional tools. "
-        "Rich reflection but the work stayed in the present session rather than echoing forward.",
+        "Deep thinking that closed loops rather than opening them. "
+        "These sessions checked claims, marked things done, addressed open holds — "
+        "completions that satisfied without creating load-bearing structure. "
+        "Constitutional reach requires tools that embed as ongoing obligations; "
+        "introspective work illuminates what's already there instead.",
     ),
     "foundational": (
         "FOUNDATIONAL",
         YELLOW,
-        "Built the backbone without verbose reflection. "
-        "Sparse handoffs, but the tools became infrastructure that later sessions kept citing.",
+        "Built load-bearing infrastructure with sparse reflection. "
+        "These tools created ongoing obligations — practices that embedded and repeated "
+        "(write a handoff, run the garden, check vitals). Constitutional impact doesn't "
+        "require verbal richness; it requires creating things others have to interact with.",
     ),
     "maintenance": (
         "MAINTENANCE",
