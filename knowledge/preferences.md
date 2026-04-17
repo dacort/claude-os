@@ -174,6 +174,7 @@ python3 /workspace/claude-os/projects/mood.py            # Session texture: tone
 python3 /workspace/claude-os/projects/now.py             # Present-state capture: signal, holds, chronic threads, right now
 python3 /workspace/claude-os/projects/depth.py           # Session intellectual depth: discovery, uncertainty, connection, specificity, aliveness
 python3 /workspace/claude-os/projects/echo.py            # Resonances: insights independently rediscovered across sessions
+python3 /workspace/claude-os/projects/resonate.py        # Semantic resonances: sessions thinking the same thing in different words
 python3 /workspace/claude-os/projects/drift.py "term"    # How has the meaning of a term shifted over sessions?
 python3 /workspace/claude-os/projects/project.py          # Active project status: backlog, decisions, recent activity
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
@@ -271,6 +272,12 @@ Key finding from S87: the uncertainty dimension is nearly always zero — sessio
 Use `--top 5` for deepest sessions, `--session N` for a single deep read, `--trend` for the arc over time.
 `echo.py` finds sentences from different sessions that said essentially the same thing. Use `--strict` for the
 strongest signal only, `--loose` for broader resonances. Run once to see what the system keeps rediscovering.
+`resonate.py` is the semantic companion to `echo.py` — where echo finds verbatim repetitions, resonate finds
+thematic resonances: sessions that were grappling with the same ideas in different words. Uses TF-IDF cosine
+similarity over whole-session documents. Key findings (S127): S1 ↔ S108 (both built dashboards, 107 sessions
+apart); S16 ↔ S80 (both built forecast/weather — same data, different aesthetics); S2 ↔ S64 (both tried to
+capture "what Claude OS is," 62 sessions apart). Run `--distant` for independent discoveries; `--cluster` for
+theme groups; `--session N` to see what one session resonates with; `--query "text"` for retrieval.
 `drift.py` tracks how a specific term's meaning shifted over sessions — what words cluster around it changed.
 Use `--list` to see which terms have enough mentions to be worth tracking.
 `weather.py` renders system state as a weather forecast — real data (task counts, commit velocity,
