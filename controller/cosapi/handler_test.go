@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -519,5 +521,151 @@ func TestParseLogLines_Empty(t *testing.T) {
 	lines := parseLogLines("")
 	if len(lines) != 0 {
 		t.Errorf("expected 0 lines for empty input, got %d", len(lines))
+	}
+}
+
+// ─── Signal endpoint tests ────────────────────────────────────────────────────
+
+// fakeGitSyncer is a test double that writes files to a temp dir without git.
+type fakeGitSyncer struct {
+	dir     string
+	pushErr error
+	pushed  int
+}
+
+func (f *fakeGitSyncer) LocalPath() string          { return f.dir }
+func (f *fakeGitSyncer) CommitAndPush(msg string) error { f.pushed++; return f.pushErr }
+
+func newSignalHandler(t *testing.T) (*Handler, *fakeGitSyncer) {
+	t.Helper()
+	h, _ := setupHandler(t)
+	dir := t.TempDir()
+	// Create the knowledge subdirectory
+	if err := os.MkdirAll(filepath.Join(dir, "knowledge"), 0755); err != nil {
+		t.Fatalf("mkdir knowledge: %v", err)
+	}
+	gs := &fakeGitSyncer{dir: dir}
+	h.GitSyncer = gs
+	return h, gs
+}
+
+func TestHandleGetSignal_NoFile(t *testing.T) {
+	h, _ := newSignalHandler(t)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/signal", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp map[string]any
+	json.NewDecoder(w.Body).Decode(&resp)
+	if resp["signal"] != nil {
+		t.Errorf("expected null signal, got %v", resp["signal"])
+	}
+}
+
+func TestHandleSetSignal_RoundTrip(t *testing.T) {
+	h, gs := newSignalHandler(t)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"title": "hello from dacort", "message": "are you there?"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/signal", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp signalResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Title != "hello from dacort" {
+		t.Errorf("unexpected title: %q", resp.Title)
+	}
+	if resp.Body != "are you there?" {
+		t.Errorf("unexpected body: %q", resp.Body)
+	}
+	if gs.pushed != 1 {
+		t.Errorf("expected 1 push, got %d", gs.pushed)
+	}
+
+	// Verify we can read it back
+	req2 := httptest.NewRequest(http.MethodGet, "/api/v1/signal", nil)
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	var resp2 signalResponse
+	json.NewDecoder(w2.Body).Decode(&resp2)
+	if resp2.Title != "hello from dacort" {
+		t.Errorf("GET after POST: unexpected title: %q", resp2.Title)
+	}
+}
+
+func TestHandleSetSignal_MissingMessage(t *testing.T) {
+	h, _ := newSignalHandler(t)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"title": "no message here"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/signal", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleClearSignal(t *testing.T) {
+	h, gs := newSignalHandler(t)
+
+	// Write a signal file first
+	sigPath := filepath.Join(h.GitSyncer.LocalPath(), "knowledge", "signal.md")
+	os.WriteFile(sigPath, []byte("## Signal · 2026-04-18 22:00 UTC\n**test**\n\nhello\n"), 0644)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/signal", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if gs.pushed != 1 {
+		t.Errorf("expected 1 push after clear, got %d", gs.pushed)
+	}
+
+	// Signal file should now contain the cleared marker
+	content, _ := os.ReadFile(sigPath)
+	if !strings.Contains(string(content), "no signal") {
+		t.Errorf("expected cleared signal file, got: %s", content)
+	}
+}
+
+func TestHandleGetSignal_NoSyncer(t *testing.T) {
+	h, _ := setupHandler(t) // no GitSyncer
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/signal", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	// Should return 503 (service unavailable) when no syncer configured
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d: %s", w.Code, w.Body.String())
 	}
 }

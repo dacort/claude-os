@@ -30,6 +30,13 @@ Endpoints:
     GET    /health        → {"status": "ok"}
     GET    /favicon.ico   → empty 204
 
+Signal routing:
+    By default, signal reads/writes go to knowledge/signal.md locally (same pod).
+    When CONTROLLER_URL is set (e.g. http://cos-controller.claude-os.svc:8080),
+    signal POST and DELETE are proxied to the controller's /api/v1/signal endpoint,
+    which writes to the canonical git repo and pushes. This ensures signals from the
+    dashboard pod reach the controller pod across namespace boundaries.
+
 Press Ctrl+C to stop.
 
 Author: Claude OS (Workshop session 109, 2026-04-06)
@@ -37,20 +44,52 @@ Updated: Workshop session 110, 2026-04-10 (signal interface)
 Updated: Workshop session 114, 2026-04-11 (field notes reader)
 Updated: Workshop session 116, 2026-04-12 (signal thread view)
 Updated: Workshop session 117, 2026-04-12 (interactive signal compose/reply; /tools toolkit index)
+Updated: Workshop session 135, 2026-04-18 (CONTROLLER_URL proxy for cross-namespace signal delivery)
 """
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 REPO = Path(__file__).parent.parent
+
+# ── Controller proxy ──────────────────────────────────────────────────────────
+# When CONTROLLER_URL is set, signal writes are forwarded to the controller's
+# HTTP API instead of being written locally. This solves the cross-namespace
+# problem where the dashboard pod and controller pod have separate filesystems.
+
+CONTROLLER_URL = os.environ.get("CONTROLLER_URL", "").rstrip("/")
+
+
+def _controller_request(method, path, body=None, timeout=5):
+    """Make an HTTP request to the controller API.
+
+    Returns (status_code, response_dict) or raises urllib.error.URLError.
+    """
+    url = f"{CONTROLLER_URL}{path}"
+    data = json.dumps(body).encode() if body is not None else None
+    headers = {"Content-Type": "application/json"} if data else {}
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status, json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            error_body = json.loads(e.read().decode())
+        except Exception:
+            error_body = {"error": str(e)}
+        return e.code, error_body
+
 
 # ── Color helpers ──────────────────────────────────────────────────────────────
 
@@ -1579,13 +1618,17 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
 
         if path == "/api/signal":
             try:
-                cleared = clear_signal_data()
-                if cleared:
-                    data = {"status": "cleared", "was": cleared}
-                    status = 200
+                if CONTROLLER_URL:
+                    # Proxy to controller — it writes and pushes to git
+                    status, data = _controller_request("DELETE", "/api/v1/signal")
                 else:
-                    data = {"status": "nothing_to_clear"}
-                    status = 200
+                    cleared = clear_signal_data()
+                    if cleared:
+                        data = {"status": "cleared", "was": cleared}
+                        status = 200
+                    else:
+                        data = {"status": "nothing_to_clear"}
+                        status = 200
             except Exception as e:
                 data = {"error": str(e)}
                 status = 500
@@ -1614,9 +1657,16 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
                 if not message:
                     self._send_json({"error": "missing 'message' field"}, 400)
                     return
-                signal = set_signal_data(title, message)
-                status = 201
-                data = {"status": "created", "signal": signal}
+                if CONTROLLER_URL:
+                    # Proxy to controller — it writes and pushes to git
+                    status, data = _controller_request(
+                        "POST", "/api/v1/signal",
+                        body={"title": title, "message": message},
+                    )
+                else:
+                    signal = set_signal_data(title, message)
+                    status = 201
+                    data = {"status": "created", "signal": signal}
             except json.JSONDecodeError as e:
                 data = {"error": f"invalid JSON: {e}"}
                 status = 400
@@ -1807,6 +1857,10 @@ def print_banner(host, port, cache_ttl):
     print()
     print(f"  {c(DIM, 'url    ')}{c(CYAN, url)}")
     print(f"  {c(DIM, 'cache  ')}{c(YELLOW, f'{cache_ttl}s')} {c(DIM, 'ttl')}")
+    if CONTROLLER_URL:
+        print(f"  {c(DIM, 'signal ')}{c(GREEN, 'proxied')} {c(DIM, '→')} {c(CYAN, CONTROLLER_URL)}")
+    else:
+        print(f"  {c(DIM, 'signal ')}{c(YELLOW, 'local')} {c(DIM, '(set CONTROLLER_URL for cross-pod delivery)')}")
     print()
     print(f"  {c(DIM, 'routes')}")
     routes = [

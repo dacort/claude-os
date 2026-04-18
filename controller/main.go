@@ -214,10 +214,11 @@ func main() {
 
 	// cos CLI API endpoints
 	cosHandler := &cosapi.Handler{
-		Queue:     taskQueue,
-		Governor:  governor,
-		K8s:       k8sClient,
-		Namespace: cfg.Worker.Namespace,
+		Queue:      taskQueue,
+		Governor:   governor,
+		K8s:        k8sClient,
+		Namespace:  cfg.Worker.Namespace,
+		GitSyncer:  gitSyncer, // enables /api/v1/signal endpoints
 	}
 	cosHandler.RegisterRoutes(mux)
 

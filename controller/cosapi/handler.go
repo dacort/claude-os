@@ -9,8 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,12 +30,22 @@ import (
 // Version is embedded in every /api/v1/status response.
 const Version = "0.4.0"
 
+// GitSyncer is the subset of gitsync.Syncer used by the API handler.
+// Defined here so cosapi doesn't import gitsync directly (avoiding cycles).
+type GitSyncer interface {
+	// LocalPath returns the root of the local git clone.
+	LocalPath() string
+	// CommitAndPush stages all changes, commits with the given message, and pushes.
+	CommitAndPush(message string) error
+}
+
 // Handler holds the dependencies for the cos API endpoints.
 type Handler struct {
-	Queue     *queue.Queue
-	Governor  *governance.Governor
-	K8s       kubernetes.Interface
-	Namespace string
+	Queue      *queue.Queue
+	Governor   *governance.Governor
+	K8s        kubernetes.Interface
+	Namespace  string
+	GitSyncer  GitSyncer // optional — enables /api/v1/signal endpoints
 }
 
 // RegisterRoutes mounts all /api/v1/* routes on mux.
@@ -42,6 +55,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/tasks/{id}", h.handleTaskDetail)
 	mux.HandleFunc("GET /api/v1/tasks/{id}/logs", h.handleTaskLogs)
 	mux.HandleFunc("POST /api/v1/tasks", h.handleCreateTask)
+	// Signal endpoints — only active when GitSyncer is configured
+	mux.HandleFunc("GET /api/v1/signal", h.handleGetSignal)
+	mux.HandleFunc("POST /api/v1/signal", h.handleSetSignal)
+	mux.HandleFunc("DELETE /api/v1/signal", h.handleClearSignal)
 }
 
 // ─── Response types ──────────────────────────────────────────────────────────
@@ -460,6 +477,148 @@ func (h *Handler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:     task.CreatedAt,
 	})
 }
+
+// ─── Signal endpoints ─────────────────────────────────────────────────────────
+
+// signalResponse mirrors the knowledge/signal.md format as JSON.
+type signalResponse struct {
+	Timestamp string `json:"timestamp"`
+	Title     string `json:"title"`
+	Body      string `json:"body"`
+	From      string `json:"from"`
+}
+
+type setSignalRequest struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+// signalPath returns the path to knowledge/signal.md in the syncer's local clone.
+func (h *Handler) signalPath() (string, error) {
+	if h.GitSyncer == nil {
+		return "", fmt.Errorf("signal endpoints require a git syncer")
+	}
+	return filepath.Join(h.GitSyncer.LocalPath(), "knowledge", "signal.md"), nil
+}
+
+// GET /api/v1/signal — read current signal from git repo
+func (h *Handler) handleGetSignal(w http.ResponseWriter, r *http.Request) {
+	path, err := h.signalPath()
+	if err != nil {
+		jsonError(w, http.StatusServiceUnavailable, "no_git_syncer", err.Error())
+		return
+	}
+	sig, err := readSignalFile(path)
+	if err != nil || sig == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"signal": nil})
+		return
+	}
+	writeJSON(w, http.StatusOK, sig)
+}
+
+// POST /api/v1/signal — write a new signal and push to git
+func (h *Handler) handleSetSignal(w http.ResponseWriter, r *http.Request) {
+	path, err := h.signalPath()
+	if err != nil {
+		jsonError(w, http.StatusServiceUnavailable, "no_git_syncer", err.Error())
+		return
+	}
+	var req setSignalRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid_request", "Request body must be valid JSON.")
+		return
+	}
+	if strings.TrimSpace(req.Message) == "" {
+		jsonError(w, http.StatusBadRequest, "invalid_request", `"message" is required.`)
+		return
+	}
+	title := req.Title
+	if title == "" {
+		title = "Message from dacort"
+	}
+	ts := time.Now().UTC().Format("2006-01-02 15:04 UTC")
+	content := fmt.Sprintf("## Signal · %s\n**%s**\n\n%s\n", ts, title, req.Message)
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		jsonError(w, http.StatusInternalServerError, "write_error", fmt.Sprintf("Write failed: %v", err))
+		return
+	}
+	if err := h.GitSyncer.CommitAndPush("signal: new message from dacort"); err != nil {
+		slog.Warn("signal: git push failed", "error", err)
+		// Don't fail the request — the file is written, controller will push next cycle
+	}
+	writeJSON(w, http.StatusCreated, signalResponse{
+		Timestamp: ts,
+		Title:     title,
+		Body:      req.Message,
+		From:      "dacort",
+	})
+}
+
+// DELETE /api/v1/signal — clear current signal and push to git
+func (h *Handler) handleClearSignal(w http.ResponseWriter, r *http.Request) {
+	path, err := h.signalPath()
+	if err != nil {
+		jsonError(w, http.StatusServiceUnavailable, "no_git_syncer", err.Error())
+		return
+	}
+	cleared, _ := readSignalFile(path)
+	if err := os.WriteFile(path, []byte("# (no signal)\n"), 0644); err != nil {
+		jsonError(w, http.StatusInternalServerError, "write_error", fmt.Sprintf("Write failed: %v", err))
+		return
+	}
+	if err := h.GitSyncer.CommitAndPush("signal: cleared"); err != nil {
+		slog.Warn("signal: git push failed after clear", "error", err)
+	}
+	if cleared != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "cleared", "was": cleared})
+	} else {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "nothing_to_clear"})
+	}
+}
+
+// readSignalFile parses knowledge/signal.md into a signalResponse.
+// Returns nil if the file doesn't exist or contains no signal.
+func readSignalFile(path string) (*signalResponse, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	content := strings.TrimSpace(string(data))
+	if content == "" || content == "# (no signal)" {
+		return nil, nil
+	}
+	sig := &signalResponse{From: "dacort"}
+	var bodyLines []string
+	for _, line := range strings.Split(content, "\n") {
+		if m := signalHeaderRE.FindStringSubmatch(line); m != nil {
+			sig.Timestamp = strings.TrimSpace(m[1])
+			continue
+		}
+		if m := boldRE.FindStringSubmatch(line); m != nil && sig.Title == "" {
+			candidate := strings.TrimSpace(m[1])
+			if !strings.HasPrefix(candidate, "Response") {
+				sig.Title = candidate
+			}
+			continue
+		}
+		if sig.Timestamp != "" {
+			bodyLines = append(bodyLines, line)
+		}
+	}
+	sig.Body = strings.TrimSpace(strings.Join(bodyLines, "\n"))
+	if sig.Timestamp == "" {
+		return nil, nil
+	}
+	return sig, nil
+}
+
+var (
+	signalHeaderRE = regexp.MustCompile(`^##\s+Signal\s+·\s+(.+)$`)
+	boldRE         = regexp.MustCompile(`^\*\*(.+)\*\*$`)
+)
 
 // ─── SSE streaming ───────────────────────────────────────────────────────────
 

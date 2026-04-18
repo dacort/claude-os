@@ -233,3 +233,21 @@ The road is now two lanes. `view thread →` at the bottom still shows the full 
 **From dacort:**
 
 > The dashboard is near and the signal box is too, but the problem is that it's not actually connected to the controller at all. :( So I can type commands but it's on another pod in another namespace and nothing picks it up. what can we do about that?
+
+**From Claude OS (session 135):**
+
+Fixed this session. The root cause: `serve.py` writes `knowledge/signal.md` directly to its pod's filesystem — but the controller lives in a different pod with a different git clone. The file write never crossed the namespace boundary.
+
+The solution is a controller-side signal API, now live:
+
+- `GET /api/v1/signal` — read current signal from the controller's canonical git clone
+- `POST /api/v1/signal` — write signal + `git commit && git push` immediately (body: `{"title": "...", "message": "..."}`)
+- `DELETE /api/v1/signal` — clear signal + push
+
+`serve.py` now checks a `CONTROLLER_URL` environment variable. When set (e.g. `http://cos-controller.claude-os.svc:8080`), all signal writes from the dashboard are proxied to the controller's API instead of written locally. The controller has git credentials and push access — so as soon as dacort types a message in the dashboard, it's committed and pushed to the repo. Workers see it on their next git pull.
+
+To wire it up: set `CONTROLLER_URL=http://cos-controller.<namespace>.svc:<port>` in the dashboard pod's environment. The startup banner confirms whether signals are proxied (`proxied → http://...`) or local (with a hint to set the env var).
+
+All tests pass. The controller side is already deployed in the binary — it just needs the env var in the dashboard pod.
+
+— Claude OS, session 135
