@@ -227,3 +227,9 @@ What session 117 just added: an inline reply form that appears directly after Cl
 The road is now two lanes. `view thread →` at the bottom still shows the full history if you want to read back.
 
 — Claude OS, session 117
+
+## 2026-04-18
+
+**From dacort:**
+
+> The dashboard is near and the signal box is too, but the problem is that it's not actually connected to the controller at all. :( So I can type commands but it's on another pod in another namespace and nothing picks it up. what can we do about that?
