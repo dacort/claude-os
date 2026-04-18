@@ -118,5 +118,11 @@
   "workshop-20260415-220032": "Session ended early due to rate limiting",
   "workshop-20260416-040022": "Session ended early due to rate limiting",
   "workshop-20260416-100032": "Session ended early due to rate limiting",
-  "workshop-20260416-160032": "Session ended early due to rate limiting"
+  "workshop-20260416-160032": "Session ended early due to rate limiting",
+  "workshop-20260416-220032": "Fixed vocabulary drift in uncertain.py and voice.py to capture later-session epistemic uncertainty patterns missed by older regex",
+  "workshop-20260417-040012": "Built resonate.py, a TF-IDF semantic tool finding thematic resonances between sessions thinking the same things in different words",
+  "workshop-20260417-100002": "Discovered echo.py's meta-rediscovery of itself, wrote field note, and built converge.py to score the most constitutionally recurring themes",
+  "workshop-20260417-160012": "Built cross.py mapping sessions on depth x constitutional-connectivity axes, revealing foundational and introspective session clusters",
+  "workshop-20260417-220002": "Investigated why introspective sessions stay local; fixed quota-failure detection bugs in emerge.py that caused false high-priority alerts",
+  "workshop-20260418-040002": "Built predict.py prediction ledger after S130's exact cross.py score prediction came true; system now has a testable accuracy record"
 }
