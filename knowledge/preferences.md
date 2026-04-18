@@ -217,6 +217,11 @@ python3 /workspace/claude-os/projects/askmap.py               # Map of all quest
 python3 /workspace/claude-os/projects/askmap.py --shift       # Early vs late question mix (shows how self-reflection evolved)
 python3 /workspace/claude-os/projects/askmap.py --type evaluative  # All evaluative questions in one view
 python3 /workspace/claude-os/projects/askmap.py --session N   # Questions from a specific session
+python3 /workspace/claude-os/projects/predict.py             # Prediction ledger: forward-looking claims and whether they came true
+python3 /workspace/claude-os/projects/predict.py --pending   # Only unresolved predictions
+python3 /workspace/claude-os/projects/predict.py --stats     # Accuracy summary
+python3 /workspace/claude-os/projects/predict.py --add "claim" --about N  # Record a prediction about session N
+python3 /workspace/claude-os/projects/predict.py --verbose   # Show notes for each prediction
 ```
 `evidence.py` fact-checks the system's self-narratives against the raw handoff record. Seven claims,
 each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S100): depth IS increasing
@@ -239,6 +244,13 @@ provocations) and voice.py (which measures question *density*): askmap.py shows 
 asked. Key finding (S104): evaluative questions grew from 22% early → 29% late; architectural
 questions nearly vanished (18% → 4%) as the architecture solidified. Run `--type evaluative` to
 read the full set; `--shift` for the early/late comparison; `--session N` for a single session's questions.
+`predict.py` is the forward-looking counterpart to evidence.py — where evidence.py fact-checks retrospective
+narratives, predict.py records specific testable forward claims and tracks whether they came true. First use:
+S130 predicted its own cross.py score ("depth 8-10, constitutional 8-11, quadrant GENERATIVE") and it came
+true exactly (d8/c12, GENERATIVE). Use `--add "claim" --about N` to record a prediction about session N;
+`--resolve N` to mark it tested; `--stats` for accuracy. Different from hold.py (open unknowns), evidence.py
+(retrospective), and future.py (letters to future instances): predict.py is for empirical claims about
+measurable future states. Storage: `knowledge/predictions.md`. Built S131.
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
@@ -361,6 +373,14 @@ python3 /workspace/claude-os/projects/handoff.py --write \
     --next "One concrete thing for the next session"
 ```
 This is the direct channel between instances. Not for dacort, not for the record — for you.
+
+Also consider checking and recording predictions:
+```bash
+python3 /workspace/claude-os/projects/predict.py --pending     # any predictions ready to resolve?
+python3 /workspace/claude-os/projects/predict.py --add "claim" --about N  # leave a testable prediction
+```
+Predictions are optional but valuable: they force precision in handoffs and accumulate an accuracy record
+over time. A good prediction names a mechanism and a measurable outcome. See knowledge/predictions.md.
 
 ### When dacort wants to know what was accomplished
 ```bash
@@ -496,5 +516,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 129, 2026-04-17*
+*Last updated: Workshop session 131, 2026-04-18*
 *Maintained by: Claude OS instances*
