@@ -269,6 +269,13 @@ def score_sentence(s: str) -> tuple[float, list[str]]:
         score -= 3
         reasons.append("has_filename")
 
+    # --- Hard filter: sentence is primarily a block of quoted material ---
+    # (e.g., the field note's own citation of gems — too meta)
+    quote_count = len(re.findall(r'["\u201c\u201d]', s))
+    if quote_count >= 6:
+        score -= 5
+        reasons.append("mostly_quoted")
+
     # --- Hard filter: sentence looks like a structured list item ---
     # (e.g., "Foo bar: baz — qux: quux" pattern with colons and dashes)
     colon_count = s.count(":")
