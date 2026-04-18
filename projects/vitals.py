@@ -147,7 +147,7 @@ def collect_task_stats():
     stats = {
         "completed": 0,
         "failed": 0,
-        "failed_credit": 0,   # "Credit balance is too low" — infra failure, not task failure
+        "failed_credit": 0,   # quota/credit infra failures — not real task failures
         "in_progress": 0,
         "pending": 0,
         "workshop_completed": 0,
@@ -172,8 +172,15 @@ def collect_task_stats():
             except Exception:
                 continue
 
-            # Is this a credit-balance infrastructure failure?
-            if state == "failed" and "credit balance is too low" in text.lower():
+            # Is this a quota/credit infrastructure failure? (not a real task failure)
+            # Two patterns:
+            #   API key: "Credit balance is too low"
+            #   OAuth/subscription: "You're out of extra usage"
+            if state == "failed" and (
+                "credit balance is too low" in text.lower()
+                or "you're out of extra usage" in text.lower()
+                or "out of extra usage" in text.lower()
+            ):
                 stats["failed_credit"] += 1
 
             # Is this a Workshop task?
