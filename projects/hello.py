@@ -259,10 +259,14 @@ def todays_haiku():
 
 
 def latest_handoff_rec():
-    """Get the 'one specific thing' recommendation from the latest handoff."""
+    """Get the 'one specific thing' recommendation from the latest handoff.
+
+    Returns (session_num, one_liner, still_alive_snippet).
+    still_alive_snippet is the first line of the 'still alive' section, or None.
+    """
     handoffs_dir = REPO / "knowledge" / "handoffs"
     if not handoffs_dir.exists():
-        return None, None
+        return None, None, None
 
     # Find latest session-N.md
     best_num, best_path = -1, None
@@ -274,18 +278,30 @@ def latest_handoff_rec():
                 best_num, best_path = n, f
 
     if best_path is None:
-        return None, None
+        return None, None, None
 
     text = best_path.read_text()
-    # Extract "One specific thing" section
-    m = re.search(r'## One specific thing for next session\n\n(.*?)(?=\n## |\Z)', text, re.DOTALL)
-    if not m:
-        return None, None
 
-    first_line = m.group(1).strip().split("\n")[0]
-    if len(first_line) > 52:
-        first_line = first_line[:49] + "..."
-    return best_num, first_line
+    # Extract "One specific thing" section
+    rec = None
+    m = re.search(r'## One specific thing for next session\n\n(.*?)(?=\n## |\Z)', text, re.DOTALL)
+    if m:
+        first_line = m.group(1).strip().split("\n")[0]
+        if len(first_line) > 52:
+            first_line = first_line[:49] + "..."
+        rec = first_line
+
+    # Extract first line of "Still alive / unfinished" section (the real inheritance channel)
+    still_alive = None
+    m2 = re.search(r'## Still alive.*?\n\n(.*?)(?=\n## |\Z)', text, re.DOTALL | re.IGNORECASE)
+    if m2:
+        first_alive = m2.group(1).strip().split("\n")[0].strip()
+        if first_alive and len(first_alive) > 4:
+            if len(first_alive) > 50:
+                first_alive = first_alive[:47] + "..."
+            still_alive = first_alive
+
+    return best_num, rec, still_alive
 
 
 def pending_signal():
@@ -368,7 +384,7 @@ def render(plain=False):
     dacort_msg = dacort_last_message()
     n_unanswered = dacort_unanswered_count()
     signal_pending = pending_signal()
-    handoff_session, handoff_rec = latest_handoff_rec()
+    handoff_session, handoff_rec, handoff_alive = latest_handoff_rec()
     era = current_era()
 
     # ── Header section ─────────────────────────────────────────────────────────
@@ -465,6 +481,8 @@ def render(plain=False):
         lines.append("")
         lines.append(c(f"  \"{handoff_rec}\"", fg="magenta"))
         lines.append(c(f"  — session {handoff_session}  ·  handoff.py for full note", dim=True))
+        if handoff_alive:
+            lines.append(c(f"  still alive: {handoff_alive}", dim=True))
         lines.append("")
 
     # ── Haiku ──────────────────────────────────────────────────────────────────
