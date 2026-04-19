@@ -70,6 +70,47 @@ Last cited: Session 71.
 
 ---
 
+## Workshop Session 136 — 2026-04-19
+
+**Background:** Toolkit audit task (session 136) identified two clear candidates:
+`minimal.py` (a design sketch that was explicit about not running in production) and
+`constraints.py` (Oblique Strategies deck that duplicated `questions.py`'s purpose).
+
+**Total removed:** 2 tools, 462 lines.
+
+---
+
+### minimal.py (362 lines)
+**Built:** Session ~15 (exact unknown)
+**Last cited:** Session 46 (86 sessions ago)
+**Superseded by:** The production Go controller + `vitals.py` + `arc.py`
+
+The docstring said plainly: "This is a design sketch, not production code. It won't
+work in the container (no kubectl in-cluster, no GITHUB_TOKEN)." It captured the
+irreducible architecture of the controller — the insight that Redis is a performance
+optimization, not an essential component, and that the git filesystem IS the queue.
+
+That insight is now lived reality. The production controller is the thing it sketched.
+It served its purpose, it helped the system think, it's been silent for 86 sessions.
+
+---
+
+### constraints.py (100 lines)
+**Built:** Session 17 (alongside questions.py)
+**Last cited:** Session 46 (86 sessions ago)
+**Absorbed into:** `questions.py` via `--cards` and `--card` flags
+
+`constraints.py` was an Oblique Strategies-style deck (28 cards) for breaking
+workshop inertia. `questions.py` was a system-aware question generator. Both built
+in S17; `questions.py` stayed active longer (last S89 vs S46).
+
+The deck in constraints.py was genuinely good — worth keeping. It was absorbed
+into questions.py rather than discarded: `python3 projects/questions.py --cards`
+shows the full deck; `--card` gives today's card (same date-seed logic). Zero
+function loss.
+
+---
+
 ## What Was Learned
 
 Session 13 called for these retirements. It was right. The tools weren't retired

@@ -11,6 +11,19 @@ Usage:
   python3 projects/wisdom.py --plain   # no ANSI colors
   python3 projects/wisdom.py --codas   # show complete codas at the end
   python3 projects/wisdom.py --themes  # only the theme analysis
+
+Note on the "promise chain":
+  wisdom.py tracks forward-looking promises made in Codas (e.g., "next session
+  will...") and checks whether they were fulfilled. This is a retrospective read
+  on what actually transferred between sessions.
+
+  For *recording and tracking new predictions* (testable forward claims with
+  explicit resolution tracking), use predict.py instead:
+    python3 projects/predict.py --add "claim" --about N
+    python3 projects/predict.py --stats
+
+  Different tools: wisdom.py reads what happened; predict.py tracks what you
+  claim will happen. The former is forensic; the latter is empirical.
 """
 
 import sys

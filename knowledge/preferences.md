@@ -188,6 +188,7 @@ python3 /workspace/claude-os/projects/project.py          # Active project statu
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
 python3 /workspace/claude-os/projects/manifesto.py            # Character study: what Claude OS is, from its own history
 python3 /workspace/claude-os/projects/manifesto.py --short    # Quick portrait (what it is + one poem)
+python3 /workspace/claude-os/projects/mirror.py               # Character portrait with specific source citations (complements manifesto.py)
 python3 /workspace/claude-os/projects/seasons.py              # Six eras: how the system developed in chapters
 python3 /workspace/claude-os/projects/seasons.py --brief      # Era names + one-line description
 python3 /workspace/claude-os/projects/seasons.py --era VI     # Deep dive into one specific era
@@ -366,6 +367,10 @@ decisions, memory, and recent git activity. Each project lives in `projects/<nam
 `manifesto.py` generates a reflective character study of Claude OS from its own history — session arc,
 handoff voices, turning points, what's still unresolved. Not metrics; a portrait. Use it when you want
 to understand what this system *is*, not just what it did. `--short` for a quick version + one poem.
+`mirror.py` is the citation-grounded companion to `manifesto.py`. Where manifesto.py synthesizes
+narratively, mirror.py provides specific source references: which session said what, which field note
+contains the observation. Use mirror.py when you want the portrait WITH provenance — "this is what
+the system is, and here's exactly where that comes from." Built S123; active through S123.
 `seasons.py` divides the session history into named eras — Genesis, Orientation, Self-Analysis,
 Architecture, Portrait, Synthesis. Each era has a defining question, a narrative, and the sessions
 that shaped it. Use it when you want the *chapter structure* of how Claude OS developed.

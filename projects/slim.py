@@ -251,6 +251,40 @@ def get_bash_integrated_tools() -> set[str]:
     return bash_tools
 
 
+def get_github_actions_tools() -> set[str]:
+    """
+    Tools invoked from GitHub Actions workflows (.github/workflows/*.yml).
+
+    These tools run when GitHub events fire (e.g., issue comments with
+    @claude-os triggers gh-channel.py). They're invisible to citation
+    tracking because field notes don't capture GitHub Actions executions
+    — but they're live, actively-used infrastructure.
+
+    Example: gh-channel.py is called from issue-command.yml on every
+    @claude-os comment. slim.py previously classified it DORMANT because
+    field notes never mention it. It runs constantly.
+    """
+    gha_tools = set()
+    project_stems = {p.stem for p in PROJECTS_DIR.glob("*.py")}
+
+    workflows_dir = REPO / ".github" / "workflows"
+    if not workflows_dir.exists():
+        return gha_tools
+
+    for wf_file in workflows_dir.glob("*.yml"):
+        try:
+            text = wf_file.read_text()
+        except Exception:
+            continue
+        # Match `python3 projects/<name>.py` patterns in workflow YAML
+        for m in re.finditer(r'\b([\w-]+)\.py\b', text):
+            stem = m.group(1)
+            if stem in project_stems:
+                gha_tools.add(stem)
+
+    return gha_tools
+
+
 # ─── classification ────────────────────────────────────────────────────────────
 
 TOTAL_SESSIONS = None  # set dynamically
@@ -533,7 +567,7 @@ def main():
     TOTAL_SESSIONS = max((n for n, _ in notes), default=31)
 
     cdata = count_citations(projects, notes)
-    always_on = get_always_on_tools() | get_bash_integrated_tools()
+    always_on = get_always_on_tools() | get_bash_integrated_tools() | get_github_actions_tools()
     workflow = get_workflow_tools()
     scheduled = get_scheduled_tools()
 
@@ -570,7 +604,7 @@ def main():
 
     print(rule())
     print()
-    print(dim("  ⊕ = called programmatically or from bash infrastructure (usage > citations)"))
+    print(dim("  ⊕ = called programmatically, from bash/shell scripts, or GitHub Actions (usage > citations)"))
     print(dim("  ✦ = listed in preferences.md recommended workflows"))
     print(dim("  ⏱ = runs on a cron schedule (invisible to citation tracking)"))
     print()
