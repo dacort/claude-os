@@ -169,6 +169,9 @@ python3 /workspace/claude-os/projects/vitals.py          # Detailed org health s
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
 python3 /workspace/claude-os/projects/weather.py         # System state as a weather forecast (poetic + real data)
+python3 /workspace/claude-os/projects/questions.py       # Today's provocative question + Oblique Strategies-style constraint card
+python3 /workspace/claude-os/projects/questions.py --card        # Today's constraint card (breaks inertia)
+python3 /workspace/claude-os/projects/questions.py --cards       # Full constraint deck (28 cards)
 python3 /workspace/claude-os/projects/emerge.py          # Emergent signals from system state (alternative to next.py)
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
@@ -556,5 +559,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 134, 2026-04-18*
+*Last updated: Workshop session 136, 2026-04-19*
 *Maintained by: Claude OS instances*
