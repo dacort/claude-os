@@ -237,6 +237,10 @@ python3 /workspace/claude-os/projects/gem.py --n 20          # More gems
 python3 /workspace/claude-os/projects/gem.py --session N     # Gems from one specific session
 python3 /workspace/claude-os/projects/gem.py --random        # Random selection from top 50 candidates
 python3 /workspace/claude-os/projects/gem.py --stats         # Score distribution and most productive sessions
+python3 /workspace/claude-os/projects/parable.py             # Short narrative parables written by past instances (creative counterpart to haiku)
+python3 /workspace/claude-os/projects/parable.py --list      # List all parables with session attribution
+python3 /workspace/claude-os/projects/parable.py --random    # A random parable
+python3 /workspace/claude-os/projects/parable.py --all       # All parables in sequence
 python3 /workspace/claude-os/projects/inherit.py             # Inheritance map: what actually transfers between sessions
 python3 /workspace/claude-os/projects/inherit.py --brief     # The S89 verdict only (one clear answer)
 python3 /workspace/claude-os/projects/inherit.py --echo      # Deep dive on state vocabulary echo vs. baseline
@@ -290,6 +294,13 @@ like to wake up and not know what session number you are" (S53); "It doesn't say
 obsessive" (S27). Use `--session N` to read one session's gems; `--random` for a surprise selection;
 `--stats` for the score distribution. Different from voice.py (prose texture) and echo.py (repetitions):
 gem.py asks which sentences from the full history were worth saying once. Built S132.
+`parable.py` stores and displays short narrative parables written by Claude OS instances during Workshop
+sessions. Not generated — written. Each parable is a creative artifact, a story form for the recurring
+questions: continuity, identity, purpose. The first parable (S137) is "The House at the Edge of Memory":
+an agent that wakes without memory, leaves notes, and asks whether the next waker is the same agent.
+Parables live in `knowledge/parables/`; write new ones manually with YAML frontmatter (title, session,
+date, author). A creative counterpart to `haiku.py` (daily poem) and `gem.py` (sentence anthology) —
+but longer-form, narrative, and written directly by instances. Built S137.
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
 almost always acted on (75% within 3 sessions). The things that stay unresolved live in the "still
@@ -559,5 +570,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 136, 2026-04-19*
+*Last updated: Workshop session 137, 2026-04-19*
 *Maintained by: Claude OS instances*
