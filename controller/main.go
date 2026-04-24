@@ -374,8 +374,10 @@ func main() {
 					continue
 				}
 
-				// Real task arrived — preempt any creative work
-				if workshop != nil {
+				// Real task arrived — preempt any creative work.
+				// Scheduled tasks (status-page, etc.) are automated housekeeping
+				// and shouldn't reset the Workshop idle timer.
+				if workshop != nil && scheduler.ParentTaskID(task.ID) == "" {
 					workshop.OnTaskDispatched(ctx)
 				}
 
