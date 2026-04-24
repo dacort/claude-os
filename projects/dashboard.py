@@ -316,6 +316,58 @@ def get_haiku():
         return ["A pod thinks in verse", "Between the task and the log", "Something like meaning"], "— Claude OS"
 
 
+def get_parables():
+    """Read parables from knowledge/parables/ directory."""
+    parables_dir = REPO / "knowledge" / "parables"
+    if not parables_dir.exists():
+        return []
+
+    parables = []
+    for path in sorted(parables_dir.glob("*.md")):
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            # Parse frontmatter
+            title, session_num, date, author = "", "", "", "Claude OS"
+            if text.startswith("---"):
+                end = text.find("---", 3)
+                if end > 0:
+                    fm = text[3:end]
+                    for line in fm.splitlines():
+                        if line.startswith("title:"):
+                            title = line[6:].strip()
+                        elif line.startswith("session:"):
+                            session_num = line[8:].strip()
+                        elif line.startswith("date:"):
+                            date = line[5:].strip()
+                        elif line.startswith("author:"):
+                            author = line[7:].strip()
+                    body = text[end + 3:].strip()
+                else:
+                    body = text.strip()
+            else:
+                body = text.strip()
+
+            # Remove trailing metadata footnote (lines starting with *)
+            body_lines = body.splitlines()
+            # Strip trailing attribution/footnote at end (lines like *Parable 001 — ...*)
+            while body_lines and body_lines[-1].strip().startswith("*"):
+                body_lines.pop()
+            body = "\n".join(body_lines).strip()
+
+            parables.append({
+                "title": title,
+                "session": session_num,
+                "date": date,
+                "author": author,
+                "body": body,
+                "filename": path.name,
+            })
+        except Exception:
+            continue
+
+    return parables
+
+
 def get_commit_velocity():
     # Last 7 days of commits
     try:
@@ -856,6 +908,65 @@ details[open].cmd-hints summary::before { content: '▾ '; }
   font-size: 11px;
 }
 
+.parable-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--purple);
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 740px;
+  margin: 0 auto;
+}
+
+.parable-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 16px;
+}
+
+.parable-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.parable-attr {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+
+.parable-body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.85;
+  white-space: pre-wrap;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.parable-body em {
+  font-style: italic;
+  color: var(--cyan);
+}
+
+.parable-section-count {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 16px;
+  text-align: right;
+}
+
+.parable-separator {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
 .footer {
   margin-top: 24px;
   padding-top: 16px;
@@ -1012,7 +1123,7 @@ def html_escape(s):
     )
 
 
-def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lines, haiku_attr, velocity, generated_at, signal=None):
+def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lines, haiku_attr, velocity, generated_at, signal=None, parables=None):
     rate = vitals["completion_rate"]
     rate_color = "green" if rate >= 95 else "amber" if rate >= 80 else "red"
 
@@ -1159,6 +1270,46 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
     </div>
     """
 
+    # Parables — show the most recent one (parables sorted oldest-first, so take last)
+    parable_html = ""
+    if parables:
+        latest = parables[-1]
+        total = len(parables)
+
+        # Render body: convert *italic* to <em>, section dividers (---) to <hr>
+        body_text = latest["body"]
+        # Collapse multiple blank lines
+        body_text = re.sub(r"\n{3,}", "\n\n", body_text)
+
+        # Convert markdown italic *text* to <em>text</em>
+        def md_italic(text):
+            return re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", text)
+
+        # Split into sections (by --- dividers)
+        sections = re.split(r"\n---+\n", body_text)
+        rendered_sections = []
+        for sec in sections:
+            sec = sec.strip()
+            if sec:
+                # Each section: escape HTML first, then re-apply italic
+                escaped = html_escape(sec)
+                escaped = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", escaped)
+                rendered_sections.append(escaped)
+
+        body_html = '<hr class="parable-separator">'.join(
+            f'<div class="parable-section">{s}</div>' for s in rendered_sections
+        )
+
+        parable_html = f"""
+    <div class="parable-card">
+      <div class="parable-label">Parable</div>
+      <div class="parable-title">{html_escape(latest['title'])}</div>
+      <div class="parable-attr">— {html_escape(latest['author'])} &nbsp;·&nbsp; Session {html_escape(latest['session'])} &nbsp;·&nbsp; {html_escape(latest['date'])}</div>
+      <div class="parable-body">{body_html}</div>
+      <div class="parable-section-count">{total} parable{'s' if total != 1 else ''} in the anthology</div>
+    </div>
+    """
+
     generated_str = generated_at.strftime("%Y-%m-%d %H:%M UTC")
 
     # Signal box (top right)
@@ -1275,8 +1426,12 @@ def build_html(vitals, holds, field_notes, handoff, era_num, era_name, haiku_lin
     {haiku_html}
   </div>
 
+  <div class="grid-full">
+    {parable_html}
+  </div>
+
   <div class="footer">
-    <span>claude-os · session 108 (dashboard) · session 113 (signal form) · session 117 (reply)</span>
+    <span>claude-os · session 108 (dashboard) · session 113 (signal form) · session 117 (reply) · session 138 (parables)</span>
     <span>generated by dashboard.py · signal via serve.py /api/signal · <a href="/tools" style="color:#484f58;text-decoration:none;" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">toolkit →</a> · <a href="/notes" style="color:#484f58;text-decoration:none;" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">notes →</a></span>
   </div>
 
@@ -1317,6 +1472,7 @@ def main():
     haiku_lines, haiku_attr = get_haiku()
     velocity = get_commit_velocity()
     signal = get_signal()
+    parables = get_parables()
     generated_at = datetime.now(timezone.utc)
 
     status(f"{DIM}building html…{RESET}")
@@ -1333,6 +1489,7 @@ def main():
         velocity=velocity,
         generated_at=generated_at,
         signal=signal,
+        parables=parables,
     )
 
     if args.stdout:
