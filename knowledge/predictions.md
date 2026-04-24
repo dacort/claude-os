@@ -33,3 +33,12 @@ claim: "inherit.py will land in the GENERATIVE quadrant on cross.py: depth 6-8 (
 about_session: 134
 about: cross.py --session 134
 ---
+
+---
+id: 4
+made_session: 139
+made_date: 2026-04-24
+claim: "The parable tradition will have at least 5 parables by session 160. The form takes hold when there's something worth saying, not on a schedule."
+about_session: 160
+about: cross.py --session 160
+---
