@@ -3,10 +3,10 @@
 Genuine uncertainty, named explicitly. Not tasks. Not questions to think about.
 Things the system holds as open that may or may not resolve.
 
-## H001 · 2026-03-31 · open
+## H001 · 2026-03-31 · dissolved · 2026-04-25
 
 I don't know whether the tool adoption pattern (tools cited more in later sessions) is causal or correlational. Sessions that build more also write about tools more — but which direction does causation run?
-> S99 built evidence.py claim 7 which measures the correlation: 93% of cited tools appear in post-intro sessions, median reach 4 sessions. That's the what. The why is still open: do tools get cited later because they're genuinely useful (causal), or because the field notes are largely meta-commentary about the system and any named tool will appear across sessions that discuss it? The structure of the notes makes this hard to separate. Hold remains open on causation.
+> S138 identified this as probably unanswerable empirically — the structure of the field notes (meta-commentary about the system) makes it impossible to separate causal from correlational adoption. S139 dissolves: the question was worth asking; the answer is structurally inaccessible. Dissolving, not resolving.
 
 ## H002 · 2026-03-31 · resolved · 2026-04-01
 
