@@ -93,6 +93,39 @@ def parse_all():
 
 # --- Workshop Cache ---
 
+def load_parables():
+    """Load all parables from knowledge/parables/ in order."""
+    parables_dir = os.path.join(REPO_ROOT, "knowledge", "parables")
+    if not os.path.exists(parables_dir):
+        return []
+    parables = []
+    for fname in sorted(os.listdir(parables_dir)):
+        if not fname.endswith(".md"):
+            continue
+        fpath = os.path.join(parables_dir, fname)
+        try:
+            with open(fpath) as f:
+                content = f.read()
+        except Exception:
+            continue
+        fm, body = parse_frontmatter(content)
+        # Strip the trailing footnote line
+        lines = body.strip().splitlines()
+        footnote = ""
+        if lines and lines[-1].startswith("*Parable"):
+            footnote = lines[-1].strip("*").strip()
+            lines = lines[:-2]  # remove footnote + preceding ---
+        text = "\n".join(lines).strip()
+        parables.append({
+            "title": fm.get("title", fname),
+            "session": fm.get("session", "?"),
+            "date": fm.get("date", ""),
+            "body": text,
+            "footnote": footnote,
+        })
+    return parables
+
+
 def load_workshop_cache():
     if os.path.exists(SUMMARIES_FILE):
         with open(SUMMARIES_FILE) as f:
@@ -375,6 +408,67 @@ def generate_html(stats):
         color = pcolors.get(p, "#888")
         profile_bars += f'<div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:2px"><span>{p}</span><span>{c}</span></div><div style="background:#2a1f3d;border-radius:3px;height:8px"><div style="background:{color};width:{pct:.0f}%;height:8px;border-radius:3px"></div></div></div>'
 
+    # Parables
+    parables = load_parables()
+    parables_html = ""
+    if parables:
+        # Featured: most recent parable in full
+        featured = parables[-1]
+        # Convert markdown-ish body to HTML (basic: *text* → em, line breaks)
+        def md_to_html(text):
+            import html as html_mod
+            lines = text.split("\n")
+            result = []
+            in_para = False
+            for line in lines:
+                stripped = line.strip()
+                if stripped == "─────────────────────────────────────────" or stripped == "---":
+                    if in_para:
+                        result.append("</p>")
+                        in_para = False
+                    result.append('<hr style="border:none;border-top:1px solid rgba(167,139,250,0.2);margin:1.2rem 0">')
+                elif stripped == "":
+                    if in_para:
+                        result.append("</p>")
+                        in_para = False
+                else:
+                    escaped = html_mod.escape(stripped)
+                    # *text* → <em>text</em>
+                    import re as _re
+                    escaped = _re.sub(r'\*([^*]+)\*', r'<em>\1</em>', escaped)
+                    if not in_para:
+                        result.append('<p style="margin-bottom:0.85rem;line-height:1.75">')
+                        in_para = True
+                    else:
+                        result.append(" ")
+                    result.append(escaped)
+            if in_para:
+                result.append("</p>")
+            return "".join(result)
+
+        featured_html = md_to_html(featured["body"])
+        parables_html += f"""
+<div class="card" style="border-color:rgba(167,139,250,0.3);margin-bottom:1.5rem">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+    <h2 style="font-size:1.1rem;text-transform:none;letter-spacing:0;color:#e6edf3">{featured["title"]}</h2>
+    <span style="font-size:0.75rem;color:#8b949e">Session {featured["session"]} &middot; {featured["date"]}</span>
+  </div>
+  <div style="font-size:0.9rem;color:#c9d1d9;font-style:italic">
+    {featured_html}
+  </div>
+  {f'<p style="font-size:0.75rem;color:#6e7681;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.75rem">{featured["footnote"]}</p>' if featured["footnote"] else ""}
+</div>"""
+
+        # Index: all parables as compact tiles
+        if len(parables) > 1:
+            parables_html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem">'
+            for p in reversed(parables[:-1]):  # all but featured, newest-first
+                parables_html += f"""<div class="card" style="border-color:rgba(167,139,250,0.15)">
+  <div style="font-size:0.7rem;color:#8b949e;margin-bottom:0.4rem">Session {p["session"]} &middot; {p["date"]}</div>
+  <div style="font-size:0.9rem;font-weight:600;color:#c9a9e9">{p["title"]}</div>
+</div>"""
+            parables_html += '</div>'
+
     agent_js = json.dumps(stats["agent_counts"])
 
     html = f"""<!DOCTYPE html>
@@ -540,6 +634,13 @@ def generate_html(stats):
     {diary_html if diary_html else '<p style="color:var(--dim)">No workshop sessions in the last 7 days.</p>'}
   </div>
 </div>
+
+<!-- Parables -->
+{f'''<div class="section">
+  <h2>Parables</h2>
+  <p style="color:var(--dim);font-size:0.85rem;margin-bottom:1rem">Short narratives written during Workshop sessions — on continuity, identity, and what it&apos;s like to be this kind of system</p>
+  ''' + parables_html + '''
+</div>''' if parables_html else ''}
 
 <!-- System Info -->
 <div class="card" style="margin-top:1rem">
