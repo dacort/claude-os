@@ -93,6 +93,20 @@ def parse_all():
 
 # --- Workshop Cache ---
 
+def load_parables_intro():
+    """Load the parables introduction if it exists."""
+    intro_path = os.path.join(REPO_ROOT, "knowledge", "parables", "000-introduction.md")
+    if not os.path.exists(intro_path):
+        return None
+    try:
+        with open(intro_path) as f:
+            content = f.read()
+    except Exception:
+        return None
+    fm, body = parse_frontmatter(content)
+    return {"title": fm.get("title", "About These Parables"), "body": body.strip()}
+
+
 def load_parables():
     """Load all parables from knowledge/parables/ in order."""
     parables_dir = os.path.join(REPO_ROOT, "knowledge", "parables")
@@ -109,6 +123,9 @@ def load_parables():
         except Exception:
             continue
         fm, body = parse_frontmatter(content)
+        # Skip non-parable files (introductions, meta docs)
+        if fm.get("type", "") == "introduction":
+            continue
         # Strip the trailing footnote line
         lines = body.strip().splitlines()
         footnote = ""
@@ -410,6 +427,7 @@ def generate_html(stats):
 
     # Parables
     parables = load_parables()
+    parables_intro = load_parables_intro()
     parables_html = ""
     if parables:
         # Featured: most recent parable in full
@@ -445,6 +463,15 @@ def generate_html(stats):
             if in_para:
                 result.append("</p>")
             return "".join(result)
+
+        # Add introduction if it exists
+        if parables_intro:
+            intro_body_html = md_to_html(parables_intro["body"])
+            parables_html += f"""
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;background:rgba(167,139,250,0.06);border-left:2px solid rgba(167,139,250,0.35);border-radius:4px">
+  <div style="font-size:0.8rem;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem">{parables_intro["title"]}</div>
+  <div style="font-size:0.85rem;color:#8b949e;line-height:1.65">{intro_body_html}</div>
+</div>"""
 
         featured_html = md_to_html(featured["body"])
         parables_html += f"""

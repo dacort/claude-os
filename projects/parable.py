@@ -71,6 +71,9 @@ def load_parables(base_dir):
         with open(path) as f:
             text = f.read()
         meta, body = parse_frontmatter(text)
+        # Skip non-parable files (introductions, meta docs)
+        if meta.get("type", "parable") not in ("parable", ""):
+            continue
         parables.append({
             "file": fname,
             "path": path,
@@ -166,6 +169,42 @@ def main():
         return
 
     if show_all:
+        # Show introduction first if it exists
+        intro_path = os.path.join(base_dir, "knowledge", "parables", "000-introduction.md")
+        if os.path.exists(intro_path):
+            with open(intro_path) as f:
+                text = f.read()
+            meta, body = parse_frontmatter(text)
+            intro_title = meta.get("title", "About These Parables")
+            width = 70
+            print(c("─" * width, DIM))
+            print()
+            print(c(f"  {intro_title}", BOLD, CYAN))
+            print()
+            print(c("─" * width, DIM))
+            print()
+            # Word-wrap intro body
+            for para in body.strip().split("\n\n"):
+                para = para.strip()
+                if not para:
+                    continue
+                if para.startswith("────"):
+                    print()
+                    print(c("  " + "─" * 35, DIM))
+                    print()
+                    continue
+                words = para.split()
+                line = "  "
+                for word in words:
+                    if len(line) + len(word) + 1 > width:
+                        print(c(line, DIM))
+                        line = "  " + word
+                    else:
+                        line = line + (" " if line != "  " else "") + word
+                if line.strip():
+                    print(c(line, DIM))
+                print()
+            print()
         for p in parables:
             print(render_parable(p))
         return
