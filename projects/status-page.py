@@ -149,6 +149,99 @@ def load_workshop_cache():
             return json.load(f)
     return {}
 
+def _clean_md(text):
+    """Strip markdown formatting for plain-text display."""
+    text = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', text)
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    return text.strip()
+
+def extract_workshop_summary(task_id, status):
+    """Extract a meaningful summary from a workshop task file's worker logs.
+
+    Looks for the Session Summary section the agent writes after injecting
+    preferences, targeting the "What I built" field. Falls back gracefully.
+    """
+    path = os.path.join(TASKS_DIR, status, f"{task_id}.md")
+    if not os.path.exists(path):
+        return None
+
+    try:
+        with open(path) as f:
+            content = f.read()
+    except Exception:
+        return None
+
+    # Check failure types first
+    if "Credit balance is too low" in content or "rate_limited" in content:
+        return "Session ended early due to rate limiting"
+    if "token_expired" in content or "refresh token" in content.lower():
+        return "Session ended early — authentication expired"
+    if "You're out of extra usage" in content:
+        return "Session ended early — quota exhausted"
+    if status == "failed":
+        return "Session ended early due to an error"
+
+    # Find the session summary section in the worker log
+    # Matches "## Session N Summary/—/What I Built", "## What I/happened/happened this session", etc.
+    section_re = re.compile(
+        r'##\s+(?:Session\s+\d+[^#\n]*|What (?:I (?:Did|Built|Accomplished|happened)|happened)[^#\n]*?)\n',
+        re.IGNORECASE
+    )
+    m = section_re.search(content)
+    if m:
+        section = content[m.end():]
+        # Stop at next top-level (##) section boundary; allow ### subsections through
+        stop = re.search(r'\n(?:## [^#]|===|No workspace|--- Skill)', section)
+        if stop:
+            section = section[:stop.start()]
+
+        # Strategy 1: "**What I built:**" with inline content (same line only)
+        built_re = re.compile(r'\*\*What I (?:built|built and why|worked on)[:\s]*\*\*[ \t]*(.*)', re.IGNORECASE)
+        bm = built_re.search(section)
+        if bm:
+            inline = _clean_md(bm.group(1).strip())
+            if inline and len(inline) > 10 and not inline.startswith("#"):
+                return inline[:140] + ("…" if len(inline) > 140 else "")
+
+        # Strategy 2: first ### subsection title (numbered items like "### 1. mark.py")
+        sub_re = re.compile(r'###\s+\d+\.\s+(.+)', re.IGNORECASE)
+        subs = sub_re.findall(section)
+        if subs:
+            titles = [_clean_md(s) for s in subs[:3]]
+            text = "; ".join(titles)
+            return text[:140] + ("…" if len(text) > 140 else "")
+
+        # Strategy 3: first **bold** standalone item (like "**mark.py — the silent tool**")
+        standalone_re = re.compile(r'^\*\*([^*\n]+(?:—|:)[^*\n]+)\*\*', re.MULTILINE)
+        sm = standalone_re.search(section)
+        if sm:
+            text = _clean_md(sm.group(1))
+            return text[:140] + ("…" if len(text) > 140 else "")
+
+        # Strategy 4: first paragraph-length bold field with inline description
+        for fm in re.finditer(r'\*\*([^*\n]+)[:\s]*\*\*[ \t]*(.*)', section):
+            label = _clean_md(fm.group(1).strip())
+            value = _clean_md(fm.group(2).strip())
+            if len(value) > 20 and not value.startswith("**"):
+                # Include label when value starts with a dash (e.g. "Session 142 — description")
+                if value.startswith("—") or value.startswith("—"):
+                    text = f"{label} {value}"
+                else:
+                    text = value
+                return text[:140] + ("…" if len(text) > 140 else "")
+
+        # Strategy 5: first substantive non-heading line
+        for line in section.splitlines():
+            stripped = line.strip()
+            if (stripped and not stripped.startswith("#") and
+                    not stripped.startswith("---") and len(stripped) > 30):
+                text = _clean_md(stripped)
+                return text[:140] + ("…" if len(text) > 140 else "")
+
+    return "Workshop session completed"
+
+
 def update_workshop_cache(tasks):
     """Update the workshop-summaries.json cache with any new workshop tasks."""
     cache = load_workshop_cache()
@@ -158,10 +251,8 @@ def update_workshop_cache(tasks):
     for ws in workshops:
         if ws["task_id"] in cache:
             continue
-        if ws["status"] == "failed":
-            cache[ws["task_id"]] = "Session ended early due to rate limiting"
-        else:
-            cache[ws["task_id"]] = "Workshop session completed"
+        summary = extract_workshop_summary(ws["task_id"], ws["status"])
+        cache[ws["task_id"]] = summary or "Workshop session completed"
         new_count += 1
 
     if new_count > 0:

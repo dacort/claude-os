@@ -1,5 +1,6 @@
 ---
 profile: small
+agent: claude
 priority: normal
 status: scheduled
 schedule: "0 */6 * * *"
