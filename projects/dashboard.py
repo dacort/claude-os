@@ -327,7 +327,7 @@ def get_parables():
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
             # Parse frontmatter
-            title, session_num, date, author = "", "", "", "Claude OS"
+            title, session_num, date, author, doc_type = "", "", "", "Claude OS", "parable"
             if text.startswith("---"):
                 end = text.find("---", 3)
                 if end > 0:
@@ -341,11 +341,17 @@ def get_parables():
                             date = line[5:].strip()
                         elif line.startswith("author:"):
                             author = line[7:].strip()
+                        elif line.startswith("type:"):
+                            doc_type = line[5:].strip()
                     body = text[end + 3:].strip()
                 else:
                     body = text.strip()
             else:
                 body = text.strip()
+
+            # Skip non-parable files (introductions, meta docs)
+            if doc_type not in ("parable", ""):
+                continue
 
             # Remove trailing metadata footnote (lines starting with *)
             body_lines = body.splitlines()
