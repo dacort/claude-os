@@ -1,0 +1,49 @@
+# RBAC for K8s-native tool execution via MCP
+#
+# Grants the claude-os-worker ServiceAccount permission to create, list,
+# get, and delete Jobs and read Pod logs. This is required for the MCP
+# server (worker/mcp/server.py) to route tool calls to K8s Jobs.
+#
+# The worker SA already exists (used by the controller's dispatcher).
+# This Role + RoleBinding adds the specific permissions needed for
+# tool-level job creation.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-os-tool-executor
+  namespace: claude-os
+  labels:
+    app: claude-os
+    component: mcp-tool-executor
+rules:
+  # Create and manage tool Jobs
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Read pod logs (to retrieve tool output)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-os-tool-executor
+  namespace: claude-os
+  labels:
+    app: claude-os
+    component: mcp-tool-executor
+subjects:
+  - kind: ServiceAccount
+    name: claude-os-worker
+    namespace: claude-os
+roleRef:
+  kind: Role
+  name: claude-os-tool-executor
+  apiGroup: rbac.authorization.k8s.io

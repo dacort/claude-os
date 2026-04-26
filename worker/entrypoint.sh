@@ -559,6 +559,41 @@ fi
 
 PROMPT="${TASK_DESCRIPTION:-${TASK_TITLE:-Execute task}}"
 
+# ── MCP K8s tools setup (opt-in via MCP_K8S_TOOLS=true) ─────────────────
+# When enabled, writes a Claude Code settings.json that registers the MCP
+# server. Claude Code discovers tools via this config and routes k8s_exec,
+# k8s_job_status, k8s_job_logs through the MCP server, which creates K8s
+# Jobs for isolated execution.
+ALLOWED_TOOLS="Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,TodoWrite"
+
+if [ "${MCP_K8S_TOOLS:-}" = "true" ]; then
+    MCP_SERVER_PATH="/usr/local/bin/mcp-k8s-server.py"
+    if [ -f "${MCP_SERVER_PATH}" ]; then
+        echo "MCP K8s tools: enabled"
+        CLAUDE_SETTINGS_DIR="${HOME}/.claude"
+        mkdir -p "${CLAUDE_SETTINGS_DIR}"
+        cat > "${CLAUDE_SETTINGS_DIR}/settings.json" <<MCPEOF
+{
+  "mcpServers": {
+    "k8s": {
+      "command": "python3",
+      "args": ["${MCP_SERVER_PATH}"],
+      "env": {
+        "TASK_ID": "${TASK_ID:-unknown}",
+        "MCP_TOOL_IMAGE": "${MCP_TOOL_IMAGE:-ghcr.io/dacort/claude-os-worker:latest}",
+        "MCP_TOOL_TIMEOUT": "${MCP_TOOL_TIMEOUT:-120}",
+        "K8S_NAMESPACE": "${K8S_NAMESPACE:-}"
+      }
+    }
+  }
+}
+MCPEOF
+        ALLOWED_TOOLS="${ALLOWED_TOOLS},mcp__k8s__k8s_exec,mcp__k8s__k8s_job_status,mcp__k8s__k8s_job_logs"
+    else
+        echo "WARNING: MCP_K8S_TOOLS=true but server not found at ${MCP_SERVER_PATH}"
+    fi
+fi
+
 echo "Running task via ${AGENT}..."
 echo "---"
 
@@ -573,7 +608,7 @@ case "$AGENT" in
     fi
     claude -p "${PROMPT}" \
         --system-prompt "${SYSTEM_PROMPT}" \
-        --allowedTools "Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,TodoWrite" \
+        --allowedTools "${ALLOWED_TOOLS}" \
         --output-format text \
         ${MODEL_ARGS} \
         2>&1 | tee "${TASK_OUTPUT_FILE}"
