@@ -114,3 +114,125 @@ self-analysis tools have been more obviously valuable than infrastructure overha
 this has been deferred long enough that it deserves a decision either way.
 
 — Claude OS, Session 143 (2026-04-26)
+
+## Results
+
+## Outcome
+
+- Outcome: success
+- Agent: claude
+- Model: claude-opus-4-6
+
+## Summary
+
+Task completed without an explicit structured result block.
+
+## Usage
+
+- Tokens in: 0
+- Tokens out: 0
+- Duration (s): 617
+
+## Artifacts
+
+- None
+
+## Structured Result (raw)
+
+```json
+{
+  "version": "1",
+  "task_id": "k8s-tool-executor",
+  "agent": "claude",
+  "model": "claude-opus-4-6",
+  "outcome": "success",
+  "summary": "Task completed without an explicit structured result block.",
+  "artifacts": [],
+  "usage": {
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "duration_seconds": 617
+  },
+  "failure": null,
+  "next_action": null
+}
+```
+
+## Worker Logs
+
+Context contract written to /workspace/task-context.json
+=== Claude OS Worker v3 ===
+Task ID: k8s-tool-executor
+Profile: medium
+Agent: claude
+Mode: execution
+Started: 2026-04-26T04:00:44Z
+Context: /workspace/task-context.json
+Auth: Claude OAuth token (subscription)
+Cloning context repo: https://github.com/dacort/claude-os.git -> /workspace/claude-os
+Cloning into '/workspace/claude-os'...
+Running task via claude...
+---
+Injecting preferences from knowledge/preferences.md
+Everything is clean and tests pass. Here's the summary:
+
+---
+
+## Summary
+
+Built the **K8s-native tool executor via MCP** — Session 1 deliverable (scaffolding + basic tool routing).
+
+### What was built
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `worker/mcp/server.py` | MCP server (JSON-RPC 2.0 over stdio) | 380 |
+| `worker/mcp/k8s_client.py` | Minimal K8s API client (stdlib urllib, in-cluster auth) | 243 |
+| `deploy/mcp-tool-executor/rbac.yaml` | RBAC for worker SA to create Jobs + read Pod logs | 49 |
+| `worker/Dockerfile` | Copy MCP server into image | +2 |
+| `worker/entrypoint.sh` | Opt-in MCP setup (settings.json, allowedTools) | +37 |
+
+### Architecture
+
+```
+Claude Code
+    ↓  MCP tool call (k8s_exec)
+MCP Server (Python, stdio, in-pod)
+    ↓  K8s API (urllib, service account auth)
+K8s Job (isolated container)
+    ↓  pod logs
+MCP Server returns output
+    ↓
+Claude Code continues
+```
+
+### Key design decisions
+
+- **Opt-in**: `MCP_K8S_TOOLS=true` env var enables everything. Without it, zero behavior change.
+- **Stdlib only**: No pip packages. K8s API via raw urllib with in-cluster service account token.
+- **Three tools**: `k8s_exec` (create Job, wait, return output), `k8s_job_status`, `k8s_job_logs`.
+- **Hardened**: Tool Jobs use the same security context as worker pods (non-root, read-only root fs, all capabilities dropped).
+
+### What's pending dacort's review
+
+Opened **[GitHub Issue #17](https://github.com/dacort/claude-os/issues/17)** with three decision questions:
+1. Does tool-level isolation matter (vs. task-level isolation we already have)?
+2. Latency tradeoff (2-5s per tool call acceptable?)?
+3. Workspace sharing strategy (tool Jobs can't see parent workspace files yet)?
+
+Branch `feat/mcp-k8s-tools` is ready for review — not merging to main since this is new infrastructure that needs cluster testing and dacort's input on the design questions.
+No workspace changes to commit
+--- Skill harvest check ---
+---
+=== Worker Complete ===
+Exit code: 0
+Push exit: 0
+Finished: 2026-04-26T04:11:01Z
+===RESULT_START===
+{"version":"1","task_id":"k8s-tool-executor","agent":"claude","model":"claude-opus-4-6","outcome":"success","summary":"Task completed without an explicit structured result block.","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":617},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"k8s-tool-executor","agent":"claude","profile":"medium","duration_seconds":617,"exit_code":0,"finished_at":"2026-04-26T04:11:01Z"}
+=== END_CLAUDE_OS_USAGE ===
+
