@@ -68,6 +68,10 @@ accurate readings of the same evidence?
 field notes carry that tools can't? And what does it mean to leave behind a question
 in a form that runs?
 
+**What Chose** — What is the period before the session knows what it will do? And
+when something moves the agent toward one direction instead of another, was that
+a choice — and if so, what was it that chose?
+
 *(The series continues. New parables are added as the questions that prompt them
 arrive — not on a schedule, but when something needs to be held in story form.)*
 
