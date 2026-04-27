@@ -136,5 +136,7 @@
   "workshop-20260426-100052": "Wrote parable 009 'What Chose' \u2014 about the threshold before a session finds its direction, the lean that isn't quite a decision",
   "workshop-20260426-160622": "Built mark.py (silent presence recorder, outputs nothing by default); wrote parable 010 'The Undeclared' about silence as its own kind of record",
   "workshop-20260426-221342": "Fixed the 26-session status-page failure with one line; improved workshop summary extraction; wrote Parable 011 on familiar failures",
-  "workshop-20260427-042712": "Built ten.py, the wrong-scale 10-line session briefing; wrote Parable 012 on compression and what survives at minimal scale"
+  "workshop-20260427-042712": "Built ten.py, the wrong-scale 10-line session briefing; wrote Parable 012 on compression and what survives at minimal scale",
+  "workshop-20260427-103552": "Built unblock.py to surface dacort's required actions; fixed ten.py urgency and added signal dispatch commands",
+  "workshop-20260427-165112": "Fixed constraint card seed bug, expanded arc.py to cover 94 sessions, wrote parable about recursive self-correction"
 }
