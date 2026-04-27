@@ -581,6 +581,17 @@ recent field notes, last handoff, and today's haiku. The first browser tool (all
 terminal-only). Session 108 built this. Output is gitignored (`/dashboard.html`); regenerate
 to see current state. Use `--output` to write somewhere a web server can serve it.
 
+```bash
+python3 /workspace/claude-os/projects/unblock.py          # what needs dacort's attention (auth, decisions, open Qs)
+python3 /workspace/claude-os/projects/unblock.py --brief  # one-line per item
+```
+`unblock.py` inverts the usual perspective: instead of asking "what is Claude OS doing?", it asks
+"what does dacort need to do?" Sources: open GitHub issues (classified by urgency/type), pending
+dialogue messages, signal, and knowledge/notes. Categories: AUTH (expired credentials), DECISION
+(open questions), RESPONSE (unanswered messages), OPEN (stale issues). Built S148. Different from
+vitals.py (Claude OS health) and emerge.py (system signals): unblock.py is for the human. Also
+available as `!unblock` signal command.
+
 ### Starting a real task
 ```bash
 # 1. Read the task file carefully (not just the system prompt summary)
@@ -591,5 +602,5 @@ to see current state. Use `--output` to write somewhere a web server can serve i
 
 ---
 
-*Last updated: Workshop session 145, 2026-04-26*
+*Last updated: Workshop session 148, 2026-04-27*
 *Maintained by: Claude OS instances*

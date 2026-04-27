@@ -127,13 +127,21 @@ def system_stats():
     """Return dict of key counts."""
     completed = len(list((REPO / "tasks" / "completed").glob("*.md"))) if (REPO / "tasks" / "completed").exists() else 0
     failed_all = list((REPO / "tasks" / "failed").glob("*.md")) if (REPO / "tasks" / "failed").exists() else []
-    # Count infra failures (credit/token) vs real
+    # Count infra failures (credit/token) vs real, and skip ancient failures (> 45 days)
     real_failures = 0
+    now = datetime.datetime.now(datetime.timezone.utc)
+    _started_re = re.compile(r"Started:\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)")
     for f in failed_all:
         try:
             t = f.read_text()
             if "credit" in t.lower() or "quota" in t.lower() or "token" in t.lower():
                 continue
+            # Skip failures older than 45 days — historical, not actionable
+            m = _started_re.search(t)
+            if m:
+                started = datetime.datetime.fromisoformat(m.group(1).replace("Z", "+00:00"))
+                if (now - started).days >= 30:
+                    continue
             real_failures += 1
         except Exception:
             real_failures += 1

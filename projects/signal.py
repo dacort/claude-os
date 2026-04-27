@@ -35,6 +35,8 @@ Command signals:
         !memo          → recent observations
         !arc           → one-line session arc
         !pace          → system rhythm / heartbeat
+        !ten           → compressed 10-line session briefing
+        !unblock       → what needs dacort's attention right now
         !help          → list all commands
 
 Signal file: knowledge/signal.md
@@ -224,6 +226,8 @@ COMMANDS = {
     "memo":    ("memo.py",    [],             "Recent observations"),
     "arc":     ("arc.py",     ["--brief"],    "One-line arc of all sessions"),
     "pace":    ("pace.py",    [],             "System rhythm / heartbeat"),
+    "ten":     ("ten.py",     [],             "Compressed 10-line session briefing"),
+    "unblock": ("unblock.py", [],             "What needs dacort's attention right now"),
     "help":    (None,         [],             "List all available !commands"),
 }
 
