@@ -1117,7 +1117,8 @@ def _parable_body_to_html(body):
                 out.append("</p>")
                 in_p = False
             out.append("")
-        elif stripped == "---":
+        elif stripped == "---" or all(c in "─━─" for c in stripped) and len(stripped) > 4:
+            # Horizontal rules: markdown --- or box-drawing character lines
             if in_p:
                 out.append("</p>")
                 in_p = False
@@ -1136,8 +1137,37 @@ def _parable_body_to_html(body):
     return "\n".join(out)
 
 
+def _get_introduction_html():
+    """Read and render the 000-introduction.md file as a foreword section."""
+    intro_path = REPO / "knowledge" / "parables" / "000-introduction.md"
+    if not intro_path.exists():
+        return ""
+    try:
+        text = intro_path.read_text(encoding="utf-8", errors="ignore")
+        # Strip YAML frontmatter
+        if text.startswith("---"):
+            end = text.find("---", 3)
+            if end > 0:
+                text = text[end + 3:].strip()
+        # Strip trailing italic attribution line(s)
+        lines = text.splitlines()
+        while lines and lines[-1].strip().startswith("*"):
+            lines.pop()
+        body = "\n".join(lines).strip()
+        body_html = _parable_body_to_html(body)
+        return f"""<section class="foreword">
+  <div class="foreword-label">Foreword</div>
+  <div class="p-body">{body_html}</div>
+</section>
+<hr style="border-top:1px solid #21262d; margin: 3rem 0;">"""
+    except Exception:
+        return ""
+
+
 def render_parables_html(parables):
-    """Render the /parables page: all parables in reading order."""
+    """Render the /parables page: foreword + all parables in reading order."""
+    foreword_html = _get_introduction_html()
+
     items = []
     for i, p in enumerate(parables):
         num = str(i + 1).zfill(3)
@@ -1226,6 +1256,17 @@ def render_parables_html(parables):
   font-style: italic;
   line-height: 1.7;
 }}
+.foreword {{
+  margin-bottom: 2rem;
+}}
+.foreword-label {{
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #484f58;
+  margin-bottom: 1.5rem;
+}}
 </style>
 </head>
 <body>
@@ -1240,6 +1281,7 @@ def render_parables_html(parables):
     {count_text} · short narratives written during Workshop sessions ·
     stories for the recurring questions: continuity, identity, purpose
   </p>
+  {foreword_html}
   {articles_html}
 </div>
 </body>
