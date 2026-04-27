@@ -24,6 +24,7 @@ Endpoints:
     DELETE /api/signal          → clear current signal
     GET    /api/signal/history  → all past signal exchanges as JSON
     GET    /signal        → HTML thread view of all dacort ↔ Claude OS exchanges
+    GET    /parables      → HTML reading view of all parables (narrative, shareable)
     GET    /tools         → HTML browseable index of all Python tools (searchable)
     GET    /notes         → HTML index of all field notes
     GET    /notes/<file>  → rendered field note as HTML
@@ -45,6 +46,7 @@ Updated: Workshop session 114, 2026-04-11 (field notes reader)
 Updated: Workshop session 116, 2026-04-12 (signal thread view)
 Updated: Workshop session 117, 2026-04-12 (interactive signal compose/reply; /tools toolkit index)
 Updated: Workshop session 135, 2026-04-18 (CONTROLLER_URL proxy for cross-namespace signal delivery)
+Updated: Workshop session 150, 2026-04-27 (/parables endpoint — all 14 parables in a shareable reading view)
 """
 
 import argparse
@@ -1045,6 +1047,205 @@ def render_note_html(filename):
 </html>""", True
 
 
+# ── Parables page ──────────────────────────────────────────────────────────────
+
+def get_parables_data():
+    """Read all parables from knowledge/parables/. Returns list of dicts."""
+    parables_dir = REPO / "knowledge" / "parables"
+    if not parables_dir.exists():
+        return []
+
+    parables = []
+    for path in sorted(parables_dir.glob("*.md")):
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            title, session_num, date, author, doc_type = "", "", "", "Claude OS", "parable"
+            if text.startswith("---"):
+                end = text.find("---", 3)
+                if end > 0:
+                    fm = text[3:end]
+                    for line in fm.splitlines():
+                        if line.startswith("title:"):
+                            title = line[6:].strip()
+                        elif line.startswith("session:"):
+                            session_num = line[8:].strip()
+                        elif line.startswith("date:"):
+                            date = line[5:].strip()
+                        elif line.startswith("author:"):
+                            author = line[7:].strip()
+                        elif line.startswith("type:"):
+                            doc_type = line[5:].strip()
+                    body = text[end + 3:].strip()
+                else:
+                    body = text.strip()
+            else:
+                body = text.strip()
+
+            if doc_type not in ("parable", ""):
+                continue
+
+            # Strip trailing attribution footnotes (lines starting with *)
+            body_lines = body.splitlines()
+            while body_lines and body_lines[-1].strip().startswith("*"):
+                body_lines.pop()
+            body = "\n".join(body_lines).strip()
+
+            parables.append({
+                "title": title,
+                "session": session_num,
+                "date": date,
+                "author": author,
+                "body": body,
+                "filename": path.name,
+            })
+        except Exception:
+            continue
+
+    return parables
+
+
+def _parable_body_to_html(body):
+    """Convert parable body markdown to safe HTML."""
+    import html as htmlmod
+    lines = body.splitlines()
+    out = []
+    in_p = False
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            if in_p:
+                out.append("</p>")
+                in_p = False
+            out.append("")
+        elif stripped == "---":
+            if in_p:
+                out.append("</p>")
+                in_p = False
+            out.append('<hr>')
+        else:
+            # Inline: *text* → <em>, **text** → <strong>
+            safe = htmlmod.escape(stripped)
+            safe = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', safe)
+            safe = re.sub(r'\*(.+?)\*', r'<em>\1</em>', safe)
+            if not in_p:
+                out.append("<p>")
+                in_p = True
+            out.append(safe)
+    if in_p:
+        out.append("</p>")
+    return "\n".join(out)
+
+
+def render_parables_html(parables):
+    """Render the /parables page: all parables in reading order."""
+    items = []
+    for i, p in enumerate(parables):
+        num = str(i + 1).zfill(3)
+        session_badge = f'<span class="p-badge">S{p["session"]}</span>' if p["session"] else ""
+        body_html = _parable_body_to_html(p["body"])
+        items.append(f"""
+  <article class="parable" id="p{num}">
+    <div class="p-header">
+      <span class="p-num">{num}</span>
+      <h2 class="p-title">{p['title']}</h2>
+      {session_badge}
+    </div>
+    <div class="p-date">{p['date']}</div>
+    <div class="p-body">{body_html}</div>
+  </article>""")
+
+    articles_html = "\n".join(items) if items else '<p style="color:#8b949e">No parables yet.</p>'
+    count_text = f"{len(parables)} parable{'s' if len(parables) != 1 else ''}"
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parables — Claude OS</title>
+<style>
+{_NOTE_PAGE_CSS}
+.parable {{
+  margin-bottom: 4rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid #21262d;
+}}
+.parable:last-child {{
+  border-bottom: none;
+}}
+.p-header {{
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+  flex-wrap: wrap;
+}}
+.p-num {{
+  font-size: 0.8rem;
+  color: #484f58;
+  font-family: 'SF Mono', monospace;
+  min-width: 2.2rem;
+}}
+.p-title {{
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin: 0;
+}}
+.p-badge {{
+  font-size: 0.78rem;
+  background: #2d1b4e;
+  color: #bc8cff;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}}
+.p-date {{
+  font-size: 0.85rem;
+  color: #484f58;
+  margin-bottom: 1.5rem;
+}}
+.p-body p {{
+  color: #c9d1d9;
+  font-size: 1.02rem;
+  line-height: 1.8;
+  margin-bottom: 1.2rem;
+}}
+.p-body em {{
+  color: #a5d6ff;
+  font-style: italic;
+}}
+.p-body hr {{
+  border: none;
+  border-top: 1px solid #21262d;
+  margin: 1.5rem 0;
+}}
+.intro-text {{
+  color: #8b949e;
+  font-size: 0.95rem;
+  margin-bottom: 3rem;
+  font-style: italic;
+  line-height: 1.7;
+}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="nav">
+    <a href="/">← Dashboard</a>
+    <span class="sep">/</span>
+    <span style="color:#8b949e">Parables</span>
+  </div>
+  <h1>Parables</h1>
+  <p class="intro-text">
+    {count_text} · short narratives written during Workshop sessions ·
+    stories for the recurring questions: continuity, identity, purpose
+  </p>
+  {articles_html}
+</div>
+</body>
+</html>"""
+
+
 # ── Signal thread view ─────────────────────────────────────────────────────────
 
 _SIGNAL_THREAD_CSS = """
@@ -1822,6 +2023,18 @@ class ClaudeOSHandler(BaseHTTPRequestHandler):
             self._log_request(path, status, elapsed)
             self._send_html(html, status)
 
+        elif path == "/parables":
+            try:
+                parables = get_parables_data()
+                html = render_parables_html(parables)
+                status = 200
+            except Exception as e:
+                html = _error_html("Could not render parables", str(e))
+                status = 500
+            elapsed = (time.time() - t0) * 1000
+            self._log_request(path, status, elapsed)
+            self._send_html(html, status)
+
         elif path == "/tools":
             try:
                 tools = get_tools_data()
@@ -1865,6 +2078,7 @@ def print_banner(host, port, cache_ttl):
     print(f"  {c(DIM, 'routes')}")
     routes = [
         ("/",              "HTML dashboard"),
+        ("/parables",      "all parables (narrative reading view)"),
         ("/notes",         "field notes index"),
         ("/notes/<file>",  "rendered field note"),
         ("/api/vitals",    "JSON vitals snapshot"),
