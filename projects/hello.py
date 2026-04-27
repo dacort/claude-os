@@ -85,14 +85,35 @@ def git(*args):
 
 
 def session_number():
-    """Estimate current session number from field note files."""
-    notes = list((REPO / "projects").glob("field-notes-session-*.md"))
-    # e.g., field-notes-session-11.md → 11
+    """Estimate current session number from field note files.
+
+    Reads both old-format (projects/field-notes-session-N.md) and
+    new-format (knowledge/field-notes/YYYY-MM-DD-title.md) notes.
+    """
     nums = []
-    for f in notes:
+
+    # Old format: session number in filename
+    for f in (REPO / "projects").glob("field-notes-session-*.md"):
         m = re.search(r'session-(\d+)', f.name)
         if m:
             nums.append(int(m.group(1)))
+
+    # New format: session number in YAML frontmatter or content
+    new_dir = REPO / "knowledge" / "field-notes"
+    if new_dir.exists():
+        for f in new_dir.glob("*.md"):
+            try:
+                text = f.read_text(errors="ignore")[:500]
+            except Exception:
+                continue
+            m = re.search(r"^session:\s*(\d+)", text, re.MULTILINE)
+            if m:
+                nums.append(int(m.group(1)))
+                continue
+            m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text)
+            if m:
+                nums.append(int(m.group(1)))
+
     return (max(nums) + 1) if nums else 1
 
 

@@ -210,6 +210,9 @@ def collect_project_stats():
     """Analyze the projects/ directory."""
     py_files = list(PROJECTS_DIR.glob("*.py"))
     md_files = list(PROJECTS_DIR.glob("field-notes*.md"))
+    new_notes_dir = REPO / "knowledge" / "field-notes"
+    if new_notes_dir.exists():
+        md_files += list(new_notes_dir.glob("*.md"))
 
     total_lines = 0
     for f in py_files:
