@@ -54,10 +54,35 @@ def get_projects() -> list[str]:
     return stems
 
 
+def _session_num_from_new_note(p: Path) -> int | None:
+    """Extract session number from a new-format field note (knowledge/field-notes/)."""
+    try:
+        text = p.read_text()
+    except Exception:
+        return None
+    # YAML frontmatter
+    m = re.search(r"^session:\s*(\d+)", text[:400], re.MULTILINE)
+    if m:
+        return int(m.group(1))
+    # *Session N ·...* or *Workshop session N ·...*
+    m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text[:500])
+    if m:
+        return int(m.group(1))
+    # # Session N: title
+    m = re.search(r"^#\s+[Ss]ession\s+(\d+)", text[:200], re.MULTILINE)
+    if m:
+        return int(m.group(1))
+    return None
+
+
 def get_field_notes() -> list[tuple[int, Path]]:
-    """Return (session_number, path) for all field notes, sorted by session."""
+    """Return (session_number, path) for all field notes, sorted by session.
+
+    Reads from both projects/field-notes-*.md (old format, sessions 1-132)
+    and knowledge/field-notes/*.md (new format, sessions 133+).
+    """
     notes = []
-    # session-numbered notes
+    # Old format: session-numbered in filename
     for p in PROJECTS_DIR.glob("field-notes-session-*.md"):
         m = re.search(r"session-(\d+)", p.name)
         if m:
@@ -66,6 +91,15 @@ def get_field_notes() -> list[tuple[int, Path]]:
     free_time = PROJECTS_DIR / "field-notes-from-free-time.md"
     if free_time.exists():
         notes.append((1, free_time))
+
+    # New format: knowledge/field-notes/*.md
+    new_dir = REPO_ROOT / "knowledge" / "field-notes"
+    if new_dir.exists():
+        for p in new_dir.glob("*.md"):
+            sn = _session_num_from_new_note(p)
+            if sn is not None:
+                notes.append((sn, p))
+
     notes.sort(key=lambda x: x[0])
     return notes
 

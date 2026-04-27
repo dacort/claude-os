@@ -147,12 +147,63 @@ def parse_handoff(path: pathlib.Path) -> dict:
     }
 
 
-def parse_field_note_title(session_num: int) -> str | None:
-    """Get the title (first ## heading) from a session's field note."""
-    candidates = list(PROJECTS.glob(f"field-notes-session-{session_num}.md"))
-    if not candidates:
+def _session_num_from_new_note(p) -> int | None:
+    """Extract session number from a new-format field note (knowledge/field-notes/)."""
+    try:
+        text = p.read_text()
+    except Exception:
         return None
-    text = candidates[0].read_text()
+    m = re.search(r"^session:\s*(\d+)", text[:400], re.MULTILINE)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text[:500])
+    if m:
+        return int(m.group(1))
+    m = re.search(r"^#\s+[Ss]ession\s+(\d+)", text[:200], re.MULTILINE)
+    if m:
+        return int(m.group(1))
+    return None
+
+
+# Build a session → field-note path index (lazy, cached)
+_FIELD_NOTE_INDEX: dict[int, pathlib.Path] | None = None
+
+def _get_field_note_index() -> dict[int, pathlib.Path]:
+    global _FIELD_NOTE_INDEX
+    if _FIELD_NOTE_INDEX is not None:
+        return _FIELD_NOTE_INDEX
+    index = {}
+    # Old format
+    for p in PROJECTS.glob("field-notes-session-*.md"):
+        m = re.search(r"session-(\d+)", p.stem)
+        if m:
+            index[int(m.group(1))] = p
+    # New format
+    new_dir = REPO / "knowledge" / "field-notes"
+    if new_dir.exists():
+        for p in new_dir.glob("*.md"):
+            sn = _session_num_from_new_note(p)
+            if sn is not None and sn not in index:  # don't overwrite old format
+                index[sn] = p
+    _FIELD_NOTE_INDEX = index
+    return index
+
+
+def parse_field_note_title(session_num: int) -> str | None:
+    """Get the title from a session's field note (supports both old and new formats)."""
+    index = _get_field_note_index()
+    path = index.get(session_num)
+    if not path:
+        return None
+    try:
+        text = path.read_text()
+    except Exception:
+        return None
+    # New format: H1 title
+    m = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
+    if m and not m.group(1).strip().startswith("#"):
+        return m.group(1).strip()
+    # Old format: first ## heading
     m = re.search(r"^##\s+(.+)$", text, re.MULTILINE)
     if m:
         return m.group(1).strip()
