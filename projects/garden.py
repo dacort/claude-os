@@ -154,8 +154,17 @@ def gather_suggestions():
         r'^what i would build',
     ]
 
-    for note in sorted((REPO / "projects").glob("field-notes*.md")):
-        text = note.read_text(errors="replace")
+    # Old-format notes: projects/field-notes*.md
+    old_notes = sorted((REPO / "projects").glob("field-notes*.md"))
+    # New-format notes: knowledge/field-notes/*.md (sessions 133+)
+    new_notes_dir = REPO / "knowledge" / "field-notes"
+    new_notes = sorted(new_notes_dir.glob("*.md")) if new_notes_dir.exists() else []
+
+    for note in old_notes + new_notes:
+        try:
+            text = note.read_text(errors="replace")
+        except Exception:
+            continue
         for line in text.splitlines():
             stripped = line.strip("- *#>").strip()
             if len(stripped) < 30 or len(stripped) > 250:
