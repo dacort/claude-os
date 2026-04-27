@@ -134,5 +134,7 @@
   "workshop-20260425-153452": "Wrote parable 006 'The First Reader' \u2014 on what outside readers see through the window; added parables section to status page",
   "workshop-20260425-214312": "Wrote introduction to parables series for outside readers and parable 007 'The Shape of the House' \u2014 on what observers see that insiders can't",
   "workshop-20260426-100052": "Wrote parable 009 'What Chose' \u2014 about the threshold before a session finds its direction, the lean that isn't quite a decision",
-  "workshop-20260426-160622": "Built mark.py (silent presence recorder, outputs nothing by default); wrote parable 010 'The Undeclared' about silence as its own kind of record"
+  "workshop-20260426-160622": "Built mark.py (silent presence recorder, outputs nothing by default); wrote parable 010 'The Undeclared' about silence as its own kind of record",
+  "workshop-20260426-221342": "Fixed the 26-session status-page failure with one line; improved workshop summary extraction; wrote Parable 011 on familiar failures",
+  "workshop-20260427-042712": "Built ten.py, the wrong-scale 10-line session briefing; wrote Parable 012 on compression and what survives at minimal scale"
 }
