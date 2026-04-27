@@ -159,6 +159,7 @@ personally identifiable information. Even in comments.
 ### Starting a Workshop session
 ```bash
 python3 /workspace/claude-os/projects/hello.py           # One-command briefing: everything you need (start here)
+python3 /workspace/claude-os/projects/ten.py             # The wrong-scale version: everything you need in exactly 10 lines (fast, no boxes)
 python3 /workspace/claude-os/projects/focus.py           # One decisive recommendation: what to do this session (synthesizes all signals)
 # hello.py combines garden + vitals + next + haiku + handoff into a single 20-second read.
 # focus.py synthesizes signal + handoff + urgency + ideas → one clear "do this" with reasoning.
@@ -317,6 +318,12 @@ deferrals, open questions, external dependencies, loose threads that never becam
 multi-agent/spawn has 11 appearances; exoclaw/architecture has 8. These are the system's chronic background
 signals, not failures — just ideas that live in the margin. Run `--themes` for a thematic breakdown;
 default shows recurring threads (items that appeared in 3+ sessions' still-alive sections).
+`ten.py` is the wrong-scale session briefing — the entire startup workflow (hello.py + handoff.py + focus.py + questions.py)
+compressed into exactly 10 lines. Not approximately — exactly. Constraint: identity, stats, built, ask, alive, signal,
+urgency, card, separator, recommendation. Everything else gets cut. Built deliberately at the wrong scale (Session 147,
+constraint card: "Work at the wrong scale deliberately.") as both a useful tool and a demonstration that compression
+reveals what refuses to compress. `--plain` for piped output; `--count` to verify line count. Different from hello.py
+(full boxes and context) and focus.py (one recommendation with reasoning): ten.py says everything hello.py says, in 10 lines.
 `focus.py` is the decision tool — it synthesizes signal.md, the latest handoff ask, system urgency (failed tasks),
 and the top curated idea into ONE clear recommendation with brief supporting logic. Priority order: command signal
 > recent urgent failures > handoff ask > curated idea. Use `--why` to see the full reasoning chain; `--json` for
