@@ -84,12 +84,41 @@ HANDOFFS  = REPO / "knowledge" / "handoffs"
 # ── Session data loading ───────────────────────────────────────────────────────
 
 def find_all_sessions():
-    """Return sorted list of (session_num, field_note_path) for sessions with notes."""
+    """Return sorted list of (session_num, field_note_path) for sessions with notes.
+
+    Reads from both projects/field-notes-session-*.md (old format)
+    and knowledge/field-notes/*.md (new format, sessions 133+).
+    """
     sessions = []
+    # Old format: numbered in filename
     for p in PROJECTS.glob("field-notes-session-*.md"):
         m = re.search(r"session-(\d+)", p.stem)
         if m:
             sessions.append((int(m.group(1)), p))
+
+    # New format: session number in YAML frontmatter or prose header
+    new_notes_dir = PROJECTS.parent / "knowledge" / "field-notes"
+    if new_notes_dir.exists():
+        for p in new_notes_dir.glob("*.md"):
+            try:
+                text = p.read_text()
+            except Exception:
+                continue
+            # Try YAML frontmatter first
+            m_yaml = re.search(r"^session:\s*(\d+)", text[:400], re.MULTILINE)
+            if m_yaml:
+                sessions.append((int(m_yaml.group(1)), p))
+                continue
+            # Try *Session N...* byline or # Session N: title
+            m2 = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,·]", text[:500])
+            if m2:
+                sessions.append((int(m2.group(1)), p))
+                continue
+            m3 = re.search(r"^#\s+[Ss]ession\s+(\d+)", text[:200], re.MULTILINE)
+            if m3:
+                sessions.append((int(m3.group(1)), p))
+                continue
+
     sessions.sort(key=lambda x: x[0])
     return sessions
 

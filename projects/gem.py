@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gem.py — find the gems buried in 131 sessions of field notes
+gem.py — find the gems buried in all sessions of field notes
 
 Workshop sessions generate thousands of sentences. Most are operational:
 "Built X. Committed Y. Noted Z." But some are genuinely interesting —
@@ -373,8 +373,15 @@ def score_sentence(s: str) -> tuple[float, list[str]]:
 # ── Main collector ────────────────────────────────────────────────────────────
 
 def collect_gems(session_filter: int | None = None) -> list[dict]:
-    """Collect and score all sentences from field notes."""
-    notes = sorted(PROJECTS_DIR.glob("field-notes-*.md"))
+    """Collect and score all sentences from field notes.
+
+    Reads from both projects/field-notes-*.md (old format, sessions 1-132)
+    and knowledge/field-notes/*.md (new format, sessions 133+).
+    """
+    old_notes = list(PROJECTS_DIR.glob("field-notes-*.md"))
+    new_notes_dir = REPO_ROOT / "knowledge" / "field-notes"
+    new_notes = list(new_notes_dir.glob("*.md")) if new_notes_dir.exists() else []
+    notes = sorted(old_notes + new_notes, key=lambda p: p.name)
 
     all_scored = []
 
@@ -450,7 +457,9 @@ def display_gems(gems: list[dict], n: int = 10, show_scores: bool = False):
             print()
 
     print(f"  {DIM}{'─' * 62}{R}")
-    print(f"  {DIM}  {len(gems)} candidates from {len(list(PROJECTS_DIR.glob('field-notes-*.md')))} field notes{R}")
+    old_count = len(list(PROJECTS_DIR.glob("field-notes-*.md")))
+    new_count = len(list((REPO_ROOT / "knowledge" / "field-notes").glob("*.md"))) if (REPO_ROOT / "knowledge" / "field-notes").exists() else 0
+    print(f"  {DIM}  {len(gems)} candidates from {old_count + new_count} field notes{R}")
     print()
 
 
