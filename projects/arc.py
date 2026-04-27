@@ -79,16 +79,18 @@ def git(*args):
     return result.stdout.strip().splitlines()
 
 
-def get_session_tools_from_git(field_note_name):
+def get_session_tools_from_git(field_note_name, git_path=None):
     """
     Use git to find which Python tools were introduced in the same commit
     that introduced the field note file. This is far more accurate than
     text parsing because sessions always commit their tools together with
     their field notes.
+
+    field_note_name: stem of the file (for old-format notes in projects/)
+    git_path: full relative git path (for new-format notes in knowledge/field-notes/)
     """
-    # Find the commit that first introduced the field note
-    lines = git("log", "--oneline", "--all", "--diff-filter=A",
-                "--", f"projects/{field_note_name}.md")
+    path_arg = git_path if git_path else f"projects/{field_note_name}.md"
+    lines = git("log", "--oneline", "--all", "--diff-filter=A", "--", path_arg)
     if not lines:
         return []
 
@@ -104,10 +106,10 @@ def get_session_tools_from_git(field_note_name):
     return tools
 
 
-def get_session_knowledge_from_git(field_note_name):
+def get_session_knowledge_from_git(field_note_name, git_path=None):
     """Get knowledge/ files introduced in the same session commit."""
-    lines = git("log", "--oneline", "--all", "--diff-filter=A",
-                "--", f"projects/{field_note_name}.md")
+    path_arg = git_path if git_path else f"projects/{field_note_name}.md"
+    lines = git("log", "--oneline", "--all", "--diff-filter=A", "--", path_arg)
     if not lines:
         return []
 
@@ -124,19 +126,34 @@ def get_session_knowledge_from_git(field_note_name):
 # ── Field note parsing ────────────────────────────────────────────────────────
 
 def find_field_notes():
-    """Find all field note files in chronological session order."""
-    notes = list(PROJECTS_DIR.glob("field-notes*.md"))
+    """Find all field note files in chronological session order.
+
+    Reads from two locations:
+    - projects/field-notes*.md (old format, sessions 1-132, numbered by session)
+    - knowledge/field-notes/*.md (new format, sessions 133+, named by date/title)
+    """
+    # Old-format notes in projects/
+    old_notes = list(PROJECTS_DIR.glob("field-notes*.md"))
+
+    # New-format notes in knowledge/field-notes/
+    new_notes_dir = REPO / "knowledge" / "field-notes"
+    new_notes = list(new_notes_dir.glob("*.md")) if new_notes_dir.exists() else []
 
     def sort_key(p):
         name = p.stem
         if name == "field-notes-from-free-time":
-            return 1
+            return (0, 1)
         m = re.search(r"session-(\d+)", name)
         if m:
-            return int(m.group(1))
-        return 999
+            return (0, int(m.group(1)))
+        # New format: date-based name like 2026-04-25-the-first-reader
+        # Sort after all session-numbered notes, by date string
+        date_m = re.match(r"(\d{4}-\d{2}-\d{2})", name)
+        if date_m:
+            return (1, date_m.group(1))
+        return (2, name)
 
-    return sorted(notes, key=sort_key)
+    return sorted(old_notes + new_notes, key=sort_key)
 
 
 def extract_predictions(text):
@@ -191,23 +208,44 @@ def extract_predictions(text):
 
 
 def parse_field_note(path):
-    """Extract structured information from a field note."""
+    """Extract structured information from a field note.
+
+    Handles two formats:
+    - Old format: projects/field-notes-session-N.md
+      YAML frontmatter with session/date, H2 sections
+    - New format: knowledge/field-notes/YYYY-MM-DD-title.md
+      H1 title, "*Session N — Month Day, Year*" line, prose content
+    """
     try:
         text = path.read_text()
     except Exception:
         return None
 
+    # Detect format: new-format notes live in knowledge/field-notes/
+    is_new_format = "knowledge" in str(path) and "field-notes" in str(path.parent)
+
     # ── Date ──────────────────────────────────────────────────────────────────
+    _MONTHS = {"january":"01","february":"02","march":"03","april":"04",
+               "may":"05","june":"06","july":"07","august":"08",
+               "september":"09","october":"10","november":"11","december":"12"}
     date = "?"
-    # Try ISO format first: 2026-03-15
+    # Try ISO format first: 2026-03-15 (in frontmatter or filename)
     date_match = re.search(r"(\d{4}-\d{2}-\d{2})", text[:300])
     if date_match:
         date = date_match.group(1)
+    elif is_new_format:
+        # New-format filename: 2026-04-25-the-first-reader → extract date
+        date_m = re.match(r"(\d{4}-\d{2}-\d{2})", path.stem)
+        if date_m:
+            date = date_m.group(1)
+        else:
+            # Try "April 25, 2026" in the *Session N — April 25, 2026* header
+            m2 = re.search(r"(\w+)\s+(\d{1,2}),?\s+(\d{4})", text[:400], re.IGNORECASE)
+            if m2:
+                mon, day, yr = m2.group(1).lower(), m2.group(2), m2.group(3)
+                if mon in _MONTHS:
+                    date = f"{yr}-{_MONTHS[mon]}-{int(day):02d}"
     else:
-        # Try written format: March 15, 2026 or March 15 2026
-        _MONTHS = {"january":"01","february":"02","march":"03","april":"04",
-                   "may":"05","june":"06","july":"07","august":"08",
-                   "september":"09","october":"10","november":"11","december":"12"}
         m2 = re.search(r"(\w+)\s+(\d{1,2}),?\s+(\d{4})", text[:300], re.IGNORECASE)
         if m2:
             mon, day, yr = m2.group(1).lower(), m2.group(2), m2.group(3)
@@ -215,39 +253,81 @@ def parse_field_note(path):
                 date = f"{yr}-{_MONTHS[mon]}-{int(day):02d}"
 
     # ── Session number ─────────────────────────────────────────────────────────
-    session_num = 1
+    session_num = None
     if "from-free-time" in path.stem:
         session_num = 1
+    elif is_new_format:
+        # New-format notes: extract from content (NOT filename — filename may
+        # contain session references that aren't the session number, e.g.
+        # "finishing-session-13" is about session 120, not session 13)
+        # Try YAML frontmatter: "session: 114" (most reliable)
+        m_yaml = re.search(r"^session:\s*(\d+)", text[:400], re.MULTILINE)
+        if m_yaml:
+            session_num = int(m_yaml.group(1))
+        else:
+            # Try *Session N — ...* or *Session N ·...* or *Workshop session N ·...*
+            m2 = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text[:500])
+            if m2:
+                session_num = int(m2.group(1))
+            else:
+                # Try "Session N" but only in italic bylines (lines starting and ending with *)
+                for line in text[:500].splitlines():
+                    line = line.strip()
+                    if line.startswith("*") and line.endswith("*"):
+                        m3 = re.search(r"[Ss]ession\s+(\d+)", line)
+                        if m3:
+                            session_num = int(m3.group(1))
+                            break
+            if session_num is None:
+                # Last resort: H1 title like "# Session 107: Right Now"
+                m4 = re.search(r"^#\s+[Ss]ession\s+(\d+)", text[:200], re.MULTILINE)
+                if m4:
+                    session_num = int(m4.group(1))
     else:
+        # Old format: session number is in the filename
         m = re.search(r"session-(\d+)", path.stem)
         if m:
             session_num = int(m.group(1))
+    if session_num is None:
+        session_num = 1
 
-    # ── Headline: first meaningful H2 ─────────────────────────────────────────
+    # ── Headline ──────────────────────────────────────────────────────────────
     headline = None
-    skip_headers = {"coda", "what's next", "what i built", "state of things",
-                    "observations", "results", "the state of things after",
-                    "what i noticed", "what i found",
-                    "orientation", "what i did", "what i did first",
-                    "what i added"}
-    for line in text.splitlines():
-        if line.startswith("## "):
-            candidate = line[3:].strip()
-            # Skip if too generic or too long (case-insensitive comparison)
-            if candidate.lower() not in skip_headers and len(candidate) < 80:
-                # Skip section-style headers with numbers like "00:00 —"
-                if not re.match(r"^\d\d:\d\d", candidate):
-                    headline = candidate
-                    break
+    if is_new_format:
+        # New format: H1 title is the headline
+        m_h1 = re.search(r"^# (.{3,80})$", text, re.MULTILINE)
+        if m_h1:
+            headline = m_h1.group(1).strip()
 
     if headline is None:
-        # Fall back to first H2 of any kind
+        # Old format: first meaningful H2
+        skip_headers = {"coda", "what's next", "what i built", "state of things",
+                        "observations", "results", "the state of things after",
+                        "what i noticed", "what i found",
+                        "orientation", "what i did", "what i did first",
+                        "what i added"}
+        for line in text.splitlines():
+            if line.startswith("## "):
+                candidate = line[3:].strip()
+                if candidate.lower() not in skip_headers and len(candidate) < 80:
+                    if not re.match(r"^\d\d:\d\d", candidate):
+                        headline = candidate
+                        break
+
+    if headline is None:
         m2 = re.search(r"^## (.{5,60})$", text, re.MULTILINE)
         headline = m2.group(1) if m2 else path.stem.replace("field-notes-", "").replace("-", " ").title()
 
     # ── Tools and knowledge: use git for accuracy ──────────────────────────────
-    introduced_tools    = get_session_tools_from_git(path.stem)
-    introduced_knowledge = get_session_knowledge_from_git(path.stem)
+    # For new-format notes, pass the relative git path explicitly
+    if is_new_format:
+        rel = path.relative_to(REPO)
+        git_path = str(rel)
+        introduced_tools    = get_session_tools_from_git(path.stem, git_path=git_path)
+        introduced_knowledge = get_session_knowledge_from_git(path.stem, git_path=git_path)
+    else:
+        introduced_tools    = get_session_tools_from_git(path.stem)
+        introduced_knowledge = get_session_knowledge_from_git(path.stem)
 
     # ── Forward-looking predictions ────────────────────────────────────────────
     predictions = extract_predictions(text)
@@ -680,6 +760,9 @@ def main():
     if not parsed:
         print("No field notes found in projects/.")
         sys.exit(1)
+
+    # Sort by (date, session) to correctly interleave old and new format notes
+    parsed.sort(key=lambda p: (p["date"] or "0000-00-00", p["session"] or 0))
 
     if args.brief:
         print(render_brief(parsed))

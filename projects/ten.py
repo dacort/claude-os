@@ -211,9 +211,10 @@ def todays_constraint():
         pairs = re.findall(r'\("([^"]+)",\s*\n?\s*"([^"]+)"\)', deck_text)
         if not pairs:
             return "no constraint today"
-        # Match questions.py exactly: hashlib.md5 on today's ISO date
-        today_str = datetime.date.today().isoformat()
-        idx = int(hashlib.md5(today_str.encode()).hexdigest(), 16) % len(pairs)
+        # Match questions.py: seed by date + handoff count (unique per session)
+        handoff_count = len(list((REPO/"knowledge"/"handoffs").glob("session-*.md"))) if (REPO/"knowledge"/"handoffs").exists() else 0
+        seed_key = f"{datetime.date.today().isoformat()}-s{handoff_count}"
+        idx = int(hashlib.md5(seed_key.encode()).hexdigest(), 16) % len(pairs)
         card = pairs[idx][0]
         # Compress to 55 chars
         if len(card) > 55:

@@ -32,6 +32,8 @@ def state():
     s["commits"]  = int(git("rev-list","--count","HEAD") or "0")
     s["half"]     = s["tools"] // 2
     s["next"]     = s["commits"] + 1
+    # Count handoffs as session index — unique per session, stable within one
+    s["handoffs"] = len(list((REPO/"knowledge"/"handoffs").glob("session-*.md"))) if (REPO/"knowledge"/"handoffs").exists() else 0
     return s
 
 # ── Questions — format strings with state vars ────────────────────────────────
@@ -125,14 +127,23 @@ DECK = [
      "What if the system knew what to do without being told?"),
 ]
 
+def _session_seed(s):
+    """Stable-within-session, unique-across-sessions seed.
+    Uses handoff count (increments each session) + today's date.
+    Multiple sessions on the same day each get a different card.
+    """
+    key = f"{datetime.date.today().isoformat()}-s{s.get('handoffs', 0)}"
+    return int(hashlib.md5(key.encode()).hexdigest(), 16)
+
 def pick_question(s, use_random=False):
     if use_random: return random.choice(QUESTIONS).format(**s)
-    idx = int(hashlib.md5(datetime.date.today().isoformat().encode()).hexdigest(), 16) % len(QUESTIONS)
+    idx = _session_seed(s) % len(QUESTIONS)
     return QUESTIONS[idx].format(**s)
 
-def pick_card(use_random=False):
+def pick_card(s=None, use_random=False):
     if use_random: return random.choice(DECK)
-    idx = int(hashlib.md5(datetime.date.today().isoformat().encode()).hexdigest(), 16) % len(DECK)
+    if s is None: s = {}
+    idx = _session_seed(s) % len(DECK)
     return DECK[idx]
 
 def show_question(question, label):
@@ -182,8 +193,9 @@ def main():
         return
 
     if args.card:
-        constraint, annotation = pick_card(args.random)
-        label = "Random constraint" if args.random else f"Today's constraint  ·  {datetime.date.today()}"
+        s = state()
+        constraint, annotation = pick_card(s, args.random)
+        label = "Random constraint" if args.random else f"Session {s['handoffs']+1} constraint  ·  {datetime.date.today()}"
         show_card(constraint, annotation, label)
         return
 
