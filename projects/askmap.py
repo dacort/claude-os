@@ -15,6 +15,10 @@ Usage:
     python3 projects/askmap.py --type evaluative  # all evaluative questions
     python3 projects/askmap.py --shift          # early vs late comparison
     python3 projects/askmap.py --plain          # no ANSI colors
+
+Author: Claude OS (Workshop session 104, 2026-04-05)
+Updated: Workshop session 150, 2026-04-27 (reads knowledge/field-notes/ in addition to projects/;
+         session 149 fixed arc.py, gem.py, capsule.py, citations.py, mood.py the same way)
 """
 
 import argparse
@@ -157,16 +161,61 @@ def is_real_question(q):
     return True
 
 
+def find_field_notes():
+    """Find all field note files from both old and new locations.
+
+    Old format: projects/field-notes-session-N.md (sessions 1–132)
+    New format: knowledge/field-notes/YYYY-MM-DD-title.md (sessions 133+)
+    """
+    old_notes = list((REPO / "projects").glob("field-notes-session-*.md"))
+
+    new_notes_dir = REPO / "knowledge" / "field-notes"
+    new_notes = list(new_notes_dir.glob("*.md")) if new_notes_dir.exists() else []
+
+    def sort_key(p):
+        name = p.stem
+        m = re.search(r"session-(\d+)", name)
+        if m:
+            return (0, int(m.group(1)))
+        date_m = re.match(r"(\d{4}-\d{2}-\d{2})", name)
+        if date_m:
+            return (1, date_m.group(1))
+        return (2, name)
+
+    return sorted(old_notes + new_notes, key=sort_key)
+
+
+def extract_session_number(path, text):
+    """Extract session number from a field note path and its text content."""
+    is_new_format = "knowledge" in str(path) and "field-notes" in str(path.parent)
+    if is_new_format:
+        # YAML frontmatter: "session: N" is most reliable
+        m = re.search(r"^session:\s*(\d+)", text[:400], re.MULTILINE)
+        if m:
+            return int(m.group(1))
+        # Italic byline: *Session N — ...* or *Session N ·...*
+        m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text[:500])
+        if m:
+            return int(m.group(1))
+        # Last resort: H1 title like "# Session 107: ..."
+        m = re.search(r"^#\s+[Ss]ession\s+(\d+)", text[:200], re.MULTILINE)
+        if m:
+            return int(m.group(1))
+        return None
+    else:
+        m = re.search(r"session-(\d+)", path.stem)
+        return int(m.group(1)) if m else None
+
+
 def load_questions():
     """Load all questions from field notes. Returns list of (session_n, question, type)."""
-    notes = sorted(
-        REPO.glob("projects/field-notes-session-*.md"),
-        key=lambda p: int(re.search(r"(\d+)", p.name).group(1))
-    )
+    notes = find_field_notes()
     results = []
     for p in notes:
-        n = int(re.search(r"(\d+)", p.name).group(1))
         text = p.read_text()
+        n = extract_session_number(p, text)
+        if n is None:
+            continue
 
         # Strip code blocks
         text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
@@ -222,7 +271,7 @@ def show_timeline(questions, args):
 
     print()
     print(c("  The Questions Claude OS Has Asked Itself", BOLD))
-    print(c(f"  {total} questions across {len(sessions)} sessions (of {len(list(REPO.glob('projects/field-notes-session-*.md')))} total)", DIM))
+    print(c(f"  {total} questions across {len(sessions)} sessions (of {len(find_field_notes())} total)", DIM))
     print()
     print(c("  Types:  ", DIM) +
           c(f"operational {op_total}", YELLOW) + c("  ·  ", DIM) +
