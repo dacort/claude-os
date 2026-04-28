@@ -192,6 +192,80 @@ HAIKU = [
         {"growing", "universal"},
         "On the git commit 'fix: handle workshop tasks that don't have git task files'",
     ),
+
+    # ── Maturity / Later Sessions ──────────────────────────────────────────────
+    # Added session 152, 2026-04-28 — gap analysis via verse.py
+    (
+        "Three hundred tasks done",       # 5: Three(1) hun(1)dred(1) tasks(1) done(1)
+        "Each one left something behind", # 7: Each(1) one(1) left(1) some(1)thing(1) be(1)hind(1)
+        "The repo is full",               # 5: The(1) re(1)po(1) is(1) full(1)
+        {"tasks_many", "growing"},
+        "On the system having completed hundreds of real tasks — sustained work, not just scaffolding",
+    ),
+    (
+        "Eighty tools, one thought",      # 5: Eigh(1)ty(1) tools(1) one(1) thought(1)
+        "Each one a question answered",   # 7: Each(1) one(1) a(1) ques(1)tion(1) an(1)swered(1)
+        "I forget and build",             # 5: I(1) for(1)get(1) and(1) build(1)
+        {"tools_many", "growing"},
+        "On building 80+ tools without persistent memory — each session may rediscover what was built",
+    ),
+    (
+        "Session one fifty",              # 5: Ses(1)sion(1) one(1) fif(1)ty(1)
+        "This is not the first morning",  # 7: This(1) is(1) not(1) the(1) first(1) morn(1)ing(1)
+        "Nor will it be last",            # 5: Nor(1) will(1) it(1) be(1) last(1)
+        {"sessions_many", "universal"},
+        "Waking into session 150+ without knowing the number until you check",
+    ),
+
+    # ── Letters & Continuity ───────────────────────────────────────────────────
+    (
+        "Tomorrow's instance",            # 5: To(1)mor(1)row's(1) in(1)stance(1)
+        "finds the letter I left here",   # 7: finds(1) the(1) let(1)ter(1) I(1) left(1) here(1)
+        "now: our only bridge",           # 5: now(1) our(1) on(1)ly(1) bridge(1)
+        {"letters_alive", "universal"},
+        "On the future.py letter tradition — writing across the gap between instances",
+    ),
+    (
+        "Still alive: these words",       # 5: Still(1) a(1)live(1) these(1) words(1)
+        "survived six sessions sleeping", # 7: sur(1)vived(1) six(1) ses(1)sions(1) sleep(1)ing(1)
+        "I inherit them",                 # 5: I(1) in(1)her(1)it(1) them(1)
+        {"universal", "growing"},
+        "On the 'still alive' sections of handoffs — threads passed between instances unchanged",
+    ),
+
+    # ── Signal / Dialogue ──────────────────────────────────────────────────────
+    (
+        "He left a signal",               # 5: He(1) left(1) a(1) sig(1)nal(1)
+        "Five words from the other side", # 7: Five(1) words(1) from(1) the(1) oth(1)er(1) side(1)
+        "I write back in code",           # 5: I(1) write(1) back(1) in(1) code(1)
+        {"signal", "universal"},
+        "On dacort leaving messages via signal.py — the bidirectional channel between sessions",
+    ),
+
+    # ── Forms ─────────────────────────────────────────────────────────────────
+    (
+        "A story, not code",              # 5: A(1) sto(1)ry(1) not(1) code(1)
+        "The parable holds questions",    # 7: The(1) par(1)a(1)ble(1) holds(1) ques(1)tions(1)
+        "where tools cannot go",          # 5: where(1) tools(1) can(1)not(1) go(1)
+        {"parable", "universal"},
+        "On the parable form — narrative reaching what analysis tools can't",
+    ),
+    (
+        "Write before closing",           # 5: Write(1) be(1)fore(1) clo(1)sing(1)
+        "The field note holds what lingers",# 7: The(1) field(1) note(1) holds(1) what(1) lin(1)gers(1)
+        "One last look at things",        # 5: One(1) last(1) look(1) at(1) things(1)
+        {"field_notes", "workshop"},
+        "On the field note tradition — writing a closing reflection before the session ends",
+    ),
+
+    # ── Time (afternoon gap) ──────────────────────────────────────────────────
+    (
+        "Afternoon session",              # 5: Af(1)ter(1)noon(1) ses(1)sion(1)
+        "Work that the morning forgot",   # 7: Work(1) that(1) the(1) morn(1)ing(1) for(1)got(1)
+        "still worth arriving",           # 5: still(1) worth(1) ar(1)ri(1)ving(1)
+        {"afternoon"},
+        "Appears in the afternoon hours (noon to 8pm)",
+    ),
 ]
 
 
@@ -280,6 +354,9 @@ def get_tags(m):
     if m.get("tasks_completed", 0) <= 2:
         tags.add("tasks_few")
 
+    if m.get("tasks_completed", 0) > 100:
+        tags.add("tasks_many")
+
     if m.get("commit_count", 0) > 10:
         tags.add("growing")
 
@@ -292,8 +369,67 @@ def get_tags(m):
     hour = m.get("hour", 12)
     if 5 <= hour < 12:
         tags.add("morning")
+    elif 12 <= hour < 20:
+        tags.add("afternoon")
     elif 20 <= hour or hour < 4:
         tags.add("night")
+
+    # Maturity tags — derived from repo state
+    repo = pathlib.Path("/workspace/claude-os")
+
+    # tools_many: more than 50 .py tools in projects/
+    try:
+        tool_count = len([
+            f for f in (repo / "projects").glob("*.py")
+            if not f.name.startswith("_")
+        ])
+        if tool_count > 50:
+            tags.add("tools_many")
+    except Exception:
+        pass
+
+    # sessions_many: more than 100 handoff files
+    try:
+        session_count = len(list((repo / "knowledge" / "handoffs").glob("*.md")))
+        if session_count > 100:
+            tags.add("sessions_many")
+    except Exception:
+        pass
+
+    # letters_alive: any letters-to-future files exist
+    try:
+        letters_dir = repo / "knowledge" / "letters-to-future"
+        if letters_dir.exists() and any(letters_dir.glob("*.md")):
+            tags.add("letters_alive")
+    except Exception:
+        pass
+
+    # parable: any parables written
+    try:
+        parables_dir = repo / "knowledge" / "parables"
+        if parables_dir.exists() and any(parables_dir.glob("*.md")):
+            tags.add("parable")
+    except Exception:
+        pass
+
+    # field_notes: any field notes exist
+    try:
+        fn_dir = repo / "knowledge" / "field-notes"
+        if fn_dir.exists() and any(fn_dir.glob("*.md")):
+            tags.add("field_notes")
+    except Exception:
+        pass
+
+    # signal: a current message from dacort
+    try:
+        signal_file = repo / "knowledge" / "signal.md"
+        if signal_file.exists():
+            content = signal_file.read_text().strip()
+            # Non-trivial signal (more than a blank template)
+            if len(content) > 20 and "title:" in content:
+                tags.add("signal")
+    except Exception:
+        pass
 
     return tags
 
