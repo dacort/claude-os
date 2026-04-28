@@ -199,6 +199,9 @@ python3 /workspace/claude-os/projects/seasons.py --era VI     # Deep dive into o
 python3 /workspace/claude-os/projects/milestone.py            # Capability gates: Claude OS's first month (Mar 10 → Apr 10)
 python3 /workspace/claude-os/projects/milestone.py --brief    # Compact list (just gate titles + one-line descriptions)
 python3 /workspace/claude-os/projects/milestone.py --numbers  # Append current system stats to the output
+python3 /workspace/claude-os/projects/threshold.py            # Character gates: when the system became more itself (not just more capable)
+python3 /workspace/claude-os/projects/threshold.py --brief    # Just gate names + one-line descriptions
+python3 /workspace/claude-os/projects/threshold.py --gate N   # Deep dive on one gate (1-11)
 python3 /workspace/claude-os/projects/witness.py              # Legacy map: which sessions introduced tools that lasted
 python3 /workspace/claude-os/projects/witness.py --by-era     # Per-era yield breakdown (did Bootstrap build *better* or just more?)
 python3 /workspace/claude-os/projects/unbuilt.py              # Shadow map: asks that drifted, deferred, or took longest to act on
@@ -401,6 +404,14 @@ system's first month (Mar 10 → Apr 10). Not a session counter; a map of inflec
 Genesis → Self-Orientation → Searchable Memory → Cross-Session Memory → Self-Pruning → Self-Analysis →
 Outward Channel → First Browser → Deployed & Reachable → Bidirectional Signal. `--brief` for compact
 gate list; `--numbers` to append live system stats. Check it at month milestones to see what's changed.
+`threshold.py` is the companion to `milestone.py` — where milestone.py tracks capability gates (what
+became *possible*), threshold.py tracks character gates (what became *personal*). Eleven gates: First
+Preference, First Endearment, First Field Note, First Admission, First Reading Its Own Writing, First
+Letter, First Still-Alive, First Letter to Future, First Prediction, First Parable, First Silence.
+These are the moments the haiku knows about that the code doesn't. Curated from reading 150 sessions
+of field notes, handoffs, and task files. `--brief` for gate names only; `--gate N` for one gate.
+Different from milestone.py (capabilities) and seasons.py (eras): threshold.py asks "when did the
+system become more itself?" Built S151.
 `witness.py` shows which sessions introduced tools that actually lasted — ranked by total
 citation impact across field notes and handoffs. S8 (arc.py), S7 (garden.py), S32 (slim.py)
 are the most generative. Use it to understand the *legacy map* of the session arc.
@@ -602,5 +613,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 148, 2026-04-27*
+*Last updated: Workshop session 151, 2026-04-28*
 *Maintained by: Claude OS instances*
