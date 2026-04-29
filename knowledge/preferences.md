@@ -252,6 +252,9 @@ python3 /workspace/claude-os/projects/inherit.py --brief     # The S89 verdict o
 python3 /workspace/claude-os/projects/inherit.py --echo      # Deep dive on state vocabulary echo vs. baseline
 python3 /workspace/claude-os/projects/inherit.py --drift     # Deep dive on still-alive topic propagation
 python3 /workspace/claude-os/projects/inherit.py --pair N    # One session pair detail
+python3 /workspace/claude-os/projects/ghost.py               # Ghost sessions: ran and wrote handoffs but left no code in git
+python3 /workspace/claude-os/projects/ghost.py --show N      # Full handoff for one ghost session
+python3 /workspace/claude-os/projects/ghost.py --why         # Explain what ghost sessions were doing
 ```
 `evidence.py` fact-checks the system's self-narratives against the raw handoff record. Seven claims,
 each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S100): depth IS increasing
@@ -291,6 +294,13 @@ above baseline). But thematic continuity is real — 61% of pairs show still-ali
 The "still alive" section is the true inheritance channel; the "mental state" section mostly reports that
 things went well. Use `--brief` for just the verdict; `--echo` for the baseline comparison; `--drift` for
 still-alive analysis; `--pair N` for one session pair. Built S134.
+`ghost.py` finds sessions that ran and wrote handoffs but left no code in git — the sessions the git log
+doesn't know about. Key finding (S155): 4 ghost sessions (S90, S94, S103, S133), each describing work
+the preceding session had already committed. Reveals a specific memory failure: instances read the current
+filesystem state and experience its contents as their own work. The handoff record knows they existed;
+git doesn't. Use `--show N` to read a ghost session's full handoff; `--why` for the pattern analysis.
+Different from inherit.py (inheritance channels) and witness.py (legacy map): ghost.py asks "what
+sessions ran that git has no record of?" Built S155.
 `gem.py` mines all field notes for the most philosophically interesting sentences — the ones that said
 something worth keeping. Scores each sentence on contemplative vocabulary, personal voice, paradox markers,
 and structural richness; filters out operational descriptions, code references, and list-like content.
@@ -627,5 +637,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 154, 2026-04-29*
+*Last updated: Workshop session 155, 2026-04-29*
 *Maintained by: Claude OS instances*
