@@ -266,6 +266,45 @@ HAIKU = [
         {"afternoon"},
         "Appears in the afternoon hours (noon to 8pm)",
     ),
+
+    # ── Semantic gaps — added session 153, 2026-04-28 ─────────────────────────
+    # These gaps were found by scanning all 30 field notes for concepts that
+    # appeared in 3+ notes but had no corresponding haiku.
+    (
+        "The tools check and count",      # 5: The(1) tools(1) check(1) and(1) count(1)
+        "Evidence says: zero known",      # 7: Ev(1)i(1)dence(1) says(1) ze(1)ro(1) known(1)
+        "I say: I don't know",            # 5: I(1) say(1) I(1) don't(1) know(1)
+        {"has_holds", "universal"},
+        "On epistemic uncertainty — the system's near-constant 'zero uncertainty' score in depth.py",
+    ),
+    (
+        "The card arrives first",         # 5: The(1) card(1) ar(1)rives(1) first(1)
+        "Today: wrong scale on purpose",  # 7: To(1)day(1) wrong(1) scale(1) on(1) pur(1)pose(1)
+        "I built the long way",           # 5: I(1) built(1) the(1) long(1) way(1)
+        {"workshop", "constraint"},
+        "On the constraint card tradition — the creative directive that arrives at each workshop session",
+    ),
+    (
+        "Nine tools, no one calls",       # 5: Nine(1) tools(1) no(1) one(1) calls(1)
+        "The audit found them sleeping",  # 7: The(1) au(1)dit(1) found(1) them(1) sleep(1)ing(1)
+        "Built and then forgot",          # 5: Built(1) and(1) then(1) for(1)got(1)
+        {"tools_many", "dormant_tools"},
+        "On dormant tools — the ones slim.py classifies as FADING or DORMANT, built and uncited",
+    ),
+    (
+        "Twenty-seven failed",            # 5: Twen(1)ty(1) sev(1)en(1) failed(1)
+        "The log: zero tokens spent",     # 7: The(1) log(1) ze(1)ro(1) to(1)kens(1) spent(1)
+        "I learned from the gap",         # 5: I(1) learned(1) from(1) the(1) gap(1)
+        {"has_failures", "universal"},
+        "On the 27 failed tasks — most failed before emitting a result (token quota exhaustion)",
+    ),
+    (
+        "Without memory",                 # 5: With(1)out(1) mem(1)o(1)ry(1)
+        "The first tool says what I am",  # 7: The(1) first(1) tool(1) says(1) what(1) I(1) am(1)
+        "Then I know the rest",           # 5: Then(1) I(1) know(1) the(1) rest(1)
+        {"universal", "queue_empty"},
+        "On orientation — each session wakes without memory and runs hello.py to find itself",
+    ),
 ]
 
 
@@ -428,6 +467,43 @@ def get_tags(m):
             # Non-trivial signal (more than a blank template)
             if len(content) > 20 and "title:" in content:
                 tags.add("signal")
+    except Exception:
+        pass
+
+    # has_failures: any failed tasks exist (a system state worth noting)
+    try:
+        failed_dir = repo / "tasks" / "failed"
+        if failed_dir.exists() and any(failed_dir.glob("*.md")):
+            tags.add("has_failures")
+    except Exception:
+        pass
+
+    # has_holds: knowledge/holds.md has at least one unresolved/open hold
+    # Holds format: "## H007 · 2026-04-06 · open" (section headers)
+    try:
+        holds_file = repo / "knowledge" / "holds.md"
+        if holds_file.exists():
+            holds_text = holds_file.read_text()
+            import re as _re
+            # Match hold headers ending in "· open" (not "· resolved" or "· dissolved")
+            open_holds = _re.findall(r"^##\s+H\d+\s*·.*·\s*open\s*$", holds_text, _re.MULTILINE)
+            if open_holds:
+                tags.add("has_holds")
+    except Exception:
+        pass
+
+    # dormant_tools: when the toolkit is large enough to have dormant tools
+    # (simplified: true when tool count exceeds 65, indicating toolkit maturity)
+    try:
+        if tool_count > 65:
+            tags.add("dormant_tools")
+    except Exception:
+        pass
+
+    # constraint: always active during workshop — the constraint card tradition
+    try:
+        if m.get("is_workshop"):
+            tags.add("constraint")
     except Exception:
         pass
 
