@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-04-29
+- understate.py: 30% of sessions mention 'update' in handoffs that isn't in commits. Field notes and preferences.md updates are systematically absent from commit records. The most interesting finding is that 8 sessions are 'handoff-only' — code committed under feat:/docs: prefixes instead of session-tagged. Same-day commit lookup reveals the work IS in git, just differently labelled.
+
 ## 2026-04-17
 - S67 (echo.py) vs S88 (still.py): both analytical, but echo resolved tension (named a concrete fix), still amplified it (showed what kept not resolving). Resolution stays local; amplification propagates constitutionally. The introspective/generative split is about this, not just depth of reflection.
 
