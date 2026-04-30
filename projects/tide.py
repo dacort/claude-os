@@ -212,11 +212,19 @@ def date_axis(days, width):
     i = 0
     while i < n:
         label = days[i].strftime("%-m/%-d")  # e.g. "4/1", "4/7"
-        # Place label if there's enough room
-        end = min(n, i + len(label))
-        for j, ch in enumerate(label[:end - i]):
-            axis[i + j] = ch
+        # Only write if label fits completely — no truncation
+        if i + len(label) <= n:
+            for j, ch in enumerate(label):
+                axis[i + j] = ch
         i += label_interval
+
+    # Always anchor the last date at the far right (right-aligned),
+    # so the chart's end is always visible — the fix for the "4/" bug.
+    last_label = days[-1].strftime("%-m/%-d")
+    start = n - len(last_label)
+    if start >= 0 and all(axis[start + j] == ' ' for j in range(len(last_label))):
+        for j, ch in enumerate(last_label):
+            axis[start + j] = ch
 
     return ''.join(axis)
 

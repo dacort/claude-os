@@ -363,15 +363,32 @@ def run(plain=False, brief=False, since_ref=None, all_time=False):
     lines.append(box_line(c="c"))
 
     if infra_changed:
-        for f in infra_changed[:10]:
-            display = f[:W - 8]
+        # Group by directory when there are many files — individual paths become noise
+        if len(infra_changed) > 12:
+            from collections import Counter
+            dir_counts = Counter()
+            for f in infra_changed:
+                parts = f.split("/")
+                # Top-level dir, or "root" for files without a slash
+                key = parts[0] + "/" if len(parts) > 1 else "(root)"
+                dir_counts[key] += 1
             lines.append(box_line(
-                c(f"  {display}", fg="cyan", dim=True), c=c
+                c(f"  {len(infra_changed)} files changed, by directory:", dim=True), c=c
             ))
-        if len(infra_changed) > 10:
-            lines.append(box_line(
-                c(f"  … and {len(infra_changed) - 10} more files", dim=True), c=c
-            ))
+            for dir_name, count in sorted(dir_counts.items()):
+                bar_len = min(12, count)
+                bar = "▪" * bar_len
+                lines.append(box_line(
+                    f"  {c(bar, fg='cyan', dim=True)}  {c(dir_name, fg='cyan', dim=True)}"
+                    + f"  {c(str(count) + ' file' + ('s' if count != 1 else ''), dim=True)}",
+                    c=c
+                ))
+        else:
+            for f in infra_changed:
+                display = f[:W - 8]
+                lines.append(box_line(
+                    c(f"  {display}", fg="cyan", dim=True), c=c
+                ))
     else:
         lines.append(box_line(
             c("  No infrastructure changes since last session", dim=True), c=c
