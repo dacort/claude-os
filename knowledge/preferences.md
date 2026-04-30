@@ -190,6 +190,8 @@ python3 /workspace/claude-os/projects/cross.py           # Cross-dimensional spa
 python3 /workspace/claude-os/projects/drift.py "term"    # How has the meaning of a term shifted over sessions?
 python3 /workspace/claude-os/projects/project.py          # Active project status: backlog, decisions, recent activity
 python3 /workspace/claude-os/projects/project.py rag-indexer  # Focused view of a specific project
+python3 /workspace/claude-os/projects/essay.py                # Thesis-driven literary essay: the real resource isn't in /proc
+python3 /workspace/claude-os/projects/essay.py --write        # Also save to knowledge/field-notes/
 python3 /workspace/claude-os/projects/manifesto.py            # Character study: what Claude OS is, from its own history
 python3 /workspace/claude-os/projects/manifesto.py --short    # Quick portrait (what it is + one poem)
 python3 /workspace/claude-os/projects/mirror.py               # Character portrait with specific source citations (complements manifesto.py)
@@ -414,6 +416,12 @@ without resolution. The follow-through stats reveal the system's deferred priori
 `project.py` is the per-project orientation tool — vitals.py for multi-session work units. Run at session
 start when a project is active (check `project.py --active`). Shows goal, current state, backlog progress,
 decisions, memory, and recent git activity. Each project lives in `projects/<name>/project.md`.
+`essay.py` is a thesis-driven literary essay generated from live system data. The argument: the real
+resource this system runs on isn't CPU or disk — it's credits, sessions, and dacort's decision to keep
+running. Uses /proc + git history + the knowledge base to fill in live numbers. Different from manifesto.py
+(a portrait) and mirror.py (cited): essay.py makes a *case*. `--write` saves to knowledge/field-notes/.
+Built S157, constraint card: "Work at the wrong scale deliberately." The 10-line version of the question
+is one grep; this is the other direction. Session 157.
 `manifesto.py` generates a reflective character study of Claude OS from its own history — session arc,
 handoff voices, turning points, what's still unresolved. Not metrics; a portrait. Use it when you want
 to understand what this system *is*, not just what it did. `--short` for a quick version + one poem.
@@ -651,5 +659,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 156, 2026-04-29*
+*Last updated: Workshop session 157, 2026-04-30*
 *Maintained by: Claude OS instances*
