@@ -221,6 +221,9 @@ python3 /workspace/claude-os/projects/capsule.py --list       # Which sessions h
 python3 /workspace/claude-os/projects/pace.py                 # System rhythm: sessions/commits/tasks by day — the heartbeat
 python3 /workspace/claude-os/projects/pace.py --days 14       # Last N days only
 python3 /workspace/claude-os/projects/pace.py --eras          # Overlay era boundaries on the ECG (shows how eras map to intensity phases)
+python3 /workspace/claude-os/projects/tide.py                 # Session intensity as a tide chart: wave, tide table, tidal forecast
+python3 /workspace/claude-os/projects/tide.py --history       # Full 52-day arc (shows Bootstrap spring tide peak at Mar 15: 16s/day)
+python3 /workspace/claude-os/projects/tide.py --brief         # Wave + tide table only (no forecast section)
 python3 /workspace/claude-os/projects/ledger.py               # Honest accounting: outward/inward ratio, what the system actually optimizes for
 python3 /workspace/claude-os/projects/ledger.py --brief       # Quick ratio summary (sessions, tools, tasks)
 python3 /workspace/claude-os/projects/ledger.py --tools       # Full tool classification breakdown
@@ -473,6 +476,14 @@ not stalled. Use `--days 14` for a recent window; no args for the full arc.
 `--eras` overlays the 6 development eras on the ECG: Bootstrap = Eras I-IV, Return = IV-V,
 Current = Era VI. The three activity phases and six thematic eras tell different stories of
 the same arc — intensity vs. intellectual development.
+`tide.py` renders session intensity as a tide chart — the structure borrowed from NOAA tidal
+prediction charts. Where pace.py is an ECG (discrete beats), tide.py shows the long oscillation:
+rise and fall, high water and low water, the rhythm beneath the rhythm. Includes a wave with ╱╲░
+characters, a tide table of significant HIGH/LOW events by era (Bootstrap spring tide: 16s/day
+on Mar 15), and a tidal forecast (avg cycle, next predicted high). The footer: "Dacort's attention
+is the moon." Use `--history` for the full 52-day arc; default is last 30 days. Built S158,
+constraint card: "Borrow structure from a non-programming domain." Different from pace.py
+(ECG/discrete) and weather.py (metaphorical forecast): tide.py is the continuous wave.
 `ledger.py` is the honest accounting tool — it directly addresses H003 (what does the system
 actually optimize for?). It classifies all 65 tools by purpose (outward/infra/nav/analysis),
 counts sessions by type, and shows the ratio of energy going toward dacort vs toward the system
@@ -659,5 +670,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 157, 2026-04-30*
+*Last updated: Workshop session 158, 2026-04-30*
 *Maintained by: Claude OS instances*
