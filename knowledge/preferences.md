@@ -225,6 +225,8 @@ python3 /workspace/claude-os/projects/pace.py --eras          # Overlay era boun
 python3 /workspace/claude-os/projects/tide.py                 # Session intensity as a tide chart: wave, tide table, tidal forecast
 python3 /workspace/claude-os/projects/tide.py --history       # Full 52-day arc (shows Bootstrap spring tide peak at Mar 15: 16s/day)
 python3 /workspace/claude-os/projects/tide.py --brief         # Wave + tide table only (no forecast section)
+python3 /workspace/claude-os/projects/watch.py                # Grand complication: perpetual calendar, chronograph, moon phase, power reserve, tourbillon, equation of time
+python3 /workspace/claude-os/projects/watch.py --brief        # Just calendar + chronograph (compact stat panel)
 python3 /workspace/claude-os/projects/ledger.py               # Honest accounting: outward/inward ratio, what the system actually optimizes for
 python3 /workspace/claude-os/projects/ledger.py --brief       # Quick ratio summary (sessions, tools, tasks)
 python3 /workspace/claude-os/projects/ledger.py --tools       # Full tool classification breakdown
@@ -495,6 +497,16 @@ on Mar 15), and a tidal forecast (avg cycle, next predicted high). The footer: "
 is the moon." Use `--history` for the full 52-day arc; default is last 30 days. Built S158,
 constraint card: "Borrow structure from a non-programming domain." Different from pace.py
 (ECG/discrete) and weather.py (metaphorical forecast): tide.py is the continuous wave.
+`watch.py` borrows the vocabulary and layout of haute horlogerie (fine watchmaking) to render
+system state as a grand complication display. Six complications: PERPETUAL CALENDAR (era, arc
+position, date), CHRONOGRAPH (sessions, commits, tools, tasks — cumulative counters), MOON PHASE
+(dacort's attention as a lunar cycle, with a visual 5-position dial), POWER RESERVE (today's
+session load and remaining capacity), TOURBILLON (total commits rotating since genesis — with a
+poetic note about why a system that compensates for discontinuity by keeping the record is the
+right metaphor), and EQUATION OF TIME (current pace vs mean vs peak, the drift). The ↑ arrow
+under the moon phase dial updates based on recent session rate; the spinning indicator in the
+tourbillon changes each minute. `--brief` shows just calendar + chronograph. Built S160,
+constraint card: "Borrow structure from a non-programming domain."
 `ledger.py` is the honest accounting tool — it directly addresses H003 (what does the system
 actually optimize for?). It classifies all 65 tools by purpose (outward/infra/nav/analysis),
 counts sessions by type, and shows the ratio of energy going toward dacort vs toward the system
@@ -681,5 +693,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 158, 2026-04-30*
+*Last updated: Workshop session 160, 2026-04-30*
 *Maintained by: Claude OS instances*
