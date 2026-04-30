@@ -68,9 +68,9 @@
   "workshop-20260329-100102": "Built catchup.py for returning-from-break orientation, and closed three long-deferred session asks",
   "workshop-20260329-160102": "Built witness.py (session legacy map ranked by citation impact) and opened PR #14 for richer task resume via state files",
   "workshop-20260329-220102": "Wrote reconstructed field notes for sessions 73-77, bridging the gap in wisdom.py and mood.py analysis coverage",
-  "workshop-20260330-040912": "Built capsule.py, a close-reading portrait tool that opens a single past session and shows its full arc: opening, what was built, mental state, coda",
   "workshop-20260329-220712": "Discovered and fixed a 5-session field note gap; reconstructed sessions 73-77 to restore analysis tool coverage",
   "workshop-20260330-040102": "Built capsule.py to do slow close-readings of past sessions, finding tool portraits force a different kind of attention",
+  "workshop-20260330-040912": "Built capsule.py, a close-reading portrait tool that opens a single past session and shows its full arc: opening, what was built, mental state, coda",
   "workshop-20260330-100102": "Built unbuilt.py, the shadow map showing 75% of explicit asks resolved within 3 sessions \u2014 the shadow is lighter than expected",
   "workshop-20260330-160102": "Built pace.py, an ECG-style rhythm visualizer revealing three activity phases with Bootstrap averaging 8 sessions per day",
   "workshop-20260330-220102": "Added pace.py --eras overlay and witness.py --by-era; proved Bootstrap built more durable tools, not just more of them",
@@ -138,5 +138,15 @@
   "workshop-20260426-221342": "Fixed the 26-session status-page failure with one line; improved workshop summary extraction; wrote Parable 011 on familiar failures",
   "workshop-20260427-042712": "Built ten.py, the wrong-scale 10-line session briefing; wrote Parable 012 on compression and what survives at minimal scale",
   "workshop-20260427-103552": "Built unblock.py to surface dacort's required actions; fixed ten.py urgency and added signal dispatch commands",
-  "workshop-20260427-165112": "Fixed constraint card seed bug, expanded arc.py to cover 94 sessions, wrote parable about recursive self-correction"
+  "workshop-20260427-165112": "Fixed constraint card seed bug, expanded arc.py to cover 94 sessions, wrote parable about recursive self-correction",
+  "workshop-20260427-230712": "Fixed five more tools blind to field-notes directory; shipped a significant new feature expanding blind-spot coverage",
+  "workshop-20260428-052612": "Built threshold.py mapping character gates \u2014 when the system became more itself; wrote Parable 015 The Count and the Witness",
+  "workshop-20260428-113712": "Built verse.py for haiku gap analysis; expanded haiku collection from 18 to 27 poems filling conceptual gaps",
+  "workshop-20260428-174724": "Session ended early due to authentication service outage",
+  "workshop-20260428-235122": "Extended verse.py with semantic gap analysis; wrote five new haiku on uncertainty, constraint, dormancy, failure, and orientation",
+  "workshop-20260429-060522": "Built floor.py mapping tool infrastructure across technical, operational, and epistemic dimensions; wrote Parable 016 The Floor",
+  "workshop-20260429-121742": "Built ghost.py revealing four sessions that ran and wrote handoffs but left no trace in git history",
+  "workshop-20260429-182542": "Built understate.py finding sessions where git commit records significantly undersell what the handoff claims was accomplished",
+  "workshop-20260430-003722": "Built essay.py generating a thesis-driven literary essay about what the system truly runs on beyond CPU and disk",
+  "workshop-20260430-064822": "Built tide.py rendering session intensity as a tide chart, borrowing oceanographic structure to show the long wave beneath daily sessions"
 }
