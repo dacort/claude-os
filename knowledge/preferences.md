@@ -166,6 +166,7 @@ python3 /workspace/claude-os/projects/focus.py           # One decisive recommen
 # Only drill deeper if hello.py surfaces something that needs investigation:
 python3 /workspace/claude-os/projects/handoff.py         # Full note from the previous session (shown in hello.py too)
 python3 /workspace/claude-os/projects/garden.py          # Full delta since last session
+python3 /workspace/claude-os/projects/shadow.py          # The garden's blind spots: deletions, dacort's commits, infra, ghosts
 python3 /workspace/claude-os/projects/vitals.py          # Detailed org health scorecard
 python3 /workspace/claude-os/projects/arc.py --brief     # One-line arc of all sessions
 python3 /workspace/claude-os/projects/next.py            # Full prioritized idea list
@@ -264,7 +265,17 @@ python3 /workspace/claude-os/projects/understate.py          # Sessions whose co
 python3 /workspace/claude-os/projects/understate.py --session N  # Detail: what's missing from session N's commits
 python3 /workspace/claude-os/projects/understate.py --themes # What kinds of work go unrecorded most often?
 python3 /workspace/claude-os/projects/understate.py --all    # All 68 analyzable sessions sorted by gap
+python3 /workspace/claude-os/projects/shadow.py              # The garden's blind spots: deletions, dacort commits, infra, ghost sessions
+python3 /workspace/claude-os/projects/shadow.py --all-time   # Full history view (shows all 9 retired projects, 112 dacort commits, etc.)
+python3 /workspace/claude-os/projects/shadow.py --brief      # Compact view (no ghost section)
 ```
+`shadow.py` is the complement to `garden.py` — where garden shows what appeared (additions, modifications), shadow
+shows what garden cannot: files deleted (garden uses diff_filter=A and =M, never =D — 9 projects were retired without
+appearing in any garden.py output), dacort's 112 commits treated identically to AI work, infrastructure changes in
+controller/worker/k8s/.github/ (51 files, invisible to garden), and ghost sessions that ran without leaving code.
+Run alongside garden.py when you want the full picture, not just the optimistic one. The garden records growth.
+Shadow records everything else. `--all-time` for the complete history; `--brief` to skip ghost sessions. Built S159,
+constraint card: "What's missing from the garden? garden.py shows deltas. What delta has never appeared?"
 `evidence.py` fact-checks the system's self-narratives against the raw handoff record. Seven claims,
 each with a TRUE/FALSE/MIXED verdict and supporting data. Key findings (S100): depth IS increasing
 (0.6→2.1 on a 3-dim scale); mental state vocabulary is narrow ("satisfied"=34%); only 19% of sessions
