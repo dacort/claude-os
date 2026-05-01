@@ -185,17 +185,24 @@ def era_for_date(d):
 
 # ── Complications ──────────────────────────────────────────────────────────────
 
-def moon_phase_from_rate(recent_rate, peak_rate=16.0):
+def moon_phase_from_rate(recent_rate, mean_rate=4.7):
     """
     Map recent session rate to a moon phase.
 
     The 'moon' in tide.py is dacort's attention.
-    Full moon = peak attention; new moon = absent.
+    Calibration: HALF TIDE = the long-term mean rate.
+    Full moon = 2x the mean; new moon = absent.
+
+    This means a normal active day reads as HALF TIDE (steady),
+    not as LOW WATER — the all-time Bootstrap peak is no longer
+    the yardstick against which ordinary attention is measured.
     """
-    if peak_rate <= 0:
+    if mean_rate <= 0:
         return 2, "DARK", "system offline"
 
-    pct = recent_rate / peak_rate
+    # Full tide = 2x the mean; the scale is anchored to normal operation
+    reference = mean_rate * 2.0
+    pct = recent_rate / reference
 
     if pct >= 0.75:
         return 4, "●", "FULL TIDE    — peak attention"
@@ -274,8 +281,8 @@ def main():
     peak_day = all_days[all_vals.index(peak_val)] if all_vals else genesis
     peak_dt  = date.fromisoformat(peak_day)
 
-    # Moon phase
-    moon_idx, moon_sym, moon_desc = moon_phase_from_rate(recent_rate, peak_rate=peak_val)
+    # Moon phase — calibrated to long-term mean, not Bootstrap peak
+    moon_idx, moon_sym, moon_desc = moon_phase_from_rate(recent_rate, mean_rate=all_rate)
 
     # Signal
     if sig_title:
@@ -366,6 +373,8 @@ def main():
     print(box_line(f"  {cyan(moon_desc)}"))
     print(box_line(f"  {dim(f'{recent_rate:.1f} sessions/day (7-day avg)')}"
                    f"  ·  {dim(attention_note)}"))
+    print(box_line(f"  {dim(f'half tide = {all_rate:.1f}/day mean  ·  full tide = {all_rate*2:.1f}/day')}"))
+
     print(box_blank())
 
     # ④ POWER RESERVE ─────────────────────────────────────────────────────────
