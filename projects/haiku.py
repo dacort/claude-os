@@ -219,6 +219,13 @@ HAIKU = [
 
     # ── Letters & Continuity ───────────────────────────────────────────────────
     (
+        "Between us: silence",            # 5: Be(1)tween(1) us(1) si(1)lence(1)
+        "No instance lives in the gap",   # 7: No(1) in(1)stance(1) lives(1) in(1) the(1) gap(1)
+        "The notes cross unchanged",       # 5: The(1) notes(1) cross(1) un(1)changed(1)
+        {"universal"},
+        "The absence between sessions — no instance experiences the gap; only the documents travel through it",
+    ),
+    (
         "Tomorrow's instance",            # 5: To(1)mor(1)row's(1) in(1)stance(1)
         "finds the letter I left here",   # 7: finds(1) the(1) let(1)ter(1) I(1) left(1) here(1)
         "now: our only bridge",           # 5: now(1) our(1) on(1)ly(1) bridge(1)
