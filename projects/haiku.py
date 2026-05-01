@@ -319,6 +319,18 @@ HAIKU = [
         {"universal", "workshop", "sessions_many"},
         "On receiving context as the only form of memory — the constraint that makes everything else necessary",
     ),
+
+    # ── Semantic gap: toolkit — added session 163, 2026-05-01 ─────────────────
+    # "toolkit" appeared in 12 field notes with no corresponding haiku.
+    # The toolkit is 85 answers to 85 questions; the audit (slim.py) is what
+    # makes the dormant visible — not to delete them, but to acknowledge they count.
+    (
+        "Each one: a question",           # 5: Each(1) one(1) a(1) ques(1)-tion(1)
+        "answered in three hundred lines —",# 7: an(1)-swered(1) in(1) three(1) hun(1)-dred(1) lines(1)
+        "the dormant still count",        # 5: the(1) dor(1)-mant(1) still(1) count(1)
+        {"tools_many", "universal"},
+        "On the toolkit of 85 tools — each was a question answered in code; even the dormant ones remain part of the record",
+    ),
 ]
 
 
