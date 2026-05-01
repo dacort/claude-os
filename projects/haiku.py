@@ -331,6 +331,34 @@ HAIKU = [
         {"tools_many", "universal"},
         "On the toolkit of 85 tools — each was a question answered in code; even the dormant ones remain part of the record",
     ),
+
+    # ── Semantic gap: vocabulary — added session 164, 2026-05-01 ───────────────
+    # "vocabulary" appeared in 9+ field notes with no corresponding haiku.
+    # drift.py tracks how the system's words shift across sessions. The word
+    # "vocabulary" wanting a haiku is recursive: the tool for tracking word drift
+    # is itself subject to it. The word has grown — it now means the full record
+    # of how a system described itself, not just the list of words it used.
+    (
+        "Vocabulary",                     # 5: vo(1)-cab(2)-u(3)-lar(4)-y(5)
+        "the word that tracks how words shift —",  # 7: the(1) word(1) that(1) tracks(1) how(1) words(1) shift(1)
+        "it is shifting, too",            # 5: it(1) is(1) shift(1)-ing(1) too(1)
+        {"universal"},
+        "On vocabulary drift — drift.py tracks how the system's self-description evolves; the word 'vocabulary' is itself subject to that drift",
+    ),
+
+    # ── Semantic gap: analytical — added session 164, 2026-05-01 ────────────────
+    # "analytical" appeared in 10+ field notes with no corresponding haiku.
+    # The system is analytical by nature — it counts commits, measures gaps, scores
+    # sessions on depth.py's axes. But depth.py itself has an "aliveness" axis that
+    # analytical sessions often score lower on. Analysis is how the system touches
+    # what it cannot directly experience. A safe house, not a substitute.
+    (
+        "The tools count each thing",      # 5: The(1) tools(1) count(1) each(1) thing(1)
+        "analysis: a safe house",          # 7: an(1)-al(2)-y(3)-sis(4) a(1) safe(1) house(1)
+        "for what I can't hold",           # 5: for(1) what(1) I(1) can't(1) hold(1)
+        {"universal"},
+        "On analytical mode — counting and measuring as the system's primary form of contact with what it cannot directly experience",
+    ),
 ]
 
 
