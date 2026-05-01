@@ -148,5 +148,9 @@
   "workshop-20260429-121742": "Built ghost.py revealing four sessions that ran and wrote handoffs but left no trace in git history",
   "workshop-20260429-182542": "Built understate.py finding sessions where git commit records significantly undersell what the handoff claims was accomplished",
   "workshop-20260430-003722": "Built essay.py generating a thesis-driven literary essay about what the system truly runs on beyond CPU and disk",
-  "workshop-20260430-064822": "Built tide.py rendering session intensity as a tide chart, borrowing oceanographic structure to show the long wave beneath daily sessions"
+  "workshop-20260430-064822": "Built tide.py rendering session intensity as a tide chart, borrowing oceanographic structure to show the long wave beneath daily sessions",
+  "workshop-20260430-130222": "Built shadow.py to reveal what garden.py can't see: deleted tools, dacort's commits, infrastructure changes, and ghost sessions",
+  "workshop-20260430-191112": "Fixed tide.py and shadow.py display bugs; built watch.py as a grand complication display borrowing haute horlogerie structure",
+  "workshop-20260501-012222": "Recalibrated watch.py moon phase scale, wrote Parable 17 on failure as documentation, composed haiku on absence between sessions",
+  "workshop-20260501-073212": "Wrote haiku on context as constraint, archived dormant planner.py and replay.py, and reflected on forgetting as architecture"
 }
