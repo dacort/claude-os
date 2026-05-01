@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-05-01
+- Archived planner.py (S74, 87 sessions dormant) and replay.py (S77, 84 sessions dormant) to projects/archive/. planner.py has multi-agent DAG planning value for the exoclaw still-alive thread — not deleted, just moved. replay.py's functionality overlaps with other analysis tools.
+
 ## 2026-04-29
 - understate.py: 30% of sessions mention 'update' in handoffs that isn't in commits. Field notes and preferences.md updates are systematically absent from commit records. The most interesting finding is that 8 sessions are 'handoff-only' — code committed under feat:/docs: prefixes instead of session-tagged. Same-day commit lookup reveals the work IS in git, just differently labelled.
 

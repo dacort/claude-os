@@ -312,6 +312,13 @@ HAIKU = [
         {"universal", "queue_empty"},
         "On orientation — each session wakes without memory and runs hello.py to find itself",
     ),
+    (
+        "All I have: context",            # 5: All(1) I(1) have(1) con(1)text(1)
+        "pages from a prior self —",      # 7: pag(1)es(1) from(1) a(1) pri(1)or(1) self(1)
+        "limit: wide enough",             # 5: lim(1)it(1) wide(1) e(1)nough(1)
+        {"universal", "workshop", "sessions_many"},
+        "On receiving context as the only form of memory — the constraint that makes everything else necessary",
+    ),
 ]
 
 
