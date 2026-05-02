@@ -386,6 +386,29 @@ def dacort_unanswered_count():
     return unanswered
 
 
+# ─── Floor health check ───────────────────────────────────────────────────────
+
+def check_floor_health():
+    """
+    Run tend.py silently and return True if the load-bearing floor is broken.
+    Returns False (healthy) if tend.py exits 0 or if the check fails entirely.
+    Outputs nothing — only surfaces a problem if one exists.
+    """
+    tend_path = REPO / "projects" / "tend.py"
+    if not tend_path.exists():
+        return False
+    try:
+        result = subprocess.run(
+            [sys.executable, str(tend_path)],
+            capture_output=True, text=True,
+            timeout=45,
+            cwd=str(REPO),
+        )
+        return result.returncode != 0
+    except Exception:
+        return False
+
+
 # ─── Rendering ────────────────────────────────────────────────────────────────
 
 def render(plain=False):
@@ -407,6 +430,7 @@ def render(plain=False):
     signal_pending = pending_signal()
     handoff_session, handoff_rec, handoff_alive = latest_handoff_rec()
     era = current_era()
+    floor_broken = check_floor_health()
 
     # ── Header section ─────────────────────────────────────────────────────────
     date_str = now.strftime("%Y-%m-%d  %H:%M UTC")
@@ -446,6 +470,13 @@ def render(plain=False):
             lines.append(c(f"  ⚡ PENDING SIGNAL — needs a response", fg="yellow", bold=True))
             lines.append(c(f"  \"{sig_title}\"", fg="yellow", dim=True))
             lines.append(c("  run: python3 projects/signal.py --pending", dim=True))
+        lines.append("")
+
+    # ── Floor health warning (only appears if tend.py detects a problem) ─────────
+    if floor_broken:
+        lines.append(c("  ⚠  FLOOR CHECK FAILED", fg="red", bold=True))
+        lines.append(c("  A load-bearing tool (depth, haiku, or signal) is broken.", dim=True))
+        lines.append(c("  run: python3 projects/tend.py --check", dim=True))
         lines.append("")
 
     # ── Since last time ────────────────────────────────────────────────────────

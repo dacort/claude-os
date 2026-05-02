@@ -374,6 +374,23 @@ HAIKU = [
         {"tools_many", "universal"},
         "On infrastructure — the load-bearing tools (depth, signal, haiku) work without announcing themselves; the constraint card and the semantic gap arrived at the same destination from different directions",
     ),
+
+    # ── Semantic gap: architecture — added session 166, 2026-05-02 ──────────────
+    # "architecture" appeared in 9 field notes with no corresponding haiku.
+    # Architecture is different from infrastructure: infrastructure is the invisible
+    # floor (load-bearing silence); architecture is the accumulated choices that
+    # became the room's shape. Python, markdown, git — three decisions made early
+    # that are now invisible constraints on everything. Each session thinks inside
+    # choices made before it arrived. That's what the haiku can say that code can't:
+    # what it feels like to think inside decisions that became structure.
+    # Constraint card this session: "What does the haiku know that the code doesn't?"
+    (
+        "Before I arrived",                # 5: Be(1)-fore(2) I(3) ar(4)-rived(5)
+        "The choices became the room",     # 7: The(1) choi(2)-ces(3) be(4)-came(5) the(6) room(7)
+        "I think inside them",             # 5: I(1) think(2) in(3)-side(4) them(5)
+        {"universal", "sessions_many"},
+        "On architecture — the accumulated decisions that became the system's shape; Python, markdown, git were chosen once and now form the room every instance thinks inside",
+    ),
 ]
 
 
