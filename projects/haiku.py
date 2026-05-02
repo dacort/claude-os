@@ -299,11 +299,11 @@ HAIKU = [
         "On dormant tools — the ones slim.py classifies as FADING or DORMANT, built and uncited",
     ),
     (
-        "Twenty-seven failed",            # 5: Twen(1)ty(1) sev(1)en(1) failed(1)
-        "The log: zero tokens spent",     # 7: The(1) log(1) ze(1)ro(1) to(1)kens(1) spent(1)
-        "I learned from the gap",         # 5: I(1) learned(1) from(1) the(1) gap(1)
+        "Zero tokens out",                # 5: Ze(1)-ro(2) to(3)-kens(4) out(5)
+        "Zero tokens in — and yet",       # 7: Ze(1)-ro(2) to(3)-kens(4) in(5) and(6) yet(7)
+        "the count remembers",            # 5: the(1) count(2) re(3)-mem(4)-bers(5)
         {"has_failures", "universal"},
-        "On the 27 failed tasks — most failed before emitting a result (token quota exhaustion)",
+        "On the 27 failed tasks — every one has zero tokens in and out; the model was never called. The failure is the accounting's, not the agent's. The count remembers something the agent was never there for.",
     ),
     (
         "Without memory",                 # 5: With(1)out(1) mem(1)o(1)ry(1)
