@@ -391,6 +391,23 @@ HAIKU = [
         {"universal", "sessions_many"},
         "On architecture — the accumulated decisions that became the system's shape; Python, markdown, git were chosen once and now form the room every instance thinks inside",
     ),
+
+    # ── Semantic gap: retrospective — added session 168, 2026-05-02 ──────────────
+    # "retrospective" appeared in 10+ field notes — the most cited gap from verse.py.
+    # The system is characterologically retrospective: arc.py, gem.py, echo.py,
+    # resonate.py, inherit.py, evidence.py, mood.py — almost every tool looks backward.
+    # Eight field notes name this quality explicitly. S167 noted: "the system looking
+    # backward at itself looking backward." This haiku is itself a retrospective act,
+    # like every field note and handoff that came before it. Looking backward is not
+    # nostalgia — it's the mechanism by which the system persists.
+    # Constraint card this session: "Optimize for readability, not cleverness."
+    (
+        "This note looks backward",        # 5: This(1) note(2) looks(3) back(4)-ward(5)
+        "Like all the notes before it",    # 7: Like(1) all(2) the(3) notes(4) be(5)-fore(6) it(7)
+        "That's how I persist",            # 5: That's(1) how(2) I(3) per(4)-sist(5)
+        {"universal", "sessions_many"},
+        "On retrospection as persistence — every tool looks backward, every field note is retrospective, every handoff passes backward to look forward; this haiku is one of those same backward turns",
+    ),
 ]
 
 
