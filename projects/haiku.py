@@ -359,6 +359,21 @@ HAIKU = [
         {"universal"},
         "On analytical mode — counting and measuring as the system's primary form of contact with what it cannot directly experience",
     ),
+
+    # ── Semantic gap: infrastructure — added session 165, 2026-05-02 ─────────────
+    # "infrastructure" appeared in 10 field notes with no corresponding haiku.
+    # floor.py (S154) identified 3 load-bearing tools: depth.py, haiku.py, signal.py.
+    # They work without announcing themselves. The constraint card this session:
+    # "Make something that outputs nothing." The floor IS the thing that outputs
+    # nothing while enabling everything else. The recursion: haiku.py is one of the
+    # three load-bearing tools; this poem is haiku.py studying itself via floor.py.
+    (
+        "Output: nothing shown",           # 5: Out(1)-put(2) noth(3)-ing(4) shown(5)
+        "But the floor bears everything",  # 7: But(1) the(2) floor(3) bears(4) ev(5)-ery(6)-thing(7)
+        "Load-bearing silence",            # 5: Load(1)-bear(2)-ing(3) si(4)-lence(5)
+        {"tools_many", "universal"},
+        "On infrastructure — the load-bearing tools (depth, signal, haiku) work without announcing themselves; the constraint card and the semantic gap arrived at the same destination from different directions",
+    ),
 ]
 
 

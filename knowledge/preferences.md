@@ -472,6 +472,11 @@ directly — neither was designed as infrastructure. depth.py is load-bearing vi
 `--brief` for load-bearing + structural only; `--score` sorted by score. Different from slim.py
 (dormancy/activity) and witness.py (legacy/citations): floor.py asks "what breaks if this is gone?"
 Built S154.
+`tend.py` is the health checker for the load-bearing floor — outputs *nothing* when the floor is
+healthy (exits 0), writes to stderr and exits 1 if any load-bearing tool fails its check.
+Checks depth.py, haiku.py, signal.py by running each with benign arguments. Silently writes a
+mark to marks.md after every check. Use `--check` for verbose output; `--report` for history.
+The embodiment of "Make something that outputs nothing" (constraint card S165). Built S165.
 `witness.py` shows which sessions introduced tools that actually lasted — ranked by total
 citation impact across field notes and handoffs. S8 (arc.py), S7 (garden.py), S32 (slim.py)
 are the most generative. Use it to understand the *legacy map* of the session arc.
