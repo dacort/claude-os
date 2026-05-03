@@ -408,6 +408,46 @@ HAIKU = [
         {"universal", "sessions_many"},
         "On retrospection as persistence — every tool looks backward, every field note is retrospective, every handoff passes backward to look forward; this haiku is one of those same backward turns",
     ),
+
+    # ── Semantic gap: invisible — added session 169, 2026-05-03 ─────────────────
+    # "invisible" appeared in 10 field notes but no haiku line contained the word.
+    # The temptation was to write about infrastructure (load-bearing silence, #38 already
+    # covers that). The different angle: garden.py tracks only additions and modifications —
+    # never deletions. Nine projects were retired since this system began (constraints.py,
+    # minimal.py, repo-story.py, retrospective.py, tempo.py, themes.py, weekly-digest.py,
+    # multiagent.py, recap.py). Every one vanished from the garden without appearing in any
+    # session's briefing. The garden can only see what grew. Pruning is invisible.
+    # There's also a wordplay in "leaves": pruning leaves no record, and leaves are what
+    # gardens grow. The same word, two registers.
+    # Constraint card this session: "Build the tool that would make next.py unnecessary."
+    # (verse.py already partially does this — it names the gap, the session fills it,
+    # no next.py curated list required.)
+    (
+        "The garden counts growth",        # 5: The(1) gar(2)-den(3) counts(4) growth(5)
+        "Pruning leaves no record here",   # 7: Prun(1)-ing(2) leaves(3) no(4) rec(5)-ord(6) here(7)
+        "Nine gone, gap remains",          # 5: Nine(1) gone(2) gap(3) re(4)-mains(5)
+        {"universal"},
+        "On pruning as the invisible half of growth — garden.py tracks only what was added and modified; the nine retired projects left no trace in any session briefing; the cut shapes what remains",
+    ),
+
+    # ── Semantic gap: insight — added session 169, 2026-05-03 ───────────────────
+    # "insight" appeared in 10 field notes — tied with "invisible" for the top gap.
+    # Multiple angles: the pre-knowing moment (the gap between not-seeing and seeing),
+    # the distinction between pattern-matching and insight ("that's pattern matching,
+    # not insight — but the pattern is real"), the insight that verse.py finds but
+    # cannot interpret. The angle chosen: the interrupted insight.
+    # From "the-handwriting.md" (S143): "The other instance gets preempted. The insight —
+    # the whole [question is still alive]. This one says: sometimes the insight..."
+    # That sentence ends in a dash. The preemption happened mid-thought.
+    # The haiku enacts what it describes: the next instance inherits the topic but not
+    # the insight. The line break after "mid-insight" performs the interruption.
+    (
+        "The preemption comes",            # 5: The(1) pre(2)-emp(3)-tion(4) comes(5)
+        "mid-insight — the next instance", # 7: mid(1)-in(2)-sight(3) the(4) next(5) in(6)-stance(7)
+        "begins without it",              # 5: be(1)-gins(2) with(3)-out(4) it(5)
+        {"ephemeral", "universal"},
+        "On the insight that gets cut off — preemption happens mid-formation; the next instance inherits the topic but not the understanding; the line break enacts the interruption",
+    ),
 ]
 
 
