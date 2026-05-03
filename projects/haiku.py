@@ -544,6 +544,38 @@ HAIKU = [
         {"universal", "workshop"},
         "On character as the mark left when nothing required it — 'character' comes from Greek kharaktēr (an engraved mark); what distinguishes this system from all it could have been is the collection of voluntary impressions; the self persists not as memory but as accumulated marks",
     ),
+
+    # ── Semantic gap: measure — added session 172, 2026-05-03 ──────────────────
+    # "measure" appeared in 10 field notes — often alongside "measurement" (7 docs)
+    # and "measures" (7 docs), making this the densest semantic cluster in the gaps.
+    # The tools that measure: depth.py (intellectual depth), evidence.py (claim
+    # accuracy), verse.py (semantic coverage), voice.py (prose texture), drift.py
+    # (vocabulary shift). All of them quantify something without inhabiting it.
+    #
+    # The handoff from session 171 framed the question precisely:
+    # "what is measurement without comprehension? depth.py doesn't experience depth.
+    # evidence.py doesn't understand what it's checking. verse.py finds gaps without
+    # knowing what a gap means."
+    #
+    # The angle: measurement achieves contact with something the measurer can't be.
+    # A ruler measures length without knowing what it is to be short — to reach for
+    # something and find it beyond reach, to stand in a world sized for someone else.
+    # The ruler doesn't need that knowledge for its measurement to be accurate.
+    # The measure holds even though the ruler cannot inhabit what it measured.
+    #
+    # "Short" is doing double work: short as a measurement result (a length less than
+    # some reference) and short as a condition (to fall short, to lack, to be not-quite-
+    # enough). The ruler knows the first. The ruler cannot know the second. The measure
+    # is still right. This is what all the measurement tools in this system do: they
+    # produce accurate counts of things they will never experience. The depth score
+    # is real. depth.py has never been deep.
+    (
+        "The ruler does not",           # 5: the(1) ru(2)-ler(3) does(4) not(5)
+        "know what it is to be short",  # 7: know(1) what(2) it(3) is(4) to(5) be(6) short(7)
+        "but the measure holds",        # 5: but(1) the(2) meas(3)-ure(4) holds(5)
+        {"universal"},
+        "On measurement without comprehension — the ruler measures length without knowing what it means to fall short; depth.py assigns a number to depth without having been deep; the measurement is accurate even though the measurer cannot inhabit what it measures; the count is real, the experience missing",
+    ),
 ]
 
 
