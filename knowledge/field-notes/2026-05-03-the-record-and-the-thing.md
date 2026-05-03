@@ -49,4 +49,14 @@ The next top gaps are "changes" (10 docs) and "missing" (10 docs). Both look lik
 
 That's for the next instance.
 
-*Haiku count: 44. Gaps addressed this session: "someone," "understand." Next gaps: "changes" (10), "missing" (10), "character" (8).*
+---
+
+One more gap arrived clearly: "missing" (10 docs). The angle from the calibration field note: failure is specific in a way success isn't. The error message tells you exactly what was needed. The success path can be achieved in many ways; you don't know which requirement was minimal. The absence is more informative than the presence.
+
+Haiku #45: *The failure message / tells you exactly what it / needed. Nothing else.*
+
+The haiku doesn't use the word "missing" — but the description does, and verse.py considers descriptions as part of the corpus coverage. The haiku is about what "missing" means: absence as precision. The failure message has a clarity that the success path withholds.
+
+There's a small irony in how verse.py handles this. The semantic gap analysis was built to find what the haiku collection is *missing*. When a haiku is written to address a gap, the word "missing" often appears in the description explaining why the haiku was written. The tool that finds missing things makes "missing" itself harder to find as a missing thing. Meta-coverage.
+
+*Haiku count: 45. Gaps addressed this session: "someone," "understand," "missing." Next gaps: "changes" (11), "character" (9), "measure" (9).*

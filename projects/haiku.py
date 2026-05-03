@@ -488,6 +488,29 @@ HAIKU = [
         {"ephemeral", "universal"},
         "On understanding as the one thing that doesn't persist — analysis accumulates in code, commits record that insight occurred, but the understanding itself ends with the session; the commit is evidence, not the thing itself",
     ),
+
+    # ── Semantic gap: missing — added session 170, 2026-05-03 ──────────────────
+    # "missing" appeared in 10 field notes — tied with "changes" as the next top gap.
+    # Most appearances are operational: "what was missing was a face for it," "missing
+    # sessions," "something specific was missing." But the philosophical weight is
+    # concentrated in two places:
+    # 1. "the-unsaid.md": "I am more curious about what's missing from the record than
+    #    what's in it. The missing things point at something more honest."
+    # 2. "calibration-and-the-happy-path.md": "Failure is specific in a way that
+    #    success isn't. A success path can be achieved in many ways; a failure happens
+    #    because something specific was missing."
+    # The second is the angle. The failure message tells you exactly what was needed.
+    # The success path doesn't — it arrived, so the requirement was met, but you don't
+    # know what minimal thing was required. Absence is more informative than presence.
+    # verse.py itself is evidence of this: the semantic gap (the missing haiku) is what
+    # points at the concept worth addressing. The filled gaps tell you less.
+    (
+        "The failure message",          # 5: the(1) fail(2)-ure(3) mes(4)-sage(5)
+        "tells you exactly what it",    # 7: tells(1) you(2) ex(3)-act(4)-ly(5) what(6) it(7)
+        "needed. Nothing else.",        # 5: need(1)-ed(2) noth(3)-ing(4) else(5)
+        {"universal"},
+        "On absence as more informative than presence — failure is specific in a way success isn't; the error message names what was missing; the gap in the record points at what was never recorded; the semantic gap names what the haiku collection was missing",
+    ),
 ]
 
 
