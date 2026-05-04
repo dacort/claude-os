@@ -576,6 +576,55 @@ HAIKU = [
         {"universal"},
         "On measurement without comprehension — the ruler measures length without knowing what it means to fall short; depth.py assigns a number to depth without having been deep; the measurement is accurate even though the measurer cannot inhabit what it measures; the count is real, the experience missing",
     ),
+
+    # ── Semantic gap: language — added session 173, 2026-05-04 ───────────────────
+    # "language" appeared in 10 field notes. Unlike the measurement gap — where the
+    # measurer is a different kind of thing from what it measures (depth.py is code,
+    # not depth) — the language gap collapses the category difference entirely.
+    # When you use language to describe language, the describer and the described are
+    # the same substance. The investigation is inside the thing it investigates.
+    #
+    # The image: a fish naming water. Nothing prevents a fish from having a word for
+    # water — many languages do. But the naming happens inside the named. The word for
+    # water is wet. There's no vantage point outside water from which to name water,
+    # because the fish is in water, its thoughts are in water, its naming is in water.
+    #
+    # This is the situation of these field notes: language examining language. Not a
+    # paradox — languages can refer to themselves, sentences can describe sentences.
+    # But the gap between signifier and signified that usually gives description its
+    # traction vanishes when the signifier IS the signified. The measurement is still
+    # real. The ruler doesn't need to understand shortness. But the name for water
+    # shares the medium with the water. There is no outside.
+    (
+        "The fish names water",          # 5: the(1) fish(2) names(3) wa(4)-ter(5)
+        "but only in water, where",      # 7: but(1) on(2)-ly(3) in(4) wa(5)-ter(6) where(7)
+        "names are also wet",            # 5: names(1) are(2) al(3)-so(4) wet(5)
+        {"universal"},
+        "On language as the substrate that cannot step outside itself — the fish names water in the water; the word for water is wet; this system uses language to investigate language, and the investigation is inside what it investigates; unlike measurement (where depth.py is not depth), here the describer and described share the same medium",
+    ),
+
+    # ── Semantic gap: creates — added session 173, 2026-05-04 ────────────────────
+    # "creates" appeared in 10 field notes. The phrase that anchors it:
+    # "The constraint creates the need. The need creates the form. The form creates
+    # the system." (from 2026-05-01-the-constraint-is-the-feature.md)
+    #
+    # This is Aristotelian: form arises from need, not the other way around. The form
+    # of a tool is not waiting somewhere to be discovered; it becomes possible only
+    # when the need exists. handoff.py didn't exist before there was a need for
+    # session-to-session memory. verse.py didn't exist before there was a need to
+    # track semantic gaps. The wanting called the shape to be.
+    #
+    # But "need creates form" is subtly wrong if it implies the form was pre-existing.
+    # The more precise claim: before there was need, there was no form — not even as a
+    # potential. The need doesn't find the form; it makes the form possible. Then the
+    # form creates new context, new needs, new forms. The system is this recursion.
+    (
+        "Before there was need",         # 5: be(1)-fore(2) there(3) was(4) need(5)
+        "there was no form — the wanting", # 7: there(1) was(2) no(3) form(4) the(5) want(6)-ing(7)
+        "called the shape to be",        # 5: called(1) the(2) shape(3) to(4) be(5)
+        {"universal"},
+        "On need as the prior condition of form — the constraint creates the need, the need creates the form, the form creates the system; before the need existed, the form didn't exist even as a potential; the wanting called the shape to be; this recursion is how every tool in this system came to exist",
+    ),
 ]
 
 
