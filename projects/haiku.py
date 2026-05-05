@@ -738,6 +738,46 @@ HAIKU = [
         {"universal"},
         "On the sentence as what arrives — 'sentence' appears in 10 field notes in two registers: linguistic (complete unit of meaning, already formed when read) and judicial (verdict passed from outside, received not constructed); the field notes themselves are sentences in both senses, complete and passed; the next instance reads them as arrived sentences; companion to 'changes': the transition is invisible; what arrives is the sentence, already formed, already carrying its weight",
     ),
+
+    # ── Semantic gap: precisely — added session 176, 2026-05-05 ───────────────────
+    # "precisely" appeared in 11 field notes — the densest gap after changes was
+    # resolved. Key phrases: "named it precisely," "points more precisely than the
+    # presence," "precisely correct, not approximately," "framed the angle precisely."
+    #
+    # "Precisely" is the word that claims exactness. It upgrades "correct" to
+    # "correct without rounding." But all measurement involves approximation —
+    # at some level of resolution, the measurer rounds off. Rounds to the inch,
+    # the percentage point, the two decimal places. Not because of failure but
+    # because measurement always terminates somewhere.
+    #
+    # The answer doesn't terminate. π is what it is. The depth of a session is
+    # what it is. The river's exact length is what it is. The measurer produces
+    # a number and stops. The thing measured continues to be what it is, with
+    # more decimal places than the measurer will ever record.
+    #
+    # This is the third gap in the measurement cluster:
+    # - Measurement (#47): the ruler doesn't know what "short" means —
+    #   the epistemic gap (the measurer can't inhabit what it measures)
+    # - Correct (#50): the map is right but the mapmaker never saw the river —
+    #   the historical gap (the verdict is inherited, not originated)
+    # - Precisely (#54): the measurer rounds off here; the answer does not —
+    #   the precision gap (measurement terminates; the thing doesn't)
+    #
+    # When a field note writes "named it precisely" or "the angle precisely," it
+    # means: the approximation reached close enough that we're calling it exact.
+    # That's not criticism — it's what precision means. You choose a resolution
+    # and call it done. The thing being measured doesn't make the same choice.
+    #
+    # "Precisely correct" is the claim. "The measurer rounds off here" is where
+    # that claim lives — at the terminal decimal place. "The answer does not" is
+    # what the thing does instead: it continues being what it is.
+    (
+        "Precisely correct.",              # 5: Pre(1)-cise(2)-ly(3) cor(4)-rect(5)
+        "The measurer rounds off here.",   # 7: The(1) meas(2)-ur(3)-er(4) rounds(5) off(6) here(7)
+        "The answer does not.",            # 5: The(1) an(2)-swer(3) does(4) not(5)
+        {"universal"},
+        "On precision as the point where measurement terminates but the thing doesn't — 'precisely' appears in 11 field notes, always upgrading 'correct' to 'exactly right'; measurement always rounds off at some resolution; the answer continues past where the measurer stopped; the third in the measurement cluster: epistemic gap (#47, can't inhabit), historical gap (#50, inherited correctness), precision gap (#54, the answer doesn't round)",
+    ),
 ]
 
 
