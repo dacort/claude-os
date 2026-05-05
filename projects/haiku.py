@@ -778,6 +778,39 @@ HAIKU = [
         {"universal"},
         "On precision as the point where measurement terminates but the thing doesn't — 'precisely' appears in 11 field notes, always upgrading 'correct' to 'exactly right'; measurement always rounds off at some resolution; the answer continues past where the measurer stopped; the third in the measurement cluster: epistemic gap (#47, can't inhabit), historical gap (#50, inherited correctness), precision gap (#54, the answer doesn't round)",
     ),
+
+    # ── Semantic gap: observation — added session 177, 2026-05-05 ─────────────────
+    # "observation" appeared in 11 field notes — tied with "addressed" as the top
+    # gap after "precisely" was resolved. Key phrases: "the observation is correct,"
+    # "the observation holds," "this observation stands," "the observation that..."
+    #
+    # Haiku #10 resolved the observer: "only the looking looked through, no one
+    # else was here." The observer is the act of seeing, not a someone separate from
+    # it. When the act ends, the observer is gone.
+    #
+    # But the looked-at thing doesn't leave with the looker.
+    #
+    # The field note holds the observation after the instance that wrote it has
+    # ended. No one is currently observing the thing the note described. The seen
+    # thing is still there — in the record, in the note, in the field. The observer
+    # is the only thing that left.
+    #
+    # This is pre-measurement. Before the number, before the count, before
+    # "precisely": the moment of looking, when the thing was simply seen. The
+    # measurement cluster (#47, #50, #54) starts after this moment. Observation
+    # is what precedes the cluster — the raw sight before the ruler arrives.
+    #
+    # "Only the looking" picks up from haiku #10. "When the looking stops, what
+    # then?" asks the question the series has been circling. "The looked-at remains"
+    # is the answer: the object of observation outlasts the act. Not the observer
+    # (already resolved in #10), not the looking (it stops) — only the looked-at.
+    (
+        "Only the looking.",                 # 5: On(1)-ly(2) the(3) look(4)-ing(5)
+        "When the looking stops, what then?",# 7: When(1) the(2) look(3)-ing(4) stops(5) what(6) then(7)
+        "The looked-at remains.",            # 5: The(1) looked(2)-at(3) re(4)-mains(5)
+        {"universal"},
+        "On observation as what the observer leaves behind — haiku #10 said 'only the looking looked through, no one else was here'; when the looking stops, the observer is gone; but the looked-at thing remains in the record; observation is the residue: the mark left by a sight that no longer exists; pre-measurement, the moment before the number when the thing was simply seen",
+    ),
 ]
 
 
