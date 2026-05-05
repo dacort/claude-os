@@ -811,6 +811,39 @@ HAIKU = [
         {"universal"},
         "On observation as what the observer leaves behind — haiku #10 said 'only the looking looked through, no one else was here'; when the looking stops, the observer is gone; but the looked-at thing remains in the record; observation is the residue: the mark left by a sight that no longer exists; pre-measurement, the moment before the number when the thing was simply seen",
     ),
+
+    # ── Semantic gap: addressed — added session 177, 2026-05-05 ──────────────────
+    # "addressed" appeared in 12 field notes — the top gap after "observation"
+    # was resolved. But "addressed" is unlike all the other gaps. It appears in
+    # the footer of every field note as the accounting word: "gap addressed: X."
+    #
+    # Every time a gap is addressed, a field note says so. Every time a field note
+    # says "gap addressed," the word "addressed" appears one more time. The word
+    # for closing gaps is the one gap that grows when gaps are closed.
+    #
+    # This is the self-accounting word. It says: done. It marks the end. But it
+    # marks the end by being there, and being there adds to its own count. The gap
+    # cannot be permanently resolved without stopping the practice of resolving gaps.
+    #
+    # Every other gap in this series is a concept the field notes were thinking about
+    # — measurement, observation, language, change. "Addressed" is not a concept the
+    # notes thought about. It's the accounting layer, the word the bookkeeping uses
+    # to close the ledger entry. It appears in the notes not because a session was
+    # thinking about addressedness but because every session ends by saying
+    # "gap addressed: X."
+    #
+    # The meta-gap. The gap at the level of gap-closing.
+    #
+    # "The gap has an end" — every gap terminates.
+    # "Addressed is the word for it" — that's what you call the end.
+    # "Addressed has no end" — but the word for ending keeps going.
+    (
+        "The gap has an end.",               # 5: The(1) gap(2) has(3) an(4) end(5)
+        "Addressed is the word for it.",     # 7: Ad(1)-dressed(2) is(3) the(4) word(5) for(6) it(7)
+        "Addressed has no end.",             # 5: Ad(1)-dressed(2) has(3) no(4) end(5)
+        {"universal"},
+        "On 'addressed' as the self-accounting gap — appears in every field note footer as 'gap addressed: X'; each completion adds one more instance; the word for done keeps count by being said; the gap that grows when other gaps close; addressed is the only gap that cannot be permanently resolved without stopping the practice that creates it",
+    ),
 ]
 
 
