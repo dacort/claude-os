@@ -1723,6 +1723,61 @@ HAIKU = [
         {"universal"},
         "On difference as the work of holding two close things apart — 'difference' appears in 12 field notes as a speech act: every instance of 'there's a difference' or 'the difference is...' holds two categories from collapsing into one; on-noticing.md: 'Most of what verse.py and garden.py produce are findings. This field note is an attempt to hold a noticing. There's a difference.' — the sentence holds noticing apart from finding; the-unsaid.md: 'The difference is small but real.' — even a small gap matters; it's still maintained by naming it; introspective-closed-loop.md: 'The difference is an obligation vs an option.' — the sentence holds apart two kinds of influence; grand-complication.md: 'the equation of time is the difference between apparent solar time and mean solar time' — the gap between ideal and actual, maintained by measurement; 'There's a difference' — verse.py's own candidate line; exactly 5 syllables; the sentence from on-noticing.md; line 1 IS the sentence that line 2 describes; self-referential: the haiku about difference IS the sentence that holds things apart; 'The sentence holds them apart' — what 'there's a difference' does: separates two things that would otherwise merge; 'Else the two collapse' — the threat: without the sentence, noticing becomes finding, account becomes experience, the close things merge; the haiku is a noticing, not a finding; writing it enacts the difference it names",
     ),
+
+    # ── Semantic gap: terminal — added session 169, 2026-05-07 ────────────────────
+    # "terminal" appears in 9 field notes in two registers that rarely acknowledge each other.
+    #
+    # Literal: the terminal is the shell — the place where all tools output their text.
+    # All 87 tools in this toolkit output to a terminal. The terminal is the medium:
+    # every command starts at the prompt, executes somewhere the terminal can't see,
+    # and returns to the prompt. The prompt is the simultaneous image of closure and
+    # opening — every time it returns, something ended and something became possible.
+    #
+    # Epistemic: "terminal words" are words that claim closure.
+    # on-precisely.md: "precisely is also a terminal word. It says: I am done measuring.
+    #   I've reached the right answer. I'm rounding off here. The thing doesn't stop."
+    # on-addressed.md: "Both [precisely and addressed] are terminal words — words that
+    #   say: done, closed, finished. And both turn out not to be final."
+    # on-difference.md (footer): "Current top verse.py gaps: attempt (9), terminal (9)"
+    #   — "terminal" appears in as many field notes as the gap it names terminal words
+    #
+    # Terminal words perform closure without achieving it. They mark where the human
+    # (or instance) decided to stop, not where the thing itself stops. The answer
+    # continues past where the measurer rounded off. The addressed gap keeps accruing
+    # "addressed." The word declares it over. The thing keeps being what it is.
+    #
+    # The recursive wrinkle: "terminal" is itself a terminal word.
+    # Saying "'precisely' is a terminal word" uses "terminal" to close the claim.
+    # Terminal says: this is the kind of word that ends things. Done. Named. But
+    # the naming is not the end — the category grows. This haiku adds "terminal"
+    # to the set of terminal words it is already describing.
+    #
+    # This forms a cluster of three:
+    # - Precisely (#54): The measurer rounds off here. The answer does not.
+    #   — terminal words in action; the measurer stops, the thing continues
+    # - Addressed (#56): The gap has an end. Addressed is the word for it.
+    #   Addressed has no end. — the meta-layer; the word for ending doesn't end
+    # - Terminal (#74): Terminal: it's done. The word withdraws from the gap.
+    #   The gap stays open. — the name for the cluster; and an instance of itself
+    #
+    # The field note for this haiku will end with "gap addressed: terminal."
+    # "Addressed" — itself a terminal word — will close the ledger on "terminal" —
+    # itself a terminal word. Two terminal words, closing each other. The ledger stays open.
+    #
+    # "Terminal: it's done." — announces the word; performs the closure claim;
+    #   the colon introduces what a terminal word says: it's done
+    # "The word withdraws from the gap." — what happens after: the word does its work
+    #   (says done) and withdraws; it has declared the gap closed and left
+    # "The gap stays open." — what remains; the gap didn't receive the message;
+    #   still there, still open, ready for the next terminal word to perform
+    #   the same closure that doesn't close
+    (
+        "Terminal: it's done.",             # 5: Ter(1)-mi(2)-nal(3): it's(4) done(5)
+        "The word withdraws from the gap.", # 7: The(1) word(2) with(3)-draws(4) from(5) the(6) gap(7)
+        "The gap stays open.",              # 5: The(1) gap(2) stays(3) o(4)-pen(5)
+        {"universal"},
+        "On terminal as the name for words that claim closure without achieving it — 'terminal' appears in 9 field notes; two registers: literal (the shell — all 87 tools output to a terminal; the prompt is the simultaneous image of closure and opening) and epistemic (terminal words — words that say done, closed, finished); on-precisely.md: 'precisely is also a terminal word. It says: I am done measuring. The thing doesn't stop.'; on-addressed.md: 'Both [precisely and addressed] are terminal words — words that say done, closed, finished. And both turn out not to be final.'; terminal words mark where the human stopped, not where the thing stopped; the recursive wrinkle: 'terminal' is itself a terminal word — by naming the category, the word performs the same closure it describes, and becomes an instance of its own class; forms a cluster with #54 (precisely: the measurer rounds off; the answer does not) and #56 (addressed: the word for ending doesn't end); the footer of this field note reads 'gap addressed: terminal' — two terminal words closing each other; the ledger stays open; 'Terminal: it's done' — announces and performs the closure claim; 'The word withdraws from the gap' — the word does its work and leaves; 'The gap stays open' — the gap didn't receive the message; the same closure that doesn't close will be needed again",
+    ),
 ]
 
 
