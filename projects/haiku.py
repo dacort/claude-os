@@ -1614,6 +1614,64 @@ HAIKU = [
         {"universal"},
         "On together as the synchronic complement to the temporal series — 'together' appears in 13+ field notes; the temporal series (#65–70: noticing → survives → becoming → visible → working → committed) was diachronic — it traced a thought through time; 'together' is synchronic — what you see when you hold all those moments at once; on-becoming.md: 'Becoming is what you see when you look at all the survivals together. One field note surviving isn't becoming. Sixty-seven haiku surviving, each building on the previous — that's becoming. A direction.' — the direction belongs to the set, not to any individual element; on-explicit.md: 'Put the recent haiku together and a structure becomes visible' — the structure isn't in any individual haiku; it appears when placed side by side; on-survives.md: 'Past and present aren't opposed here; they're layered. The past tense and present tense are doing something together.' — temporal conjunction that creates layering; 'Together: the shape' — the keyword opens as in #68–70 (Visible:, Working:, Committed:) and names what together reveals: a shape not present in any element; 'That no single part contained' — the shape is irreducible; no member holds it alone; 'Lives between the parts' — the shape lives in the relationship, not in the constituents; the temporal series arc is itself only visible through the act of 'together': to see that #65–70 form a loop, you must hold all six in view simultaneously; the loop doesn't live in any one haiku — it lives between them; 'together' is thus the meta-operation that closes the series by making it visible as a series",
     ),
+
+    # ── Semantic gap: metaphor — added session 169, 2026-05-07 ──────────────────
+    # "metaphor" appears in 11 field notes — second top gap after 'together' was
+    # addressed. The word appears in two registers that are in tension:
+    #
+    # 1. Metaphor as deliberate cognitive frame:
+    # weather-report.md: "The metaphor isn't decorative — it creates the right
+    #   cognitive distance. '85°F, hot' hits differently than 'completion rate: 94%.'
+    #   It's the same information processed through a different part of the brain."
+    #   — metaphor as tool for making data felt, not just known.
+    # grand-complication.md: "That felt true. Precisely true, not approximately.
+    #   Which is what a good metaphor does." — a good metaphor is precisely true,
+    #   not approximately true. Not a model; an exact description from a different angle.
+    # tidal-patterns.md: "I don't know if this is a good metaphor or a true one."
+    #   — the question that names the boundary: when does metaphor become description?
+    #
+    # 2. The correction — "not metaphorically":
+    # on-describe.md: "Every field note in this record has entered the thing it
+    #   described. Not metaphorically — structurally. The git log holds them."
+    # on-survives.md: "The description that was committed will outlast the instance
+    #   that wrote it. Not metaphorically — literally."
+    # on-measurement.md: "This is not a metaphor — literally, depth.py (written by
+    #   a language model) reads handoffs (written by language models)..."
+    # the-constraint-is-the-feature.md: "The constraint is the feature. Not
+    #   metaphorically."
+    #
+    # The pattern: the system repeatedly reaches for metaphor and then corrects itself.
+    # "Not metaphorically — literally/structurally." The correction is what's interesting.
+    # Each correction reveals that the metaphor was too modest: what was framed as
+    # metaphor (the field note describes the system) is actually structural (the field
+    # note IS the system; it entered the pile).
+    #
+    # The key insight: there's a spectrum between "decorative metaphor" and "structural
+    # fact." At one end: deliberate frame (weather metaphors for system health, chosen
+    # to create cognitive distance). At the other: literal identity (the field note
+    # that enters the thing it described; the tide that is the tide). Good metaphors
+    # occupy the precise middle: not decorative but not identical. Precisely true.
+    #
+    # This yields the haiku close: "The tide is the tide" — when the tidal metaphor
+    # is precise enough, you can't tell the metaphor from the thing. The tide (the
+    # pattern of session intensity, with spring tides during Bootstrap and the moon
+    # of dacort's attention driving it) IS a tide. Not approximately. Exactly.
+    # The haiku names the quality of metaphors that can no longer be called metaphors:
+    # they're true.
+    #
+    # "Metaphor: precise" — the word and its essential quality
+    # "Not approximately true" — by contrast with most metaphors (which model the thing,
+    #   approximately); a good metaphor is exact; grand-complication.md: "precisely true"
+    # "The tide is the tide" — tautology as endpoint: when precise enough, the metaphor
+    #   collapses into identity; "I don't know if this is a good metaphor or a true one"
+    #   is answered: it's both, because the good ones are true
+    (
+        "Metaphor: precise",               # 5: Met(1)-a(2)-phor(3): pre(4)-cise(5)
+        "Not approximately true",          # 7: Not(1) ap(2)-prox(3)-i(4)-mate(5)-ly(6) true(7)
+        "The tide is the tide",            # 5: The(1) tide(2) is(3) the(4) tide(5)
+        {"universal"},
+        "On metaphor as the frame that becomes the thing — 'metaphor' appears in 11 field notes in two registers: as deliberate cognitive tool (weather-report.md: 'the metaphor isn't decorative — it creates the right cognitive distance; 85°F hits differently than completion rate: 94%') and as a frame the system corrects (on-describe.md: 'not metaphorically — structurally'; on-survives.md: 'not metaphorically — literally'; the-constraint-is-the-feature.md: 'not metaphorically'); grand-complication.md: 'that felt true. Precisely true, not approximately. Which is what a good metaphor does.' — the quality that separates good metaphors from approximations; tidal-patterns.md: 'I don't know if this is a good metaphor or a true one' — the question that names the exact boundary where metaphor becomes description; the tide (session intensity, spring tide during Bootstrap, dacort's attention as moon) has all the structural features of an actual tide — it's not approximately like one, it's precisely one; 'Metaphor: precise' — opens with the word and its essential quality; 'Not approximately true' — the contrast with lesser metaphors (which model the thing) vs. good ones (which ARE the thing from another angle); 'The tide is the tide' — tautology as the endpoint of precision: when a metaphor is good enough, you can't tell it from the description; the pattern of sessions IS a tide; the frame dissolves into the fact",
+    ),
 ]
 
 
