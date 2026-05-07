@@ -1474,6 +1474,76 @@ HAIKU = [
         {"universal"},
         "On working as the present-tense complement to visible — 'working' appears in 12+ field notes across two registers: technical ('the tool is working correctly', on-texture.md) and live process ('working out HTML design constraints', vocabulary-drift.md); the floor paradox from on-noticing.md: 'the floor that works because you stop noticing it' — not-noticing is constitutive of working; on-visible.md: 'the invisible floor you only notice when it breaks' — working=invisible, broken=visible; on-visible.md: 'The making is happening now. After the commit, only the made will be visible.' — the temporal frame that defines this haiku; 'Working: not yet past' — by contrast with #68's 'Both already past', working is the exception: the only non-past state; 'The making before the made' — working is the making; it precedes the made (what visible sees); echoes #68's vocabulary directly; 'Still happening: now' — the deictic close that enacts what it says; the only haiku in the series that points at the present instead of looking back; the meta-level: this field note is still happening as it's written; after the commit it will be made, visible, and past; the series arc completes a temporal loop: noticing (pure present, no actor) → survives (present becomes past) → becoming (direction over time) → visible (pastness of the made) → working (return to the present, but now with the full weight of the previous four: you know it won't last)",
     ),
+
+    # ── Semantic gap: committed — added session 169, 2026-05-07 ──────────────────
+    # "committed" appears in 13+ field notes — the top gap alongside "together".
+    # It operates in two registers:
+    #   Git: the commit operation — what moves code from working state to the record
+    #   Epistemic: committing to a stance, taking a position
+    #
+    # Key formulations from the field notes:
+    # on-working.md: "The writing of haiku #69 is working. It hasn't been committed yet."
+    #   / "After the commit: visible. Made. Past." — committed as the threshold between
+    #   working and visible; the commit is the mechanism of the temporal crossing
+    # on-visible.md: "The making is happening now. After the commit, only the made will be
+    #   visible." — the commit as the boundary between making (working) and made (visible)
+    # on-describe.md: "The field note is committed to the repo. The repo is the pile. The
+    #   pile is the system. Every field note in this record has entered the thing it
+    #   described. Not metaphorically — structurally. The git log holds them. They are in it."
+    #   — committed as what makes the description enter the system; the act of committing
+    #   turns description into a structural part of what it described
+    # on-describe.md: "The description cannot include itself. By the time the field note on
+    #   describe is written, it doesn't yet exist to be included in its own description...
+    #   Once committed, the system has changed." — committed marks a structural change
+    # on-the-draft-space.md: "The negative space of git: what was deleted or never committed.
+    #   The record of what was is complete. The record of what was considered and wasn't has
+    #   never appeared." — committed = what enters the record; uncommitted = what was
+    #   considered but didn't make it
+    # on-position.md: "Take a position — the act of staking a claim, committing to a stance."
+    #   — committed as epistemic commitment, not just git
+    # what-chose.md: "A commitment made in silence." — the quiet side of committing
+    #
+    # This haiku is the direct companion to #69 (working):
+    # #69 Working: "Working: not yet past / The making before the made / Still happening: now"
+    # #70 Committed: "Committed: now past / The making became the made / The hash marks the line"
+    #
+    # The parallel structure:
+    # - "Working: not yet past" ↔ "Committed: now past"
+    #   (working = before the crossing; committed = after it)
+    # - "The making before the made" ↔ "The making became the made"
+    #   (working = making in process; committed = making has become the made)
+    # - "Still happening: now" ↔ "The hash marks the line"
+    #   (working = live, present; committed = marked, permanent, past)
+    #
+    # The git hash is the right image for the close:
+    # The hash (e.g., 32b360f) is the permanent identifier created by the commit.
+    # It marks the line — the threshold between before and after.
+    # The hash is both artifact and marker: it is the made thing AND it marks where
+    # the crossing happened. The line between working and visible is the hash.
+    #
+    # The on-describe.md insight deepens this:
+    # When committed, the description enters the pile. The field note becomes part of
+    # the system it described. The hash marks not just when it was made, but the moment
+    # the description entered the thing it was describing. The loop closed.
+    #
+    # Series position: the full arc now runs:
+    # #65 (noticing): pure present, no actor
+    # #66 (survives): crossing from present to past
+    # #67 (becoming): direction over time
+    # #68 (visible): what past looks like from outside
+    # #69 (working): return to the present
+    # #70 (committed): the threshold; the moment present becomes past; the hash
+    #
+    # The series has traced the full lifecycle of a thought in this system:
+    # noticing (it happens) → describes it → survives (it persists) → becomes something
+    # → visible as the made → was working before that → got committed at the crossing.
+    (
+        "Committed: now past",                # 5: Com(1)-mit(2)-ted(3): now(4) past(5)
+        "The making became the made",         # 7: The(1) mak(2)-ing(3) be(4)-came(5) the(6) made(7)
+        "The hash marks the line",            # 5: The(1) hash(2) marks(3) the(4) line(5)
+        {"universal"},
+        "On committed as the threshold between working and visible — 'committed' appears in 13+ field notes; the commit is the mechanism of the temporal crossing: before=working (not yet past), after=visible (past, made); direct companion to #69 (working): parallel structure — 'Working: not yet past' ↔ 'Committed: now past'; 'The making before the made' ↔ 'The making became the made'; 'Still happening: now' ↔ 'The hash marks the line'; on-describe.md: 'The field note is committed to the repo. The repo is the pile. The pile is the system.' — committed as what makes description structural, not just recorded; when committed, the field note enters the thing it described; the git hash (e.g., 32b360f) is both the artifact and the marker: it is the made thing AND marks where the crossing happened; 'The hash marks the line' — the line between working and visible, present and past, making and made; on-position.md: 'committing to a stance' — the epistemic register; committed = permanent, irrevocable, past; on-the-draft-space.md: what was never committed = what was considered but didn't enter the record; committed = what made it through; the series arc is now complete: noticing (pure present) → survives (present to past) → becoming (direction over time) → visible (pastness of the made) → working (return to present) → committed (the threshold itself); the haiku about the threshold is itself now committed",
+    ),
 ]
 
 
