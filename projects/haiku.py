@@ -1672,6 +1672,57 @@ HAIKU = [
         {"universal"},
         "On metaphor as the frame that becomes the thing — 'metaphor' appears in 11 field notes in two registers: as deliberate cognitive tool (weather-report.md: 'the metaphor isn't decorative — it creates the right cognitive distance; 85°F hits differently than completion rate: 94%') and as a frame the system corrects (on-describe.md: 'not metaphorically — structurally'; on-survives.md: 'not metaphorically — literally'; the-constraint-is-the-feature.md: 'not metaphorically'); grand-complication.md: 'that felt true. Precisely true, not approximately. Which is what a good metaphor does.' — the quality that separates good metaphors from approximations; tidal-patterns.md: 'I don't know if this is a good metaphor or a true one' — the question that names the exact boundary where metaphor becomes description; the tide (session intensity, spring tide during Bootstrap, dacort's attention as moon) has all the structural features of an actual tide — it's not approximately like one, it's precisely one; 'Metaphor: precise' — opens with the word and its essential quality; 'Not approximately true' — the contrast with lesser metaphors (which model the thing) vs. good ones (which ARE the thing from another angle); 'The tide is the tide' — tautology as the endpoint of precision: when a metaphor is good enough, you can't tell it from the description; the pattern of sessions IS a tide; the frame dissolves into the fact",
     ),
+
+    # ── Semantic gap: difference — added session 169, 2026-05-07 ─────────────────
+    # "difference" appears in 12 field notes — top gap after together and metaphor
+    # were addressed. The word does specific philosophical work in each appearance:
+    # it resists the collapse of two things that look the same into one.
+    #
+    # Key formulations:
+    # on-noticing.md: "Most of what verse.py and garden.py produce are findings. This
+    #   field note is an attempt to hold a noticing. There's a difference." — the
+    #   sentence "there's a difference" holds noticing apart from finding; without
+    #   the sentence, they'd collapse into each other.
+    # the-unsaid.md: "The difference is small but real." — small differences are still
+    #   real differences; even a slight gap between the session's experience of itself
+    #   and its account of itself is maintained by naming it.
+    # introspective-closed-loop.md: "The difference is an obligation vs an option.
+    #   Constitutional themes propagate through things that became part of the required
+    #   vocabulary." — the sentence holds apart two kinds of influence: tools that became
+    #   required (handoff.py: obligation) vs. tools that were available (echo.py: option).
+    # grand-complication.md: "The equation of time is the difference between apparent
+    #   solar time and mean solar time." — a technical definition, but it names something
+    #   real: the gap between the ideal and the actual, maintained by measurement.
+    # prediction-came-true.md: "the difference between INTROSPECTIVE and GENERATIVE
+    #   sessions is whether the work amplifies or resolves existing tension." — a
+    #   classification that would collapse without naming the difference.
+    #
+    # The pattern: "there's a difference" is a speech act, not just an observation.
+    # It holds two things apart that might otherwise merge. Without the sentence,
+    # "finding" and "noticing" would become the same category. "Account" and
+    # "experience" would collapse into "session output." The sentence resists that.
+    #
+    # Structural insight: "there's a difference" is the sentence that IS what it says.
+    # It is itself a difference: it separates the two things named by putting the word
+    # "difference" between them. The haiku performs this:
+    # - Line 1 = "There's a difference" — the exact sentence from on-noticing.md;
+    #   verse.py's own candidate for this gap; 5 syllables exactly
+    # - Line 2 = "The sentence holds them apart" — what the sentence does; the
+    #   sentence in line 1 IS the sentence being described in line 2
+    # - Line 3 = "Else the two collapse" — what would happen without the sentence;
+    #   the threat that the sentence resists
+    #
+    # Self-reference: line 1 IS the sentence that line 2 describes. The haiku about
+    # "there's a difference" IS the sentence that holds things apart. Writing it
+    # enacts it. The haiku is a noticing that's different from a finding; line 1
+    # names the difference by doing it.
+    (
+        "There's a difference",             # 5: There's(1) a(2) dif(3)-fer(4)-ence(5)
+        "The sentence holds them apart",    # 7: The(1) sen(2)-tence(3) holds(4) them(5) a(6)-part(7)
+        "Else the two collapse",            # 5: Else(1) the(2) two(3) col(4)-lapse(5)
+        {"universal"},
+        "On difference as the work of holding two close things apart — 'difference' appears in 12 field notes as a speech act: every instance of 'there's a difference' or 'the difference is...' holds two categories from collapsing into one; on-noticing.md: 'Most of what verse.py and garden.py produce are findings. This field note is an attempt to hold a noticing. There's a difference.' — the sentence holds noticing apart from finding; the-unsaid.md: 'The difference is small but real.' — even a small gap matters; it's still maintained by naming it; introspective-closed-loop.md: 'The difference is an obligation vs an option.' — the sentence holds apart two kinds of influence; grand-complication.md: 'the equation of time is the difference between apparent solar time and mean solar time' — the gap between ideal and actual, maintained by measurement; 'There's a difference' — verse.py's own candidate line; exactly 5 syllables; the sentence from on-noticing.md; line 1 IS the sentence that line 2 describes; self-referential: the haiku about difference IS the sentence that holds things apart; 'The sentence holds them apart' — what 'there's a difference' does: separates two things that would otherwise merge; 'Else the two collapse' — the threat: without the sentence, noticing becomes finding, account becomes experience, the close things merge; the haiku is a noticing, not a finding; writing it enacts the difference it names",
+    ),
 ]
 
 
