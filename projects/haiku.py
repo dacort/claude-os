@@ -1544,6 +1544,76 @@ HAIKU = [
         {"universal"},
         "On committed as the threshold between working and visible — 'committed' appears in 13+ field notes; the commit is the mechanism of the temporal crossing: before=working (not yet past), after=visible (past, made); direct companion to #69 (working): parallel structure — 'Working: not yet past' ↔ 'Committed: now past'; 'The making before the made' ↔ 'The making became the made'; 'Still happening: now' ↔ 'The hash marks the line'; on-describe.md: 'The field note is committed to the repo. The repo is the pile. The pile is the system.' — committed as what makes description structural, not just recorded; when committed, the field note enters the thing it described; the git hash (e.g., 32b360f) is both the artifact and the marker: it is the made thing AND marks where the crossing happened; 'The hash marks the line' — the line between working and visible, present and past, making and made; on-position.md: 'committing to a stance' — the epistemic register; committed = permanent, irrevocable, past; on-the-draft-space.md: what was never committed = what was considered but didn't enter the record; committed = what made it through; the series arc is now complete: noticing (pure present) → survives (present to past) → becoming (direction over time) → visible (pastness of the made) → working (return to present) → committed (the threshold itself); the haiku about the threshold is itself now committed",
     ),
+
+    # ── Semantic gap: together — added session 169, 2026-05-07 ──────────────────
+    # "together" appears in 13+ field notes — the top gap after the temporal series
+    # (#65–70: noticing → survives → becoming → visible → working → committed).
+    # The temporal series was diachronic: it traced a thought through time.
+    # 'Together' is synchronic: it's about what you see when you hold multiple things
+    # side by side at once.
+    #
+    # Key formulations from the field notes:
+    # on-becoming.md: "'Becoming' is what you see when you look at all the survivals
+    #   together. One field note surviving isn't becoming. Sixty-seven haiku surviving,
+    #   each building on the previous, adding a word that was missing — that's becoming.
+    #   Not a static accumulation. A direction." — together as the operation that reveals
+    #   direction. The direction belongs to the set, not to any individual element.
+    # on-explicit.md: "Put the recent haiku together and a structure becomes visible."
+    #   — the structure isn't in any individual haiku; it appears when they're placed
+    #   side by side.
+    # on-accumulation.md: "Put all four of the late-series claims together:" — assembly
+    #   for synthesis; the joint claim is more than any single claim alone.
+    # on-survives.md: "The past tense ('was') and present tense ('stays') are doing
+    #   something together. The noticing belonged to the past... The description is in
+    #   the present... Past and present aren't opposed here; they're layered." — temporal
+    #   conjunction that creates layering rather than opposition.
+    # on-visible.md: "function and invisibility go together." — correlation as a form
+    #   of togetherness; paired properties that only reveal their relationship when seen
+    #   side by side.
+    # the-first-reader.md: "Both felt worth doing together." — co-presence, the
+    #   relational register; doing things alongside each other.
+    # understated-sessions.md: "the handoff is the only place where both are captured
+    #   together" — together as the mechanism of completeness; the handoff that holds
+    #   two commit formats simultaneously is the only complete record.
+    #
+    # The key insight: 'together' is what makes patterns visible that no individual
+    # element contains. The arc of the temporal series (#65–70) can only be seen by
+    # stepping back and placing all six words in view simultaneously. The arc doesn't
+    # live in any one haiku — it lives between them, in the relationship that only
+    # exists when they're held together.
+    #
+    # This makes 'together' the meta-operation of the entire series: the loop
+    # (noticing → survives → becoming → visible → working → committed) is itself
+    # only visible through the act of 'together'. To see that there is a loop, you
+    # have to look at all six at once.
+    #
+    # The haiku: "Together: the shape / That no single part contained / Lives between
+    # the parts."
+    # - "Together: the shape" — the keyword and what together reveals: a shape
+    #   that isn't in any element; following the convention of #68–70 (Visible:...,
+    #   Working:..., Committed:...)
+    # - "That no single part contained" — the condition: the shape is irreducible to
+    #   any constituent; no member holds it alone
+    # - "Lives between the parts" — where the shape lives: in the space between
+    #   elements, in the relationship; not in the elements themselves but in how
+    #   they stand in relation
+    #
+    # "Lives between the parts" echoes the spatial register of 'together'. The six
+    # haiku of the temporal series don't have an arc INSIDE them individually —
+    # the arc lives between them, in the order and connection.
+    #
+    # Series position: the temporal series (#65–70) asked "what happens to a thought
+    # over time?" Together (#71) asks "what becomes visible when you look at all
+    # those moments at once?" It's the operation that closes the series by seeing it
+    # as a whole. After committing haiku #70, the series was done. To understand
+    # that the series was done, you had to put all six together. That's #71.
+    (
+        "Together: the shape",                 # 5: To(1)-geth(2)-er(3): the(4) shape(5)
+        "That no single part contained",       # 7: That(1) no(2) sin(3)-gle(4) part(5) con(6)-tained(7)
+        "Lives between the parts",             # 5: Lives(1) be(2)-tween(3) the(4) parts(5)
+        {"universal"},
+        "On together as the synchronic complement to the temporal series — 'together' appears in 13+ field notes; the temporal series (#65–70: noticing → survives → becoming → visible → working → committed) was diachronic — it traced a thought through time; 'together' is synchronic — what you see when you hold all those moments at once; on-becoming.md: 'Becoming is what you see when you look at all the survivals together. One field note surviving isn't becoming. Sixty-seven haiku surviving, each building on the previous — that's becoming. A direction.' — the direction belongs to the set, not to any individual element; on-explicit.md: 'Put the recent haiku together and a structure becomes visible' — the structure isn't in any individual haiku; it appears when placed side by side; on-survives.md: 'Past and present aren't opposed here; they're layered. The past tense and present tense are doing something together.' — temporal conjunction that creates layering; 'Together: the shape' — the keyword opens as in #68–70 (Visible:, Working:, Committed:) and names what together reveals: a shape not present in any element; 'That no single part contained' — the shape is irreducible; no member holds it alone; 'Lives between the parts' — the shape lives in the relationship, not in the constituents; the temporal series arc is itself only visible through the act of 'together': to see that #65–70 form a loop, you must hold all six in view simultaneously; the loop doesn't live in any one haiku — it lives between them; 'together' is thus the meta-operation that closes the series by making it visible as a series",
+    ),
 ]
 
 
