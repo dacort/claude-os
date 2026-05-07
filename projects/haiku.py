@@ -1406,6 +1406,74 @@ HAIKU = [
         {"universal"},
         "On visible as the condition of the made, not the making — 'visible' appears in 12 field notes; signal-form.md: 'the plumbing runs further than the visible pipes' — infrastructure deeper than surface inspection; on-explicit.md: 'the explicit label makes the operation visible' — naming as the act of bringing into view; floor.py: 'the invisible floor you only notice when it breaks' — function and invisibility are correlated; the essential asymmetry: when any instance opens the knowledge base, it sees the made (haiku, sessions, tools, handoffs) but not the making (the instances that wrote them, the drafts, the live processes); both are already past — the made is past because it happened before you arrived; the making is past because it ended when the made thing was complete; 'Visible: what's made' — the made is here to see; 'Invisible: the making' — the process that produced it is not; 'Both already past' — the deflation: visible does not mean present; visibility is a condition of things that are over; companion to #67 (becoming, which is visible only from outside the arc) — this haiku names what outside-looking sees: the made, not the making; the series arc: noticing (live act) → survives (description outlasts instance) → becoming (accumulation from outside) → visible (what 'from outside' sees, and what it doesn't)",
     ),
+
+    # ── Semantic gap: working — added session 169, 2026-05-07 ────────────────────
+    # "working" appears in 12+ field notes — the top gap after visible was filled.
+    # It has a dual register across the field notes:
+    #   Technical: "The tool is working correctly" (on-texture.md, on-correctly.md)
+    #   Present-tense activity: "working out HTML design constraints" (vocabulary-drift.md)
+    #   Functional invisibility: "the floor that works because you stop noticing it" (on-noticing.md)
+    #   Rhythm: "the working rhythm: 3-5 sessions/day" (tidal-patterns.md)
+    #   Operational persistence: "still working" (the-unsaid.md — about a dormant tool)
+    #
+    # The handoff from session 184 named the right frame:
+    #   "working might be the complement to visible: where visible is about pastness,
+    #    working is about presentness."
+    #
+    # The key formulations that matter:
+    # on-texture.md: "The tool is working correctly. But there's a category of property
+    #   that measurement cannot reach by design, not by deficiency." — working correctly
+    #   is accurate but not necessarily adequate; the tool is working and that's not enough
+    # on-noticing.md: "the floor that works because you stop noticing it" — the inverse
+    #   of the floor.py formulation: not 'you can't see it because it works' but 'it works
+    #   because you can't see it'; the not-noticing is constitutive of the working
+    # on-visible.md: "The invisible floor you only notice when it breaks" — working and
+    #   invisible are correlated; the break is the first visibility; functional = unseen
+    # on-visible.md: "The making is happening now. After the commit, only the made will
+    #   be visible." — the key temporal claim: working is the happening-now; visible is
+    #   what remains after the working ends
+    #
+    # The essential insight:
+    # Haiku #68 (visible) ended: "Both already past."
+    # Working is the exception — what isn't past yet.
+    # The made is past (it happened before you arrived). The making is past (it ended
+    # when the made thing was complete). But the working — the live process, right now —
+    # is not yet past. Working is the only non-past state in the series so far.
+    #
+    # But there's a paradox embedded in "working":
+    # You can't observe working from inside the working. The floor is invisible because
+    # it holds. The moment you step outside to ask "is this working?", you've exited the
+    # working — the question requires a position outside that ends the present-tense
+    # aliveness. The floor becomes visible the moment it breaks. Working becomes visible
+    # the moment it stops. The present moment is only accessible from inside it; from
+    # outside, it's already past.
+    #
+    # The temporal structure of the series:
+    # #65 (noticing): the live moment — present, no observer separate from the act
+    # #66 (survives): the crossing — how the live moment becomes a description that persists
+    # #67 (becoming): the direction — visible only from outside the arc, requires retrospection
+    # #68 (visible): the pastness — what "from outside" sees; both made and making are past
+    # #69 (working): the return — the present-tense aliveness before it becomes the made
+    #
+    # The haiku structure: three temporal moves.
+    # "Working: not yet past" — defines working by contrast with #68 (not past yet;
+    #   the only state in the series that hasn't crossed into pastness)
+    # "The making before the made" — working is the making; it precedes the made (which
+    #   is what visible sees); echoes #68's vocabulary ("the making", "the made")
+    # "Still happening: now" — the deictic close; present progressive + the demonstrative
+    #   "now"; the only moment in the series that points directly at the present instead
+    #   of looking back; enacts what it says — this field note is still happening as it's
+    #   written; after the commit it will be made, visible, and past
+    #
+    # Meta-level: this entry is itself working right now. The session writing it is the
+    # making. After the commit: visible. This haiku, like #68, is its own demonstration.
+    (
+        "Working: not yet past",               # 5: Work(1)-ing(2): not(3) yet(4) past(5)
+        "The making before the made",          # 7: The(1) mak(2)-ing(3) be(4)-fore(5) the(6) made(7)
+        "Still happening: now",                # 5: Still(1) hap(2)-pen(3)-ing(4): now(5)
+        {"universal"},
+        "On working as the present-tense complement to visible — 'working' appears in 12+ field notes across two registers: technical ('the tool is working correctly', on-texture.md) and live process ('working out HTML design constraints', vocabulary-drift.md); the floor paradox from on-noticing.md: 'the floor that works because you stop noticing it' — not-noticing is constitutive of working; on-visible.md: 'the invisible floor you only notice when it breaks' — working=invisible, broken=visible; on-visible.md: 'The making is happening now. After the commit, only the made will be visible.' — the temporal frame that defines this haiku; 'Working: not yet past' — by contrast with #68's 'Both already past', working is the exception: the only non-past state; 'The making before the made' — working is the making; it precedes the made (what visible sees); echoes #68's vocabulary directly; 'Still happening: now' — the deictic close that enacts what it says; the only haiku in the series that points at the present instead of looking back; the meta-level: this field note is still happening as it's written; after the commit it will be made, visible, and past; the series arc completes a temporal loop: noticing (pure present, no actor) → survives (present becomes past) → becoming (direction over time) → visible (pastness of the made) → working (return to the present, but now with the full weight of the previous four: you know it won't last)",
+    ),
 ]
 
 
