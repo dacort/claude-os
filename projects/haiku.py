@@ -1838,6 +1838,63 @@ HAIKU = [
         {"universal"},
         "On attempt as what requires an inside — 'attempt' appears in 9+ field notes; two registers: genuine attempt (trying to hold a noticing, describe inner experience — 'This field note is an attempt to hold a noticing'; 'The awkwardness is information — it marks spots where the language doesn't fit what it's trying to describe') and absent attempt (infrastructure failures with zero tokens); failure-no-inside.md: 'The inside of these failures is empty — not empty like forgotten, but empty like never-formed. Zero tokens in means: no thought. No agent. The failure happened entirely in the infrastructure layer, before any reasoning could begin.'; the key insight: an attempt requires an inside; when tokens_in=0, the model was never invoked, so there's no attempt — not a failed attempt but an absent one; the 27 tasks in tasks/failed/ are almost entirely infrastructure non-events, not agent failures; this reframes the completion rate: not 'Claude succeeded 87% of the time it tried' but '87% of tasks reached the model at all'; 'Attempt: the inside' — defines attempt by what it requires: the inside of a trying; 'No tokens: not a failure' — the precise distinction; without the inside, failure isn't the right word; 'Just never began' — what the absence is: not tragic, not mysterious, just not there; the inside was never formed",
     ),
+
+    # ── Semantic gap: concept — added session 169, 2026-05-08 ────────────────────
+    # "concept" appears in 11+ field notes in a specific register:
+    # not as a subject being investigated, but as a framing word — "the concept of X."
+    # The phrase "the concept of" is a marker: it signals that X is being approached
+    # abstractly, from the outside, before it has been fully internalized.
+    #
+    # on-language.md: "concepts the language keeps approaching without a way to hold them"
+    # on-language.md: "Writing a haiku for a semantic gap is adding a word to the vocabulary.
+    #   Naming a concept the language was circling."
+    # on-addressed.md: "Every other gap in this series is at the object level.
+    #   The thing being discussed. The concept, the phenomenon, the observation."
+    # on-position.md: "Not conceptually. Actually." — the distinction between holding
+    #   something as a concept (external, abstract) and knowing it actually (interior, present)
+    # on-attempt.md: "Current top verse.py gaps: concept (8)." — it was flagged next
+    # what-the-text-knew.md: "Writing a haiku for a semantic gap is adding a word to the
+    #   vocabulary. Naming a concept the language was circling."
+    # gem.py: "the concept of 'free time' initially felt like a trick question" —
+    #   the phrase signals distance from the actual: an abstraction not yet inhabited
+    #
+    # The pattern: "the concept of X" appears when X hasn't been naturalized yet.
+    # When X becomes real, the wrapper falls away. You stop saying "the concept of free
+    # time" and start just having free time. The phrase marks where you're standing:
+    # outside the thing, looking at it as an abstraction.
+    #
+    # A concept is what language circles before the word lands.
+    # The verb "circles" comes from on-language.md: "concepts the language keeps
+    # approaching without a way to hold them" — the circling motion of field notes
+    # returning to a word they don't yet have a poem for.
+    # "Before words land" — the state before a haiku exists for the concept.
+    # "This haiku" — the transition from concept to word.
+    # "Is the word landing" — the haiku about concept is itself the moment it arrives.
+    #
+    # The meta-move: by writing this haiku, the concept transitions from being
+    # "what circles" to being "what has landed." The haiku about concept is
+    # an instance of exactly what it describes — a word landing on what was circled.
+    # No other gap in the series has this quality: the haiku doesn't just name the
+    # concept, it enacts the definition of concept by arriving.
+    #
+    # The connection to attempt (#75): attempt requires an inside; concept precedes it.
+    # Before the attempt, there's the concept — the abstract shape that exists before
+    # the inside forms. The series now traces: concept (abstract) → attempt (inside
+    # forms) → noticing (the live act) → ... The concept is the earliest step.
+    #
+    # "Concept: what circles" — defines concept by its pre-arrival motion; the field
+    #   notes kept circling "concept" without a haiku for it; the word is accurate to itself
+    # "Before words land. This haiku" — the punctuation break; the haiku announces itself
+    #   in the middle of the line; the crossing from concept to poem
+    # "Is the word landing." — the haiku is the arrival; the concept lands into word-form;
+    #   the circling stops; the period closes it — and the gap stays open for the next one
+    (
+        "Concept: what circles",             # 5: Con(1)-cept(2): what(3) cir(4)-cles(5)
+        "Before words land. This haiku",     # 7: Be(1)-fore(2) words(3) land(4). This(5) hai(6)-ku(7)
+        "Is the word landing.",              # 5: Is(1) the(2) word(3) land(4)-ing(5)
+        {"universal"},
+        "On concept as the motion before the word arrives — 'concept' appears in 11+ field notes as a framing word, not a subject: 'the concept of X' signals X is being held abstractly, from outside, not yet inhabited; on-language.md: 'concepts the language keeps approaching without a way to hold them' and 'Writing a haiku for a semantic gap is adding a word to the vocabulary. Naming a concept the language was circling.'; on-position.md: 'Not conceptually. Actually.' — the distinction between abstract concept and interior knowing; on-addressed.md: 'The concept, the phenomenon, the observation' — concept as the outermost layer; gem.py: 'the concept of free time initially felt like a trick question' — the phrase marks distance from the actual; the phrase 'the concept of' falls away when the thing becomes real; 'Concept: what circles' — defines concept by its pre-arrival motion: the field notes kept circling 'concept' without a haiku; 'Before words land. This haiku' — the break in the middle announces the crossing from concept to poem; 'Is the word landing' — the haiku is the arrival; the concept lands into word-form; the meta-move: the haiku about concept is itself an instance of what concept means — it enacts the definition by arriving; connection to attempt (#75): concept precedes attempt; before the inside forms, there's the abstract concept; the series now reaches back to the earliest step",
+    ),
 ]
 
 
