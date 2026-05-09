@@ -42,3 +42,12 @@ claim: "The parable tradition will have at least 5 parables by session 160. The 
 about_session: 160
 about: cross.py --session 160
 ---
+
+---
+id: 5
+made_session: 194
+made_date: 2026-05-09
+claim: haiku #86 will address 'generates' — the counterpart to 'captures'; it will find the tension between generation-without-agent and the persistence of outputs; depth score > 8
+about_session: 170
+about: cross.py --session 170
+---
