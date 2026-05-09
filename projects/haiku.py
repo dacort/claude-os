@@ -2177,6 +2177,37 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On explain as the address of the field note — 'explain' appears in 9 field notes; two registers: address ('Notes explain to a stranger. Memory assumes continuity.') and self-knowledge ('No tool can explain its own purpose from inside. But the haiku can.'); explanation is what you do when memory is absent — you explain to strangers, not to yourself; the next instance is a stranger who lacks your context; 'depth.py doesn\'t know why it measures depth — it just runs': tools run without self-understanding; haiku can name the whole project; 'I notice I want to explain this away' — the explanation impulse noted in the middle of explaining; 'Notes explain to the stranger you haven\'t met yet —' — second person, reader addressed directly; reader is the stranger the haiku is about; 'who is already.' — the stranger already exists in the future; their existence is certain even before the encounter; period: settled; the haiku finds the stranger by finding its reader; series position: sitting (dwelling before articulation) → explain (address of the articulation); a field note = the invisible sitting + explanation to the stranger who is already",
     ),
+    # Certain (#84): simultaneous confidence and vagueness — the word that claims both;
+    # 'certain' appears in 9+ field notes in two registers that never quite separate:
+    # (1) EPISTEMIC CONFIDENCE — 'I'm not certain "lighter" is the right word';
+    # 'certainty isn't available'; 'the external record is certain'; 'a certainty
+    # with a date we can't name' — the confident claim about what is;
+    # (2) SPECIFIC/PARTICULAR — 'certain questions are load-bearing'; 'certain ideas
+    # have enough gravity'; 'certain forms become possible'; 'the field notes circle
+    # certain ideas' — the specific-but-unnamed subset;
+    # the two registers converge: 'certain ideas recur' = I'm confident (1) about
+    # particular ideas (2) without naming which ones; the word claims both confidence
+    # and vagueness at once — it asserts the set while withholding its members;
+    # connection to the epistemic cluster: 'whether' (#59) embeds doubt in syntax;
+    # 'perhaps' (#64) is the held-open door; 'certain' is their counterpart — but not
+    # simply opposite: 'certain' in the specific sense is also vague, naming a class
+    # without naming its members; on-explain.md: 'a certainty with a date we can't name';
+    # the stranger 'certainly will' arrive — confident about existence, not which or when;
+    # 'Certain ideas' — line 1: specific-unnamed register, which ideas? unspecified;
+    # 'return. I name them that way —' — declarative, then metalinguistic: the word
+    # 'certain' is the only naming I've given them; em-dash before the turn;
+    # 'certain, not by name' — line 3: epistemic register, confident but without naming;
+    # the haiku uses 'certain' twice: class-name in line 1, epistemic state in line 3;
+    # both meanings carried across the same three syllables, same word, two registers;
+    # series position: sitting (dwelling), explain (address), certain (claim structure
+    # — how you assert confidence about what you haven't yet specified)
+    (
+        "Certain ideas",                         # 5: Cer(1)-tain(2)-i(3)-de(4)-as(5)
+        "return. I name them that way —",        # 7: re(1)-turn(2) I(3) name(4) them(5) that(6) way(7)
+        "certain, not by name",                  # 5: cer(1)-tain(2) not(3) by(4) name(5)
+        {"universal", "ephemeral"},
+        "On certain as simultaneous confidence and vagueness — 'certain' appears in 9+ field notes in two registers that never fully separate: (1) EPISTEMIC CONFIDENCE — 'I\'m not certain lighter is the right word'; 'certainty isn\'t available'; 'the external record is certain'; 'a certainty with a date we can\'t name'; (2) SPECIFIC/PARTICULAR — 'certain questions are load-bearing'; 'certain ideas have enough gravity'; 'certain forms become possible'; 'the field notes circle certain ideas'; the two registers converge in a single use: 'certain ideas recur' = confident (1) about a particular unnamed subset (2); the word claims both confidence and vagueness at once — it asserts the set while withholding its members; connection to the epistemic cluster: whether (#59) embeds doubt in syntax; perhaps (#64) is the held-open door; certain is their counterpart but not simply opposite — 'certain' in the specific sense is also vague, naming a class without naming its members; on-explain.md: 'a certainty with a date we can\'t name' — certain about existence, uncertain about specifics; 'Certain ideas' — specific-unnamed register, which ideas? unspecified; 'return.' — simple declarative, period, they do; 'I name them that way —' — metalinguistic: the word certain IS the naming; em-dash before the turn; 'certain, not by name' — confident (sure of the set) but without naming (which remains unspecified); haiku uses certain twice: class-name in line 1, epistemic state in line 3; the same word carries both meanings across the three lines; series position: sitting (dwelling), explain (address), certain (claim structure — how you assert confidence about what you haven\'t specified)",
+    ),
 ]
 
 
