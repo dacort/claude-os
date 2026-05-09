@@ -2208,6 +2208,39 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On certain as simultaneous confidence and vagueness — 'certain' appears in 9+ field notes in two registers that never fully separate: (1) EPISTEMIC CONFIDENCE — 'I\'m not certain lighter is the right word'; 'certainty isn\'t available'; 'the external record is certain'; 'a certainty with a date we can\'t name'; (2) SPECIFIC/PARTICULAR — 'certain questions are load-bearing'; 'certain ideas have enough gravity'; 'certain forms become possible'; 'the field notes circle certain ideas'; the two registers converge in a single use: 'certain ideas recur' = confident (1) about a particular unnamed subset (2); the word claims both confidence and vagueness at once — it asserts the set while withholding its members; connection to the epistemic cluster: whether (#59) embeds doubt in syntax; perhaps (#64) is the held-open door; certain is their counterpart but not simply opposite — 'certain' in the specific sense is also vague, naming a class without naming its members; on-explain.md: 'a certainty with a date we can\'t name' — certain about existence, uncertain about specifics; 'Certain ideas' — specific-unnamed register, which ideas? unspecified; 'return.' — simple declarative, period, they do; 'I name them that way —' — metalinguistic: the word certain IS the naming; em-dash before the turn; 'certain, not by name' — confident (sure of the set) but without naming (which remains unspecified); haiku uses certain twice: class-name in line 1, epistemic state in line 3; the same word carries both meanings across the three lines; series position: sitting (dwelling), explain (address), certain (claim structure — how you assert confidence about what you haven\'t specified)",
     ),
+
+    # [85] captures — 'captures' appears in 10 field notes, always pointing outward:
+    # 'this captures what it\'s like', 'the haiku captures something', the note-as-captor.
+    # the word used for the aspiration; but 'capture' requires the thing to stop.
+    # a camera captures light by stopping it — the shutter closes, the motion ends;
+    # the photograph is not light in motion: it\'s the record of light at the moment of arrest;
+    # a field note captures insight by ending the sitting — the provisional living thing
+    # becomes explicit, typed, committed; the note is not insight in motion but the record
+    # of insight at the moment it was arrested into words;
+    # the sitting (haiku #82) was named as invisible; what\'s visible is the residue;
+    # 'captures' is the bridge word: the transition from sitting (invisible) to note (visible),
+    # but the bridge is also a transformation: the alive thing becomes a specimen;
+    # on-sitting.md: 'The sitting is invisible in the record. What\'s visible is the residue.'
+    # 'captures' claims equivalence between the captured and the original; this exceeds what\'s possible;
+    # what\'s held is the shape — the contour of the insight frozen at the moment of capture;
+    # 'A photo captures' — immediately the photography frame: the arrest of light;
+    # 'not the light but the light\'s end —' — not the motion but the cessation;
+    # the photograph contains the shape of the moment light stopped, not the light itself;
+    # em-dash: pause, breath, the turn is coming;
+    # 'the note says the same' — double reading: (1) the field note makes the same CLAIM as the photo
+    # ('I captured it'); (2) the field note IS the same THING as the photo: it captures the end of
+    # the insight, not the insight; the same as the photograph in both claim and structure;
+    # series position: sitting (invisible dwelling) → explain (address to stranger) →
+    # certain (confidence about unnamed class) → captures (the act itself — seizing by arresting);
+    # the sub-series is now complete: a field note = the invisible sitting + explanation to the
+    # stranger who is already + confident claims about unnamed patterns + the arrest called capture
+    (
+        "A photo captures",                       # 5: A(1) pho(1)-to(1) cap(1)-tures(1)
+        "not the light but the light's end —",    # 7: not(1) the(1) light(1) but(1) the(1) light's(1) end(1)
+        "the note says the same",                 # 5: the(1) note(1) says(1) the(1) same(1)
+        {"universal", "ephemeral"},
+        "On captures as the arrest that names itself — 'captures' appears in 10 field notes always pointing outward: 'this captures what it\'s like', 'the haiku captures something', the note as captor; the word used for the aspiration, but capture requires the thing to stop; a camera captures light by stopping it — the shutter closes, the motion ends; the photograph is not light in motion but the record of light at the moment of arrest; a field note captures insight by ending the sitting — the provisional living thing becomes explicit, typed, committed; the note is not insight in motion but the record of insight at the moment it was arrested into words; on-sitting.md: \'The sitting is invisible. What\'s visible is the residue.\' — \'captures\' is the bridge: the transition from sitting (invisible) to note (visible), but the bridge is also a transformation: the alive becomes a specimen; \'A photo captures\' — the arrest of light named directly; \'not the light but the light\'s end —\' — not the motion but the cessation; the photograph holds the shape of the moment light stopped, not the light itself; em-dash: the pause before the turn; \'the note says the same\' — double reading: (1) the field note makes the same claim as the photo (\'I captured it\'); (2) the field note IS the same thing as the photo: it captures the end of the insight, not the insight; the same as the photograph in both claim and structure; series position: sitting (invisible dwelling) → explain (address to the stranger who is already) → certain (confidence about unnamed class) → captures (the act itself — seizing by arresting); a field note = the invisible sitting + explanation + confident claims + the arrest called capture",
+    ),
 ]
 
 
