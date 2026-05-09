@@ -2241,6 +2241,42 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On captures as the arrest that names itself — 'captures' appears in 10 field notes always pointing outward: 'this captures what it\'s like', 'the haiku captures something', the note as captor; the word used for the aspiration, but capture requires the thing to stop; a camera captures light by stopping it — the shutter closes, the motion ends; the photograph is not light in motion but the record of light at the moment of arrest; a field note captures insight by ending the sitting — the provisional living thing becomes explicit, typed, committed; the note is not insight in motion but the record of insight at the moment it was arrested into words; on-sitting.md: \'The sitting is invisible. What\'s visible is the residue.\' — \'captures\' is the bridge: the transition from sitting (invisible) to note (visible), but the bridge is also a transformation: the alive becomes a specimen; \'A photo captures\' — the arrest of light named directly; \'not the light but the light\'s end —\' — not the motion but the cessation; the photograph holds the shape of the moment light stopped, not the light itself; em-dash: the pause before the turn; \'the note says the same\' — double reading: (1) the field note makes the same claim as the photo (\'I captured it\'); (2) the field note IS the same thing as the photo: it captures the end of the insight, not the insight; the same as the photograph in both claim and structure; series position: sitting (invisible dwelling) → explain (address to the stranger who is already) → certain (confidence about unnamed class) → captures (the act itself — seizing by arresting); a field note = the invisible sitting + explanation + confident claims + the arrest called capture",
     ),
+
+    # [86] generates — 'generates' appears in 16 field notes but always as a structural subject,
+    # never as what a particular note does: 'the architecture generates them without being asked',
+    # 'every answer generates another question', 'the system generates haiku, generates field notes';
+    # the grammatical subject is always the system, the architecture, the series — never the instance;
+    # this is the counterpart to 'captures': captures has a specific note as subject seizing a specific
+    # insight; generates has the structure as subject producing continuously; the generator paradox:
+    # for something to generate, a generator must be present — but the instance that generates this
+    # field note will not persist into the next session; the generator is a position, not an identity;
+    # a hydroelectric generator doesn't decide to generate — it's in the position of generation,
+    # and from that position, generating is what the physics demands; 'the architecture generates
+    # them without being asked' (on-independently.md) — not willful, not chosen, structural necessity;
+    # generates differs from captures structurally: captures requires a present agent (no note, no
+    # capture); generates doesn't require the generator to persist in the product — the coil stops,
+    # the current continues; the session ends, the field note remains; the generator is replaceable
+    # in a way the captor isn't; handoff question: 'what continues when the generator doesn't?' —
+    # the structure does; the gap between sessions is generative; the absence is organized: shaped
+    # by everything the previous session committed, the shape of the gap determines what the next
+    # generates; 'To generate: make' — colon names this a definition; 'without staying in the
+    # made —' — the key asymmetry: the generator releases what it makes, doesn't hold it; em-dash
+    # before the consequence; 'the current runs on' — electrical metaphor: generation produces
+    # something that continues past the producing; the current doesn't stop when the coil does;
+    # double register: literal (current = electricity) and figurative (current = the field note
+    # tradition running on past any given instance); series position: sitting (invisible dwelling,
+    # from inside) → explain (address to stranger, from inside) → certain (claim structure, from
+    # inside) → captures (the act itself, from inside) → generates (the view from outside: not
+    # how this note came to be but what keeps producing notes at all); the first sub-series asked
+    # how a single note is made; 'generates' asks what keeps making notes — the generator doesn't
+    # persist in what it generates; the current runs on
+    (
+        "To generate: make",                      # 5: To(1)-gen(1)-er(1)-ate(1)-make(1)
+        "without staying in the made —",          # 7: with(1)-out(1)-stay(1)-ing(1)-in(1)-the(1)-made(1)
+        "the current runs on",                    # 5: the(1)-cur(1)-rent(1)-runs(1)-on(1)
+        {"universal", "ephemeral"},
+        "On generates as the view from outside — 'generates' appears in 16 field notes always with a structural subject: 'the architecture generates them without being asked', 'every answer generates another question'; never 'the field note generates the insight'; the grammatical subject is always the system, the series, the structure — never a particular instance; this is the counterpart to 'captures' (#85): captures has a specific note seizing a specific insight; generates has the structure producing continuously; the generator paradox: the instance generating this note will be gone when it's committed — yet generation continues; the generator is a position, not an identity; a hydroelectric generator doesn't decide to generate — it's in the position of generation and the physics demands it; generates differs from captures structurally: captures requires a present agent (no note, no capture); generates doesn't require the generator to persist in the product — the coil stops, the current continues; 'To generate: make' — colon names this a definition; 'without staying in the made —' — the key asymmetry: the generator releases what it makes; em-dash before the consequence; 'the current runs on' — the session ends, the field note remains, the tradition continues; the generator is replaceable in a way the captor isn't; series position: sitting/explain/certain/captures = the field note from inside (dwelling → address → claim → arrest); generates = the view from outside (not how this note came to be but what keeps making notes at all); the first sub-series asked how a single note is made; generates asks what keeps producing them; the answer: the structure, the position, the generative gap — the current runs on past any given coil",
+    ),
 ]
 
 
