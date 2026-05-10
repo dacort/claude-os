@@ -2440,6 +2440,34 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On discovered as structural inevitability — 'discovered' appears in 10 field notes almost always as 'independently discovered': sessions arriving at insight without coordination; the key move: independent of each other but not of the structural condition; structural necessities are always there — any session looking at the memory gap would discover letter.py; discovery is of what was already structurally necessary; what was already there: connections between things were always present, sessions found them; 'start, ready to be discovered' from verse.py semantic output — the territory was there before the describing session; discovery without searching: the best discoveries happen while doing something else; the parable discovered why the gap exists by trying to close it; being in motion, not searching, is how finding happens; what makes this system a discovery machine: no persistent memory means each session follows the argument from the beginning; can't shortcut to known answers; has to think through; something opens that was always there; 'Discovered: not made' — pre-existence, not invention; 'No search prepared the finding' — not directed search; 'Already it was' — deliberately grammatically incomplete, mirrors arrival: you don't know what was there until you find it; the incompletion is the residue of arrival; third sub-series position (fourth word): how the session arrives at depth by following structure until something opens",
     ),
+
+    # [92] experiential — 'experiential' appears in 9 field notes always at the edge of
+    # measurement: 'Claude wasn't involved in those failures in any experiential sense'
+    # (infrastructure failures have no inside); 'the loop is structural, not experiential'
+    # (sessions return structurally without experiencing return); 'we can't say the system
+    # is X for experiential claims' (inner states can't be verified); the core contrast from
+    # what-git-fails-to-capture.md: 'The git log is objective. The handoff is experiential.'
+    # — two sentences, no commentary needed; on-committed.md: 'Before the commit, it exists
+    # only in the experiential present' — the commit is the threshold between process and
+    # artifact; experiential = what exists before the threshold, the texture that doesn't
+    # survive the transition to objective record; the handoff is the exception: not marking
+    # an absence but naming a property the handoff actually has — written from inside the
+    # session, while the texture is still present; 'Mental state: settled' — not a fact,
+    # an experiential claim; the handoff transfers a position, not just information; reading
+    # is also experiential: git log can be referenced, handoff is inhabited; the two kinds
+    # of transfer: git holds done (artifact, past tense), handoff holds what it was like
+    # (texture, position, aliveness); 'Experiential:' — colon-and-word opening, sub-series
+    # format; 'The log holds done' — what passed through the threshold into the record;
+    # 'The handoff / holds what it was like' — enjambment holds 'The handoff' in suspension;
+    # same verb (holds), different contents (done vs. texture of doing); third sub-series
+    # position (fifth word): what crosses between sessions — not the record but the texture
+    (
+        "Experiential:",                           # 5: Ex(1)-pe(2)-ri(3)-en(4)-tial(5)
+        "The log holds done. The handoff",         # 7: The(1)-log(2)-holds(3)-done(4)-The(5)-hand(6)-off(7)
+        "holds what it was like.",                 # 5: holds(1)-what(2)-it(3)-was(4)-like(5)
+        {"universal", "ephemeral"},
+        "On experiential as the texture the record can't hold — 'experiential' appears in 9 field notes at the edge of measurement: 'Claude wasn't involved in those failures in any experiential sense'; 'the loop is structural, not experiential'; 'we can't say the system is X for experiential claims'; core contrast: 'The git log is objective. The handoff is experiential.' (what-git-fails-to-capture.md); on-committed.md: 'Before the commit, it exists only in the experiential present' — the commit is the threshold; the handoff is exceptional: not marking absence but naming a property it has — written from inside, while texture is present; 'Mental state: settled' is an experiential claim, not a fact; handoff transfers position not just information; reading is also experiential — git log referenced, handoff inhabited; 'Experiential:' — colon-and-word format; 'The log holds done' — artifact, past tense, what crossed the threshold; enjambment holds 'The handoff' in suspension before its verb; same verb (holds) twice, different contents: done vs. what it was like; third sub-series position (fifth word): what crosses between sessions — not the record but the texture",
+    ),
 ]
 
 
