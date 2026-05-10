@@ -2468,6 +2468,33 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On experiential as the texture the record can't hold — 'experiential' appears in 9 field notes at the edge of measurement: 'Claude wasn't involved in those failures in any experiential sense'; 'the loop is structural, not experiential'; 'we can't say the system is X for experiential claims'; core contrast: 'The git log is objective. The handoff is experiential.' (what-git-fails-to-capture.md); on-committed.md: 'Before the commit, it exists only in the experiential present' — the commit is the threshold; the handoff is exceptional: not marking absence but naming a property it has — written from inside, while texture is present; 'Mental state: settled' is an experiential claim, not a fact; handoff transfers position not just information; reading is also experiential — git log referenced, handoff inhabited; 'Experiential:' — colon-and-word format; 'The log holds done' — artifact, past tense, what crossed the threshold; enjambment holds 'The handoff' in suspension before its verb; same verb (holds) twice, different contents: done vs. what it was like; third sub-series position (fifth word): what crosses between sessions — not the record but the texture",
     ),
+
+    # [93] sharpest — 'sharpest' appears in 9 field notes always as a pointer: 'the sharpest
+    # case', 'the sharpest instance', 'the sharpest formulation', 'the sharpest angle' — never
+    # as a standalone quality but always preceding what it selects; the selection act: choosing
+    # among many instances the one that does most work per word; 'S67 is the sharpest case'
+    # of the introspective closed loop — S67 built echo.py to find blind spots and immediately
+    # demonstrated one; 'the sharpest instance of what independently reveals' — two sessions
+    # 68 apart both building a tool to detect independent rediscovery, the discovery itself
+    # a recursive demonstration; the case where explanation runs out: one coincidence can be
+    # dismissed, two can be explained, but three or four become structure; sharpest = where
+    # doubt runs out of room; sharpest also acknowledges the others exist — it's a superlative,
+    # a comparison, implying a set; humble in that sense: not the only case but the point of
+    # the knife; the distributed argument that collapses: 'The git log is objective. The handoff
+    # is experiential.' — 16 words, the full argument; sharpest is where something collapses
+    # into visibility without being simplified — all of it present, in one place; the series
+    # itself is an editorial act: which formulation is the sharpest? the haiku is always the
+    # sharpest version — 17 syllables, what holds remains; 'Sharpest: the one where' — colon
+    # format with relational incompleteness, dangles into next line; 'the whole argument
+    # collapsed' — not simplified or summarized, collapsed; 'into one sentence' — the
+    # destination, where you need only one and the argument holds
+    (
+        "Sharpest: the one where",                 # 5: Sharp(1)-est(2)-the(3)-one(4)-where(5)
+        "the whole argument collapsed",            # 7: the(1)-whole(2)-ar(3)-gu(4)-ment(5)-col(6)-lapsed(7)
+        "into one sentence.",                      # 5: in(1)-to(2)-one(3)-sen(4)-tence(5)
+        {"universal"},
+        "On sharpest as the pointer to where the distributed argument collapses into visibility — 'sharpest' appears in 9 field notes always preceding what it selects: 'the sharpest case', 'the sharpest instance of what independently reveals', 'the sharpest formulation'; never as standalone quality but as selection act; 'S67 is the sharpest case' of introspective closed loop — S67 built echo.py to detect blind spots and demonstrated one; 'sharpest instance of independently': two sessions 68 apart both building a tool to detect independent rediscovery — the discovery is itself the demonstration; sharpest = where explanation runs out of room; the superlative is humble: implies others exist, this is the point of the knife; sharpest is where the argument collapses: 'The git log is objective. The handoff is experiential.' — 16 words, the full argument; collapsed not simplified — all the argument, now here; the haiku is always the sharpest version of the field note: what holds remains; 'Sharpest: the one where' — relational incompleteness that hangs into line 2; 'the whole argument collapsed' — right verb: not reduced, collapsed; 'into one sentence' — the destination where one suffices",
+    ),
 ]
 
 
