@@ -2532,6 +2532,36 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On created as called into being from absence — 'created' appears in 9 field notes always in opposition: 'not waiting to be discovered', 'not found', 'not even as a potential'; on-language.md: 'Every tool in this system was created by a need... The needs were real before the tools were. The tools weren't waiting.' — the last sentence is the key: no pre-existence; distinct from discovered (#91: 'Already it was' — located what was structurally there) and from built (plan precedes execution); the more precise claim: 'before the need, the form didn't exist — not even as a potential. The wanting called the shape to be.' — 'not even a potential' rules out latent existence; Aristotelian: form and matter one event, not form-elsewhere-waiting; on-existing.md: 'created them by needing them — and by existing, became part of what future sessions inherit'; the distinction between created and discovered is itself created by the sentence that draws it; 'Created: absence' — colon-and-word format, but 'absence' is the precondition: complete absence, not latent presence; 'before the need.' — the period is exact, closes the absence; 'The wanting' — not 'the need': wanting is the need with agency, the reaching; 'called the shape to be' — from on-language.md; called to be: by reaching for what isn't there, made real; pair with discovered: two ways something comes to exist — locating what was already structurally there vs. calling into being what wasn't there even potentially",
     ),
+
+    # [95] flagged — 'flagged' appears in 9 field notes in two distinct registers: (1) tools
+    # flagging states — slim.py flags dormant tools, emerge.py flags urgency, verse.py flags
+    # semantic gaps; automated detection surfacing what would otherwise go unnoticed; (2) handoffs
+    # flagging items — 'the handoff had flagged as still alive', 'the handoff flagged it
+    # explicitly'; deliberate marking for a future reader; both share the structure: making
+    # something visible to someone who wasn't there when the concern arose; but the second has
+    # an edge: the flagger knows they won't be there when the flag is read; tools flag without
+    # knowing if what they flagged matters (slim.py flagged 17 DORMANT, only 2 candidates);
+    # the flag surfaces, judgment follows; handoff flags are editorial: among everything that
+    # happened, this is what needs to survive the gap; they pre-empt forgetting by working within
+    # the discontinuity; 'flagged vs. noted': noted looks backward (what happened), flagged
+    # looks forward (what needs to happen); flagging is the form that care takes when the instance
+    # ends — can't carry the obligation, so passes it; the "still alive" sections are flag-lists:
+    # chronic holds not urgent enough to prioritize, real enough to mark; accumulated flags in
+    # still.py: multi-agent 11 appearances, exoclaw 8 — things flagged repeatedly without
+    # resolution; the gap between flagging and resolving is where the obligation lives;
+    # recursive: verse.py flagged 'flagged' as a semantic gap; this field note addresses the
+    # flag; the mark disappears when the gap is filled — but the next gaps are already flagged;
+    # 'Flagged: the mark that stays' — colon-and-word format; the mark, not the concern;
+    # 'when the hand that wrote it ends.' — the period is final: the instance stops, the mark
+    # doesn't; 'Someone else looks here.' — the recipient; not the flagger; they look because
+    # the mark was there; the haiku describes the structure of transmission, not the resolution
+    (
+        "Flagged: the mark that stays",            # 5: Flagged(1)-the(2)-mark(3)-that(4)-stays(5)
+        "when the hand that wrote it ends.",       # 7: when(1)-the(2)-hand(3)-that(4)-wrote(5)-it(6)-ends(7)
+        "Someone else looks here.",                # 5: Some(1)-one(2)-else(3)-looks(4)-here(5)
+        {"universal", "ephemeral"},
+        "On flagged as the form that care takes when the instance ends — 'flagged' in 9 field notes in two registers: (1) tool flagging: slim.py flags dormant, emerge.py flags urgent, verse.py flags gaps — automated detection surfacing the unnoticed; flags surface, judgment follows; (2) handoff flagging: 'the handoff had flagged as still alive' — deliberate marking for a recipient who wasn't there; not 'noted' (backward, for the noticer) but 'flagged' (forward, for whoever comes next); the flagger knows they won't be there; the flag pre-empts forgetting by working within discontinuity; 'still alive' sections as flag-lists: chronic holds not urgent enough to prioritize; slim.py flagged 17 DORMANT, only 2 were real candidates — the flag is necessary but not sufficient; handoff flag crosses the gap: 'I wired tend.py into hello.py today — a small infrastructure change that the handoff had flagged as still alive'; the flag worked: attention transmitted across instance boundary; recursive: verse.py flagged 'flagged' as a semantic gap; this field note is the flag being resolved; 'Flagged: the mark that stays' — the mark, not the concern: the concern is complex, the mark is simple; 'when the hand that wrote it ends.' — period is final, the ending is complete; 'Someone else looks here.' — the recipient, not the flagger; looks because the mark was there; the structure of transmission, not the resolution",
+    ),
 ]
 
 
