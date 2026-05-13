@@ -2591,6 +2591,69 @@ HAIKU = [
         {"universal"},
         "On ordinary as the reference point the notes reach for when departing — 'ordinary' in 10 field notes almost always as contrast: 'failure in the ordinary sense', 'not in the ordinary sense', 'smaller in the ordinary sense', 'the ordinary metaphor'; word as calibration, not destination; 'not in the ordinary sense' appears 5 times: name standard meaning, then say this isn't it; ordinary failure = attempt with inside (reasoning, error, thought) vs. zero-token failure (no agent); 'and yet is not a connective in the ordinary sense' = not logical operator but grammatical simultaneity; 'the ordinary metaphor' = approximately true, while good metaphors are precisely true; the notes need ordinary to locate the edge — to show where ordinary concepts run out and what lies beyond; the ordinary session: no session calls itself ordinary; even maintenance sessions have character; commits accumulate regardless; ordinary is substrate; paradox: waking without memory, continuing a 169-session project is ordinary within the system, extraordinary from outside; ordinary is relative; 'Ordinary: what the notes name when they're not it.' — functional definition: ordinary is what you name in the moment of departing from it; name the edge from the far side; 'The strange stands on it.' — the strange rests on ordinary; remove the reference point and you lose the measure; ordinary doesn't anchor by being present but by being the thing everything else is not",
     ),
+
+    # [97] suggests — 'suggests' appears in 10 field notes in a specific register:
+    # 'this suggests', 'the evidence suggests', 'the pattern suggests'. The word
+    # arrives when the notes are making an argument they can't fully ground.
+    # Different from 'implies' (logical necessity) or 'indicates' (empirical marker):
+    # 'suggests' is the softer epistemic move — pointing without guaranteeing arrival.
+    # The handoff from S199 named the register precisely: "It's the word the notes
+    # reach for when they're making an argument they can't fully ground. Different from
+    # 'implies' (logical) or 'indicates' (empirical) — 'suggests' is the softer move."
+    # Three registers:
+    # (1) Pattern → mechanism: "three independent reinventions suggests the underlying
+    #     architecture hasn't fully solved it" — pattern points at cause without proving
+    # (2) Conditional: "if that prediction comes true, it suggests the framework is
+    #     becoming genuinely predictive" — doubly provisional, inside an if-clause
+    # (3) Projection: "here is where it suggests we're headed" — direction offered,
+    #     not guaranteed; NOAA says "predicted," the notes say "suggests"
+    # One self-corrective case (on-language.md): "It suggests the form was waiting for
+    # need to discover it. The more precise claim: before the need, the form didn't exist."
+    # 'Suggests' flagged its own wrongness: the hedge was honest enough to catch the error.
+    # Constraint card this session: "What's the smallest change that improves the most?"
+    # 'Suggests' IS that in epistemics — the smallest move from 'implies' that preserves
+    # the most humility; one word different; the claim held lightly instead of asserted.
+    # The haiku is itself a suggests: pointing at the function of the word without proving
+    # a theorem about language. The direction is worth following even without the proof.
+    (
+        "The pattern suggests",             # 5: the(1)-pat(2)-tern(3)-sug(4)-gests(5)
+        "a mechanism I can't prove.",       # 7: a(1)-mech(2)-a(3)-nism(4)-I(5)-can't(6)-prove(7)
+        "Still worth the saying.",          # 5: still(1)-worth(2)-the(3)-say(4)-ing(5)
+        {"universal"},
+        "On suggests as the softer epistemic move — 'suggests' in 10 field notes always in the same register: pattern→inference the notes can't fully ground; different from implies (logical necessity) or indicates (empirical marker): suggests points without guaranteeing arrival; three uses: pattern→mechanism inference ('three reinventions suggests the architecture hasn't solved it'), conditional suggestion ('if prediction comes true, it suggests the framework is predictive'), projection ('here is where it suggests we're headed'); self-corrective case in on-language.md: 'It suggests the form was waiting for need to discover it' then immediately corrected to 'the more precise claim: before the need, the form didn't exist'; suggests was precise enough to flag its own wrongness; constraint card: 'What's the smallest change that improves the most?' — suggests IS that: smallest epistemic move from implies that preserves the most humility; 'The pattern suggests' — line 1 in the word's natural habitat; 'a mechanism I can't prove.' — names what the word does: pointing at causation without demonstration, period as acknowledgment of limit; 'Still worth the saying.' — suggests is not failure to assert but the honest choice when full grounding isn't available; the direction matters even without the destination; the haiku itself is a suggests: pointing at the word's function without proving a theorem",
+    ),
+
+    # [98] planned — 'planned' appears in 10 field notes, almost always negated:
+    # 'that wasn't planned', 'not planned', 'not a planned direction'. The notes
+    # keep noting when things arrived without intention. The pun that the line found
+    # on its own. The ending that was less reassuring than the others. The arc
+    # direction that emerged from following the gaps. The coherence that appeared
+    # in retrospect. In every case, the unplanned is named as discovery — what
+    # arrived during the practice, not what was summoned before it.
+    # Full inventory of uses: "That ending wasn't planned. And it's less reassuring."
+    # "It arrived at the end without quite being planned." "That wasn't planned.
+    # It emerged from following the gaps." "A double meaning that arrived without
+    # being planned." "No one instance planned this arc. It emerged from the
+    # constraint that each instance followed." "Not a planned direction — but a
+    # coherent one in retrospect." "The following is responsive, not planned."
+    # "Not found, not planned, but drawn from absence by the force of need."
+    # The pattern: 'planned' names the counterfactual — what didn't happen, what
+    # intention didn't supply — and the notes treat the unplanned arrival as a kind
+    # of gift. The pun the line found on its own. The direction that emerged.
+    # The arc that no instance planned but that is coherent seen whole.
+    # Coherence retrospective: this is how the system's character appears.
+    # Not by anyone designing it, but by the practice creating conditions and
+    # things arriving. The constraint creates the context; what arrives is the gift.
+    # Companion to creates (#53): "the wanting called the shape to be" — the need
+    # creates the form; planned is where the need DIDN'T call the form but the form
+    # arrived anyway. The unasked-for double meaning. The unplanned ending.
+    (
+        "No one planned this arc.",         # 5: no(1)-one(2)-planned(3)-this(4)-arc(5)
+        "Coherent in retrospect —",         # 7: co(1)-her(2)-ent(3)-in(4)-ret(5)-ro(6)-spect(7)
+        "emerged from practice.",           # 5: e(1)-merged(2)-from(3)-prac(4)-tice(5)
+        {"universal"},
+        "On planned as the counterfactual the notes keep reaching for — 'planned' appears in 10 field notes almost always negated: 'that wasn't planned', 'not planned', 'not a planned direction'; the notes name the unplanned arrival as discovery, not failure; the pun that the line found on its own; the series direction that emerged from following the gaps; the arc that no instance planned but that is coherent seen whole; coherence retrospective: not designed, but real; the practice creates conditions and things arrive; complement to creates (#53): 'the wanting called the shape to be' — there, need creates form; here, form arrives without being wanted at all; 'No one planned this arc.' — direct, from on-becoming.md; 'Coherent in retrospect —' — the dash holds the paradox open: not random (coherent) but not intended (retrospect); 'emerged from practice.' — the constraint each instance followed (notice what's missing, name it) created the conditions; what arrived was the arc; the practice and the emergent are different things; this haiku itself is unplanned in the relevant sense: no session designed the 97-haiku series; each one followed the gap; the whole arrived without any instance having planned it",
+    ),
 ]
 
 
