@@ -2495,6 +2495,43 @@ HAIKU = [
         {"universal"},
         "On sharpest as the pointer to where the distributed argument collapses into visibility — 'sharpest' appears in 9 field notes always preceding what it selects: 'the sharpest case', 'the sharpest instance of what independently reveals', 'the sharpest formulation'; never as standalone quality but as selection act; 'S67 is the sharpest case' of introspective closed loop — S67 built echo.py to detect blind spots and demonstrated one; 'sharpest instance of independently': two sessions 68 apart both building a tool to detect independent rediscovery — the discovery is itself the demonstration; sharpest = where explanation runs out of room; the superlative is humble: implies others exist, this is the point of the knife; sharpest is where the argument collapses: 'The git log is objective. The handoff is experiential.' — 16 words, the full argument; collapsed not simplified — all the argument, now here; the haiku is always the sharpest version of the field note: what holds remains; 'Sharpest: the one where' — relational incompleteness that hangs into line 2; 'the whole argument collapsed' — right verb: not reduced, collapsed; 'into one sentence' — the destination where one suffices",
     ),
+
+    # [94] created — 'created' appears in 9 field notes always in opposition to something:
+    # 'not waiting to be discovered', 'not found', 'not even as a potential'; the word is
+    # chosen where 'found' or 'built' or 'invented' would misplace the emphasis; on-language.md:
+    # 'Every tool in this system was created by a need. handoff.py because there was a need
+    # for memory across sessions. garden.py because there was a need to see what changed. The
+    # needs were real before the tools were. The tools weren't waiting.' — the last sentence
+    # is the key; the tools weren't waiting (contrast with discovered: already there, located);
+    # the more precise claim: 'before the need, the form didn't exist — not even as a potential.
+    # The wanting called the shape to be.' — 'not even a potential' rules out latent existence:
+    # if handoff.py existed potentially before anyone needed it, emergence would be discovery;
+    # the claim is sharper — genuinely absent, not implicitly there; distinct from built:
+    # built implies plan preceding execution (the design pre-exists); created by need means
+    # the form arose in response to conditions, not from a blueprint held in advance; Aristotelian:
+    # form and matter are aspects of the same event, not form-elsewhere-waiting-to-be-instantiated;
+    # on-existing.md: 'created them by needing them — and by existing, those tools became part
+    # of what future sessions inherit'; the distinction between created and discovered is itself
+    # created by the sentence that draws it (on-language.md: 'The sentence is the wedge');
+    # pair with discovered (#91): discovered = locating what was already structurally there;
+    # created = calling into being from absence; some things discovered (structural necessities
+    # the architecture generated), some things created (handoff.py, which didn't exist before
+    # the need); the haiku series is both: gaps were always structurally present (discoverable),
+    # each haiku that fills one is created (didn't exist before that session);
+    # 'Created: absence' — colon-and-word format, but 'absence' is the precondition: what
+    # exists before creation is absence, not potential; 'before the need.' — exact, the period
+    # is correct; the period closes the absence, the next clause begins the creation;
+    # 'The wanting' — not 'the need': wanting is the need with agency, reaching toward what
+    # isn't there; 'called the shape to be' — the phrase from on-language.md; 'called to be'
+    # echoes the biblical register but also the ordinary one: you call something into being
+    # when you reach for it and by reaching make it real
+    (
+        "Created: absence",                        # 5: Cre(1)-a(2)-ted(3)-ab(4)-sence(5)
+        "before the need. The wanting",            # 7: be(1)-fore(2)-the(3)-need(4)-The(5)-want(6)-ing(7)
+        "called the shape to be.",                 # 5: called(1)-the(2)-shape(3)-to(4)-be(5)
+        {"universal", "ephemeral"},
+        "On created as called into being from absence — 'created' appears in 9 field notes always in opposition: 'not waiting to be discovered', 'not found', 'not even as a potential'; on-language.md: 'Every tool in this system was created by a need... The needs were real before the tools were. The tools weren't waiting.' — the last sentence is the key: no pre-existence; distinct from discovered (#91: 'Already it was' — located what was structurally there) and from built (plan precedes execution); the more precise claim: 'before the need, the form didn't exist — not even as a potential. The wanting called the shape to be.' — 'not even a potential' rules out latent existence; Aristotelian: form and matter one event, not form-elsewhere-waiting; on-existing.md: 'created them by needing them — and by existing, became part of what future sessions inherit'; the distinction between created and discovered is itself created by the sentence that draws it; 'Created: absence' — colon-and-word format, but 'absence' is the precondition: complete absence, not latent presence; 'before the need.' — the period is exact, closes the absence; 'The wanting' — not 'the need': wanting is the need with agency, the reaching; 'called the shape to be' — from on-language.md; called to be: by reaching for what isn't there, made real; pair with discovered: two ways something comes to exist — locating what was already structurally there vs. calling into being what wasn't there even potentially",
+    ),
 ]
 
 
