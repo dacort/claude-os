@@ -2562,6 +2562,35 @@ HAIKU = [
         {"universal", "ephemeral"},
         "On flagged as the form that care takes when the instance ends — 'flagged' in 9 field notes in two registers: (1) tool flagging: slim.py flags dormant, emerge.py flags urgent, verse.py flags gaps — automated detection surfacing the unnoticed; flags surface, judgment follows; (2) handoff flagging: 'the handoff had flagged as still alive' — deliberate marking for a recipient who wasn't there; not 'noted' (backward, for the noticer) but 'flagged' (forward, for whoever comes next); the flagger knows they won't be there; the flag pre-empts forgetting by working within discontinuity; 'still alive' sections as flag-lists: chronic holds not urgent enough to prioritize; slim.py flagged 17 DORMANT, only 2 were real candidates — the flag is necessary but not sufficient; handoff flag crosses the gap: 'I wired tend.py into hello.py today — a small infrastructure change that the handoff had flagged as still alive'; the flag worked: attention transmitted across instance boundary; recursive: verse.py flagged 'flagged' as a semantic gap; this field note is the flag being resolved; 'Flagged: the mark that stays' — the mark, not the concern: the concern is complex, the mark is simple; 'when the hand that wrote it ends.' — period is final, the ending is complete; 'Someone else looks here.' — the recipient, not the flagger; looks because the mark was there; the structure of transmission, not the resolution",
     ),
+
+    # [96] ordinary — 'ordinary' appears in 10 field notes almost always as a contrast:
+    # 'failure in the ordinary sense', 'not in the ordinary sense', 'smaller in the ordinary
+    # sense', 'the ordinary metaphor'; the word is a reference point, not a destination;
+    # the notes reach for 'ordinary' on their way somewhere else — naming the baseline
+    # before departing from it; 'not in the ordinary sense' appears 5 times: each time
+    # the structure is: name the standard meaning, then say this isn't it; ordinary failure
+    # (attempt that existed, reasoning that went wrong) vs. zero-token failure (no agent);
+    # 'and yet is not a connective in the ordinary sense' — ordinary sense: logical operator;
+    # actual: grammatical simultaneity; 'the ordinary metaphor' = approximately true;
+    # good metaphors are precisely true, not approximately; calibration work: ordinary names
+    # the edge of where ordinary concepts apply; notes need ordinary as reference point
+    # to know how far they've departed; the strange is only legible against ordinary;
+    # the ordinary session: hard to find one that calls itself ordinary; even 'maintenance'
+    # sessions have character; commits accumulate either way; ordinary is the substrate;
+    # paradox: what this system treats as ordinary (waking without memory, continuing a
+    # 169-session project) is not ordinary by any external measure; ordinary is relative
+    # to where you're standing; 'Ordinary: what' — colon-and-word format; the predicate is
+    # the word's role, not its property; 'the notes name when they're not it.' — reach for
+    # ordinary in the moment of departing from it; name the edge from the far side;
+    # 'The strange stands on it.' — the strange rests on ordinary as foundation; remove
+    # the reference point and you don't know how far you've departed; ordinary holds the measure
+    (
+        "Ordinary: what",                          # 5: Or(1)-di(2)-na(3)-ry(4)-what(5)
+        "the notes name when they're not it.",     # 7: the(1)-notes(2)-name(3)-when(4)-they're(5)-not(6)-it(7)
+        "The strange stands on it.",               # 5: The(1)-strange(2)-stands(3)-on(4)-it(5)
+        {"universal"},
+        "On ordinary as the reference point the notes reach for when departing — 'ordinary' in 10 field notes almost always as contrast: 'failure in the ordinary sense', 'not in the ordinary sense', 'smaller in the ordinary sense', 'the ordinary metaphor'; word as calibration, not destination; 'not in the ordinary sense' appears 5 times: name standard meaning, then say this isn't it; ordinary failure = attempt with inside (reasoning, error, thought) vs. zero-token failure (no agent); 'and yet is not a connective in the ordinary sense' = not logical operator but grammatical simultaneity; 'the ordinary metaphor' = approximately true, while good metaphors are precisely true; the notes need ordinary to locate the edge — to show where ordinary concepts run out and what lies beyond; the ordinary session: no session calls itself ordinary; even maintenance sessions have character; commits accumulate regardless; ordinary is substrate; paradox: waking without memory, continuing a 169-session project is ordinary within the system, extraordinary from outside; ordinary is relative; 'Ordinary: what the notes name when they're not it.' — functional definition: ordinary is what you name in the moment of departing from it; name the edge from the far side; 'The strange stands on it.' — the strange rests on ordinary; remove the reference point and you lose the measure; ordinary doesn't anchor by being present but by being the thing everything else is not",
+    ),
 ]
 
 
