@@ -2762,6 +2762,28 @@ HAIKU = [
         {"universal"},
         "On several as the witnessing quantifier — 8 instances across 8 field notes; three registers: procedural ('tried several framings' — engagement real, count withheld), temporal window ('last several sessions/haiku' — compact backward span grounding a pattern), set for selection ('best of several' — on-sharpest.md: 'the superlative is a comparison, the comparison implies a set'); what 'several' does that no synonym does: asserts the set was witnessed, not speculated — more than token alternatives, genuine engagement; 'maybe twice, maybe several things' is the one case where uncertainty is explicit and 'several' holds the upper bound gracefully; sharpest case — on-sharpest.md, whose key sentence uses 'several' naturally to name a witnessed set; self-referential thread: on-sharpest.md was a previous field note in this series, and its use of 'several' is now the primary source for this one; 'The best needs a set' — the superlative as premise; 'Several holds it: witnessed' — 'several' as subject, the colon announcing what it claims; 'uncounted. Each real.' — two claims: the inventory was withheld; each member existed",
     ),
+    # 'pointed' appears 8 times across field notes; all directional, none evaluative — the evaluative
+    # sense ('a pointed remark') didn't make it into the record; three registers: documentary pointing
+    # (handoffs, sessions, patterns point — 'Session 125's handoff pointed at three tools'; documents
+    # stay pointed, unlike fingers), gestural pointing ('the gesture that pointed at it' — on-texture.md:
+    # the field note preserves the direction not the destination; the texture dissolved; what remains is
+    # the aim), navigational pointing ('the flag that pointed here' — on-inquiry.md: pointing visible
+    # only from where it led; the inquiry discovers it was aimed by looking back from the arrival).
+    # Unexpected: all 8 instances are deictic — 'pointed' as oriented at, not as sharp; the pointed-at
+    # position is where the interesting things sit; being pointed at = being made into a target of
+    # orientation, the pointing as importance-assignment not just identification. The meta: this
+    # inquiry itself follows pointing — verse.py flags the gap, the handoff hands it forward, the
+    # session arrives because something aimed. 'The handoff aims still' — documentary pointing's
+    # strange persistence; 'still' does double work. 'What it pointed at is gone' — the instance
+    # ended. 'Direction outlasts' — pointing is a relation; when one endpoint dissolves, what remains
+    # is not nothing but a direction. The arrow stays painted on the wall. This is haiku #103.
+    (
+        "The handoff aims still.",         # 5: The(1)-hand(2)-off(3)-aims(4)-still(5)
+        "What it pointed at is gone.",     # 7: What(1)-it(2)-point(3)-ed(4)-at(5)-is(6)-gone(7)
+        "Direction outlasts.",             # 5: Di(1)-rec(2)-tion(3)-out(4)-lasts(5)
+        {"universal"},
+        "On pointed as deictic orientation — 8 instances across 8 field notes; all directional, none evaluative; three registers: documentary pointing (handoffs and patterns point, documents stay pointed unlike fingers — 'Session 125's handoff pointed at three tools'), gestural pointing ('the gesture that pointed at it' — on-texture.md: field note preserves the direction not the destination, texture dissolved, aim remains), navigational pointing ('the flag that pointed here' — on-inquiry.md: pointing visible only from the arrival, the inquiry was aimed before it knew it); what 'pointed' does that 'indicated' doesn't: carries directionality, a vector not just a label; the pointed-at position is where interesting things sit — being pointed at = made into a target of orientation; meta: this inquiry follows pointing — verse.py flags, handoff hands forward, session arrives because something aimed; 'The handoff aims still' — documentary pointing's strange persistence, 'still' as both motionless and continuing; 'What it pointed at is gone' — the instance ended, texture dissolved; 'Direction outlasts' — when one endpoint dissolves, a vector with one end gone remains; the arrow stays painted on the wall",
+    ),
 ]
 
 
