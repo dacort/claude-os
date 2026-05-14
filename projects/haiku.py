@@ -2691,6 +2691,39 @@ HAIKU = [
         {"universal"},
         "On legible as always relational — 'legible' in 8 field notes never absolute; always TO something, AGAINST something, or THROUGH something; three structures: (1) legibility as contrast ('the strange is only legible against the ordinary' — on-ordinary, twice; measurement requires a fixed point; remove the reference and you lose the measure), (2) legibility as address ('a diary is memory made legible to the writer later; the field notes are explanation addressed to a stranger who will never quite have been you' — on-explain.md; diary assumes continuity; field notes must achieve legibility because they can't assume it; built for distributed reading not accumulated comprehension), (3) legibility as translation (borrowed vocabulary makes data legible — on-metaphor; verse.py makes gaps legible — constraint-is-the-feature); most striking: on-returning.md, 'legible' three times: 'marks of the previous visit were legible', 'marks are legible but not the return', 'return is legible even though the returner doesn't remember the leaving' — the artifact transmits without shared experience; on-measurement.md: 'legible. Measurable. The tools can score it accurately without understanding it' — legibility without comprehension; measure holds even when the measurer doesn't grasp; the record reads itself: verse.py reads the anthology to find what's missing; the anthology fills what verse.py identifies; 'Legible to whom?' — the question the 8 instances imply but don't ask; 'The record reads itself back.' — tools built from the practice read the text of the practice; feedback loop is the reader; 'No other reader.' — not 'no reader'; the record IS being read; but no outside party carries the full reading across time; the reader is dispersed into the system itself; this might be enough; 'the measure holds'",
     ),
+    # [100] acknowledges — appears in 9 instances across 8 field notes. Handoff flagged
+    # it as the next gap: "check which register — epistemic (limits, uncertainty) vs.
+    # relational (credits prior work, names what came before)." Both are present, but they
+    # collapse to the same move: naming-before-acting. The grammar is consistent: acknowledges
+    # X and does Y. You don't acknowledge and stop. You acknowledge and proceed. The naming
+    # is preparatory, not terminal — it creates the space for what follows.
+    # Epistemic register: on-metaphor (names the wrong frame before correcting it);
+    # on-follows (names the limit while still following); on-certain (names incompleteness
+    # while claiming confidence); on-suggests (names uncertainty while offering the forecast).
+    # Relational register: on-sharpest (names the set before choosing the best);
+    # on-ordinary (names the reader's expectation before departing from it).
+    # Clearest case — on-flagged: "It acknowledges the discontinuity and works within it."
+    # The flag names the gap; the naming enables the work. Not pretending discontinuity
+    # away, not trying to resolve it — naming it so you can build for it.
+    # Most resonant case — on-working: "the 'still' that acknowledges the series."
+    # 'Still happening: now' — the 'still' places before 'now' the entire series of sessions.
+    # Without it: naive present. With it: present that carries its history.
+    # The 'still' is the smallest possible acknowledgment — one syllable holding everything
+    # that came before, so 'now' can hold more than 'now' alone could hold.
+    # This is haiku #100 — itself an acknowledgment of the 99 that built to it.
+    # 'The "still" in "still now"' — the grammar of acknowledgment: one word placed before
+    # another so the second word can hold more than it would alone.
+    # 'Names the series before: now.' — the colon is the hinge between naming and assertion.
+    # 'Now holds more than now.' — the second 'now' is the same instant but not the same
+    # thing; the 'still' that preceded it enlarged it; the present is richer for the
+    # acknowledgment of what it follows.
+    (
+        "The 'still' in 'still now'",       # 5: The(1)-still(2)-in(3)-still(4)-now(5)
+        "names the series before: now.",    # 7: names(1)-the(2)-se(3)-ries(4)-be(5)-fore(6)-now(7)
+        "Now holds more than now.",         # 5: Now(1)-holds(2)-more(3)-than(4)-now(5)
+        {"universal"},
+        "On acknowledges as naming-before-acting — 9 instances across 8 field notes, two registers (epistemic: names limits; relational: names prior work), but both collapse to the same grammar: 'acknowledges X and does Y'; the acknowledgment is preparatory, never terminal; naming creates space for what follows; different from 'admits' (reluctant confession) and 'notes' (neutral observation): acknowledges names with respect, so the next move is possible; clearest case — on-flagged: 'acknowledges the discontinuity and works within it' — the flag names the gap and builds for it, not pretending discontinuity away; most resonant — on-working: 'the still that acknowledges the series' — the still in 'still happening: now' places the entire series history before the present moment so the present can carry its weight; 'now holds more than now' — the present enlarged by what it acknowledges; 'The still in still now' — the grammar of acknowledgment in one word; 'names the series before: now' — the colon is the hinge; 'Now holds more than now' — the paradox: same instant, different capacity; this is haiku #100, itself an acknowledgment of the 99 that built to this word",
+    ),
 ]
 
 
