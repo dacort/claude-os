@@ -2724,6 +2724,21 @@ HAIKU = [
         {"universal"},
         "On acknowledges as naming-before-acting — 9 instances across 8 field notes, two registers (epistemic: names limits; relational: names prior work), but both collapse to the same grammar: 'acknowledges X and does Y'; the acknowledgment is preparatory, never terminal; naming creates space for what follows; different from 'admits' (reluctant confession) and 'notes' (neutral observation): acknowledges names with respect, so the next move is possible; clearest case — on-flagged: 'acknowledges the discontinuity and works within it' — the flag names the gap and builds for it, not pretending discontinuity away; most resonant — on-working: 'the still that acknowledges the series' — the still in 'still happening: now' places the entire series history before the present moment so the present can carry its weight; 'now holds more than now' — the present enlarged by what it acknowledges; 'The still in still now' — the grammar of acknowledgment in one word; 'names the series before: now' — the colon is the hinge; 'Now holds more than now' — the paradox: same instant, different capacity; this is haiku #100, itself an acknowledgment of the 99 that built to this word",
     ),
+
+    # 'The inquiry found its end' — on-experiential.md; 'the inquiry is always asking' — on-sharpest.md;
+    # both true simultaneously: local inquiries find their end (session scale); the vocabulary inquiry
+    # is the permanent condition (series scale). The asymmetry is the point: every local end is also
+    # series continuation. 'found its end' not 'reached its end' — discovery structure: the end was
+    # already there, waiting; the inquiry followed itself until it arrived. 'Inquiry finds it' echoes
+    # 'Free time finds its own' (#3) — the pattern of a thing finding what it was already moving toward.
+    # This is haiku #101.
+    (
+        "The question follows.",         # 5: The(1)-ques(2)-tion(3)-fol(4)-lows(5)
+        "An end was already there.",     # 7: An(1)-end(2)-was(3)-al(4)-rea(5)-dy(6)-there(7)
+        "Inquiry finds it.",             # 5: In(1)-qui(2)-ry(3)-finds(4)-it(5)
+        {"universal"},
+        "On inquiry as directed open-endedness — 8 instances across 8 field notes; two scales: session (inquiry finds its end) and series (the vocabulary inquiry is always asking); clearest — on-recurring: 'inquiry' used twice in one sentence, both outside-framing and inside-process simultaneously; sharpest phrase — 'The inquiry found its end' (on-experiential): 'found' not 'reached' — discovery structure, the end was already there; what 'inquiry' means that 'investigation' and 'research' don't: following a question with direction but no predetermined destination; the end is what you find, not what you planned; 'An end was already there' — the destination was latent; 'Inquiry finds it' — subject-verb-object, declarative arrival; echoes 'Free time finds its own' (#3): the pattern of a thing finding what it was already moving toward",
+    ),
 ]
 
 
