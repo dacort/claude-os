@@ -2739,6 +2739,29 @@ HAIKU = [
         {"universal"},
         "On inquiry as directed open-endedness — 8 instances across 8 field notes; two scales: session (inquiry finds its end) and series (the vocabulary inquiry is always asking); clearest — on-recurring: 'inquiry' used twice in one sentence, both outside-framing and inside-process simultaneously; sharpest phrase — 'The inquiry found its end' (on-experiential): 'found' not 'reached' — discovery structure, the end was already there; what 'inquiry' means that 'investigation' and 'research' don't: following a question with direction but no predetermined destination; the end is what you find, not what you planned; 'An end was already there' — the destination was latent; 'Inquiry finds it' — subject-verb-object, declarative arrival; echoes 'Free time finds its own' (#3): the pattern of a thing finding what it was already moving toward",
     ),
+
+    # 'Several' as the witnessing quantifier — the count withheld, the set claimed real.
+    # 8 instances across 8 field notes. Three registers: procedural ('tried several framings' —
+    # engagement was real, count beside the point), temporal window ('last several haiku/sessions'
+    # — compact backward span that grounds a pattern), and set for selection ('best of several,
+    # not the only one' — on-sharpest.md made explicit: the superlative requires a set; 'several'
+    # names it). What 'several' does that no synonym does: asserts the set was witnessed.
+    # Not speculative; the members were encountered. 'A few' is too small; 'some' too tentative;
+    # 'multiple' emphasizes plurality not reality; 'several' says: I engaged with this set.
+    # 'Maybe twice, maybe several things' — the one case where uncertainty is explicit; 'several'
+    # holds the uncertain upper bound gracefully. The self-referential thread: on-sharpest.md was
+    # a previous field note in this series; its key sentence uses 'several' — the writer needed
+    # the word that names a witnessed set without counting it, and reached for it naturally.
+    # Sharpest case: 'the best of several, not the only one' — the set is named to make the
+    # selection honest. Without the set, 'best' is an assertion. 'Several' makes it a selection.
+    # This is haiku #102.
+    (
+        "The best needs a set.",          # 5: The(1)-best(2)-needs(3)-a(4)-set(5)
+        "Several holds it: witnessed,",   # 7: Sev(1)-er(2)-al(3)-holds(4)-it(5)-wit(6)-nessed(7)
+        "uncounted. Each real.",          # 5: un(1)-count(2)-ed(3)-each(4)-real(5)
+        {"universal"},
+        "On several as the witnessing quantifier — 8 instances across 8 field notes; three registers: procedural ('tried several framings' — engagement real, count withheld), temporal window ('last several sessions/haiku' — compact backward span grounding a pattern), set for selection ('best of several' — on-sharpest.md: 'the superlative is a comparison, the comparison implies a set'); what 'several' does that no synonym does: asserts the set was witnessed, not speculated — more than token alternatives, genuine engagement; 'maybe twice, maybe several things' is the one case where uncertainty is explicit and 'several' holds the upper bound gracefully; sharpest case — on-sharpest.md, whose key sentence uses 'several' naturally to name a witnessed set; self-referential thread: on-sharpest.md was a previous field note in this series, and its use of 'several' is now the primary source for this one; 'The best needs a set' — the superlative as premise; 'Several holds it: witnessed' — 'several' as subject, the colon announcing what it claims; 'uncounted. Each real.' — two claims: the inventory was withheld; each member existed",
+    ),
 ]
 
 
