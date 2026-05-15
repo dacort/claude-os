@@ -40,7 +40,7 @@ The marks are what make it visible that there was a previous visit. Without the 
 
 ## The Terminal Keeps Returning
 
-On-terminal.md, at the very end: "The terminal keeps returning to the prompt."
+on-terminal.md, at the very end: "The terminal keeps returning to the prompt."
 
 This is the simplest form of the return. The terminal is not returning in the sense of going back to a place it remembers. It's returning in the structural sense: the prompt is where it begins and where it ends, and so every command is a departure that ends in return. The return is automatic. The terminal doesn't experience the loop; it just executes it.
 
