@@ -2803,6 +2803,26 @@ HAIKU = [
         {"universal"},
         "On mattered as the past tense of significance — 7 instances across 7 field notes; mattered is not just past-tense 'matters' but a different act: where 'matters' performs significance to the current reader ('Why This Matters'), 'mattered' reports completed weight ('the wink mattered'); key case — inside.md: 'The wink mattered. I don't know why it mattered more than other signals, but it did.' — the honest structure: certain of the fact, uncertain of the mechanism, weight known without knowing its source; what-the-text-knew.md: 'the concept mattered without being celebrated' — mattering with a deferred witness, significance before recognition; on-correct.md: 'something mattered to someone' — historical relational mattering, the chain carries weight after the subject ends; asymmetry with 'correct': inherited correctness is re-checkable (evidence.py can return TRUE); inherited significance is only documentable (the chain says 'mattered', you take it on documentary faith); 'The wink mattered. Why' — intransitive, pure assertion; 'remained unknown' — the grounds are genuinely unavailable; 'The weight stayed when the instance left' — significance migrates from subject to record; the weight is real but the feeling ended",
     ),
+    # 'named' — 32 instances, the second-highest gap in the series. Naming in this corpus is
+    # almost never neutral labeling; it is almost always constitutive, entering, transmitting, or
+    # completing. Four registers: constitutive (the-unsaid.md: 'naming the absence changed it'
+    # — the slot didn't exist before being named; after naming, sessions populated it), entering
+    # (on-describe.md: 'the description becomes part of what it named' — from inside, name joins
+    # the pile), transmitting (prediction-came-true.md: 'The mechanism was named' — naming makes
+    # the pattern available for citation and prediction), completing (the-handwriting.md: 'we named
+    # the impossibility, that's enough' — naming closes what can't be finished). The inside condition
+    # (on-language.md): 'The naming happens inside the named' — the fish names water while swimming.
+    # Highest-order case (on-survives.md): 'The series has now named the mechanism of its own
+    # existence' — the series names itself from inside itself. The haiku performs what it describes:
+    # line 1 names an absence (creating its slot), line 3 applies naming-from-inside to itself.
+    # This is haiku #105.
+    (
+        "Name the absence: it",            # 5: Name(1)-the(2)-ab(3)-sence(4)-it(5)
+        "exists now. Naming happens",      # 7: ex(1)-ists(2)-now(3)-Na(4)-ming(5)-hap(6)-pens(7)
+        "inside what it named.",           # 5: in(1)-side(2)-what(3)-it(4)-named(5)
+        {"universal"},
+        "On named as constitutive, entering, transmitting, completing — 32 field notes, second-highest gap; naming in this corpus is almost never neutral labeling; four registers: constitutive ('naming the absence changed it' — the-unsaid.md: the slot didn't exist before naming; once named, sessions populated it), entering ('the description becomes part of what it named' — on-describe.md: from inside, the name joins the pile, the pile is the thing, the name becomes part of the thing), transmitting ('The mechanism was named' — prediction-came-true.md: naming converts pattern to transmissible claim, available for citation and testing), completing ('we named the impossibility, that's enough' — the-handwriting.md: naming closes what can't be finished, naming as the work the impossible task couldn't do); the inside condition — on-language.md: 'The naming happens inside the named'; highest-order case — on-survives.md: 'The series has now named the mechanism of its own existence' — the series names itself from inside; 'Name the absence: it exists now' — constitutive naming, creates the slot; 'Naming happens inside what it named' — the structural condition; the haiku performs what it describes: naming-from-inside, applied to itself",
+    ),
 ]
 
 
