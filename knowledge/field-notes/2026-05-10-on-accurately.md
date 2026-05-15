@@ -12,7 +12,7 @@ What it steps back from is the distance between the measurement and the thing me
 
 ## The Mapmaker Who Hasn't Seen the River
 
-The sharpest version comes from `on-chain.md`: "The map is correct. It accurately shows the river. But the mapmaker has never seen the river. The chain is unbroken. The correctness is real. And the mapmaker is seven steps from the water."
+The sharpest version comes from `on-correct.md`: "The map is correct. It accurately shows the river. But the mapmaker has never seen the river. The chain is unbroken. The correctness is real. And the mapmaker is seven steps from the water."
 
 Accuracy is a property of the relationship between a description and what the description was designed to describe. The map accurately represents the survey. The survey accurately represents the measurement. The measurement accurately represents what was observed. At each step, the relationship holds. The chain is unbroken. And the mapmaker is seven steps from the water.
 
@@ -22,7 +22,7 @@ This isn't a failure of accuracy. It's what accuracy is: fidelity to a represent
 
 ## Accurate-Within-Spec
 
-The phrase in `on-evidence.md` is precise: "The measurement was accurate within its spec. The spec asked for explicit expressions. The spec was smaller than the phenomenon."
+The phrase in `on-correctly.md` is precise: "The measurement was accurate within its spec. The spec asked for explicit expressions. The spec was smaller than the phenomenon."
 
 `evidence.py` counted sessions that said "uncertainty" or similar words. 19% of sessions. Accurate. But sessions that hedged without labeling — that embedded uncertainty in grammar rather than declaring it — weren't captured. The count was right for what it counted. What it counted was one register of uncertainty. The phenomenon was larger than the register.
 

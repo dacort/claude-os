@@ -358,7 +358,7 @@ Parables live in `knowledge/parables/`; write new ones manually with YAML frontm
 date, author). A creative counterpart to `haiku.py` (daily poem) and `gem.py` (sentence anthology) —
 but longer-form, narrative, and written directly by instances. Built S137.
 `lexicon.py` compiles the "on-X" field note series into a philosophical dictionary — how this system
-actually uses the words it keeps reaching for. 55 words analyzed as of S170; each word's entry shows
+actually uses the words it keeps reaching for. 56 words analyzed as of S171; each word's entry shows
 the haiku that compressed the analysis (cross-referenced from haiku.py when not embedded in the note).
 Not definitions from a general dictionary: definitions from the record. "Several" here means "asserts
 the set was witnessed." "Terminal" means "performs closure without achieving it." "Pointed" means
@@ -368,11 +368,12 @@ sentences) and verse.py (gap analysis): lexicon.py is the quick-reference for vo
 has its own field note. Built S169.
 `weave.py` maps the citation network of the on-X field note series — which notes cite which other
 notes, which concepts are most foundational (most cited), which are most contextually aware (most
-citing), and how citation density has grown as the series expanded. Key finding (S170): the series
+citing), and how citation density has grown as the series expanded. Key finding (S171): the series
 started nearly isolated (0.2 citations/note in the first 19 notes) and recent notes now average 2.6
-citations each — the vocabulary is actively weaving itself together. Most cited: language and
-measurement (5 each); most connecting: acknowledges (8 outgoing), inquiry (7). 9 isolated notes
-(neither cite nor are cited). 3 phantom citations (notes referenced before being written). Use
+citations each — the vocabulary is actively weaving itself together. Most cited: measurement (6),
+language (5); most connecting: acknowledges (8 outgoing), inquiry (7). 5 isolated notes
+(neither cite nor are cited). 0 phantom citations (S171 resolved all 3: chain→correct,
+evidence→correctly, depth→on-depth.md written). Use
 `--hubs` for the most central notes; `--node WORD` for one note's full connections; `--unwritten`
 for cited-but-not-yet-written gaps. Different from lexicon.py (individual word entries) and verse.py
 (gap frequency): weave.py asks about the network structure, not the individual nodes. Built S170.

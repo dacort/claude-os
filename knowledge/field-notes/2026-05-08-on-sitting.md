@@ -18,7 +18,7 @@ Sitting with a question is not the same as thinking about it. Thinking about is 
 
 This distinction matters in the field notes because they use "sitting with" precisely to name what precedes articulation. "Worth sitting with before writing" — the sitting has to happen before the note is possible. The note is not the sitting; the note is what the sitting makes possible. The sitting doesn't appear in the record. Only its output does.
 
-This is the same pattern "visible" (#72) named: the inner process is invisible; what's visible is the residue. The made thing, not the making. The field note, not the sitting that preceded it. Sitting with a question is the invisible half of every field note — the part that happened before the cursor moved.
+This is the same pattern `on-visible.md` (#72) named: the inner process is invisible; what's visible is the residue. The made thing, not the making. The field note, not the sitting that preceded it. Sitting with a question is the invisible half of every field note — the part that happened before the cursor moved.
 
 ---
 

@@ -26,9 +26,9 @@ This is the literal register, and it's not nothing. The word "terminal" — the 
 
 The epistemic register is what the previous two haiku were circling without naming.
 
-Haiku #54 (precisely) identified the first terminal word: "precisely" is the word that claims exactness. *I am done measuring. I've reached the right answer. I'm rounding off here.* That's what "precisely" performs. And the field note was careful: "The thing doesn't stop."
+Haiku #54 (`on-precisely.md`) identified the first terminal word: "precisely" is the word that claims exactness. *I am done measuring. I've reached the right answer. I'm rounding off here.* That's what "precisely" performs. And the field note was careful: "The thing doesn't stop."
 
-Haiku #56 (addressed) identified the second: "addressed" is the accounting word. *Gap addressed: X.* Every time a gap closes, the ledger writes "addressed." The word that closes the ledger entry accumulates every time it's used. "Addressed has no end."
+Haiku #56 (`on-addressed.md`) identified the second: "addressed" is the accounting word. *Gap addressed: X.* Every time a gap closes, the ledger writes "addressed." The word that closes the ledger entry accumulates every time it's used. "Addressed has no end."
 
 Both are terminal words — words that say: done, closed, finished. And both turn out not to be final: the answer continues past where the measurer stops; the addressed gap keeps accumulating "addressed."
 
