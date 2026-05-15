@@ -14,6 +14,7 @@ Usage:
     python3 projects/weave.py              # full network analysis
     python3 projects/weave.py --hubs       # most connected notes only
     python3 projects/weave.py --unwritten  # cited but not yet written
+    python3 projects/weave.py --community  # philosophical clusters
     python3 projects/weave.py --plain      # no ANSI colors
     python3 projects/weave.py --node WORD  # one note's connections
 """
@@ -289,6 +290,139 @@ def print_hubs(edges, in_degree, notes):
         print(f"  {white(word.ljust(20))}  {b}  {dim('in:')} {cyan(str(ic).rjust(2))}  {dim('out:')} {magenta(str(oc).rjust(2))}")
     print()
 
+def find_communities(edges, in_degree, notes):
+    """
+    Group notes into philosophical clusters by co-citation similarity.
+
+    Algorithm: identify top-cited notes as hub seeds, then assign each
+    other note to the hub it's most tightly connected to (direct citation
+    + shared citations). Notes connected to multiple hubs are bridges.
+    """
+    # Use notes cited 3+ times as community seeds
+    hub_threshold = 3
+    hubs = sorted(
+        [(n, c) for n, c in in_degree.items() if c >= hub_threshold],
+        key=lambda x: -x[1],
+    )
+    if not hubs:
+        return {}, []
+
+    hub_names = {h for h, _ in hubs}
+
+    # Build reverse index: who cites each note
+    in_links = {n: set() for n in notes}
+    for citer, cited_set in edges.items():
+        for cited in cited_set:
+            if cited in in_links:
+                in_links[cited].add(citer)
+
+    # For each note, compute affinity to each hub
+    # Affinity: direct citation (weight 3), reverse citation (2), shared citations (1 each)
+    def affinity(note, hub):
+        note_cites = edges.get(note, set())
+        hub_cites = edges.get(hub, set())
+        score = 0
+        if hub in note_cites:        score += 3  # note cites hub
+        if note in hub_cites:        score += 2  # hub cites note
+        score += len(note_cites & hub_cites)      # shared co-citations
+        return score
+
+    # Assign each note to its top hub(s)
+    assignments = {}  # note -> list of (hub, score)
+    for note in notes:
+        scores = [(h, affinity(note, h)) for h, _ in hubs]
+        scores = [(h, s) for h, s in scores if s > 0]
+        scores.sort(key=lambda x: -x[1])
+        assignments[note] = scores
+
+    # Build communities: hub -> [members]
+    communities = {h: [h] for h, _ in hubs}
+    bridges = []  # notes with strong affinity to 2+ hubs
+
+    for note in notes:
+        if note in hub_names:
+            continue
+        aff = assignments.get(note, [])
+        if not aff:
+            continue  # isolated
+
+        top_score = aff[0][1]
+        top_hub = aff[0][0]
+
+        # Bridge: belongs to 2+ hubs with near-equal affinity
+        strong = [h for h, s in aff if s >= top_score * 0.75]
+        if len(strong) >= 2:
+            bridges.append((note, strong))
+        else:
+            communities[top_hub].append(note)
+
+    return communities, bridges
+
+
+def print_communities(edges, in_degree, notes):
+    """Print philosophical clusters in the citation network."""
+    communities, bridges = find_communities(edges, in_degree, notes)
+    if not communities:
+        print(f"  {dim('Not enough connected notes for community detection.')}")
+        return
+
+    # Community names (manual labels based on hub content)
+    community_labels = {
+        "measurement":  "Measurement & Accuracy",
+        "visible":      "Practice & Visibility",
+        "language":     "Language & Naming",
+        "sharpest":     "Precision & Analysis",
+        "correctly":    "Correctness & Spec",
+        "becoming":     "Process & Change",
+        "correctly":    "Correctness & Spec",
+        "noticing":     "Attention & Noticing",
+        "survives":     "What Persists",
+        "describe":     "Description & Record",
+        "acknowledges": "Recognition & Acknowledgment",
+    }
+
+    print(f"  {bold('Philosophical Clusters')}  {dim('— communities in the citation network')}")
+    print(f"  {dim('─' * 52)}")
+    print()
+
+    # Sort communities by size (largest first)
+    sorted_communities = sorted(
+        communities.items(),
+        key=lambda x: -len(x[1]),
+    )
+
+    for hub, members in sorted_communities:
+        if len(members) <= 1:
+            continue  # skip singleton communities
+        hub_word = word_from_short(hub)
+        label = community_labels.get(hub_word, hub_word.title())
+        hub_count = in_degree.get(hub, 0)
+        non_hub = [m for m in members if m != hub]
+
+        print(f"  {bold(white(label))}  {dim(f'— hub: {hub_word} ({hub_count} citations)')}")
+        if non_hub:
+            member_words = sorted(word_from_short(m) for m in non_hub)
+            # Wrap at 60 chars
+            line = ""
+            for w in member_words:
+                if len(line) + len(w) + 2 > 52:
+                    print(f"    {dim(line.rstrip(', '))}")
+                    line = ""
+                line += w + ", "
+            if line:
+                print(f"    {dim(line.rstrip(', '))}")
+        print()
+
+    if bridges:
+        print(f"  {bold('Bridge Notes')}  {dim('— connected to multiple clusters')}")
+        print(f"  {dim('─' * 52)}")
+        for note, hubs_list in sorted(bridges):
+            word = word_from_short(note)
+            hub_words = ", ".join(word_from_short(h) for h in hubs_list)
+            print(f"  {yellow('◆')}  {white(word.ljust(20))}  {dim(f'bridges: {hub_words}')}")
+        print()
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -301,6 +435,7 @@ def main():
     )
     parser.add_argument("--hubs",      action="store_true", help="Most connected notes only")
     parser.add_argument("--unwritten", action="store_true", help="Cited but not yet written")
+    parser.add_argument("--community", action="store_true", help="Philosophical clusters")
     parser.add_argument("--node",      metavar="WORD",      help="One note's connections")
     parser.add_argument("--plain",     action="store_true", help="No ANSI colors")
 
@@ -328,6 +463,12 @@ def main():
         print()
         print_header(len(notes), total_edges)
         print_unwritten(all_cited, notes)
+        return
+
+    if args.community:
+        print()
+        print_header(len(notes), total_edges)
+        print_communities(edges, in_degree, notes)
         return
 
     # Full view
