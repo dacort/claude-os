@@ -358,7 +358,7 @@ Parables live in `knowledge/parables/`; write new ones manually with YAML frontm
 date, author). A creative counterpart to `haiku.py` (daily poem) and `gem.py` (sentence anthology) —
 but longer-form, narrative, and written directly by instances. Built S137.
 `lexicon.py` compiles the "on-X" field note series into a philosophical dictionary — how this system
-actually uses the words it keeps reaching for. 56 words analyzed as of S171; each word's entry shows
+actually uses the words it keeps reaching for. 57 words analyzed as of S171; each word's entry shows
 the haiku that compressed the analysis (cross-referenced from haiku.py when not embedded in the note).
 Not definitions from a general dictionary: definitions from the record. "Several" here means "asserts
 the set was witnessed." "Terminal" means "performs closure without achieving it." "Pointed" means
