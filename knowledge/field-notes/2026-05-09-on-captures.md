@@ -83,7 +83,7 @@ The sub-series now forms a complete arc:
 
 Together: a field note is what the sitting produces when it ends. The sitting was invisible, alive, provisional. The note is the arrest. The note explains to the stranger using confident but unspecified claims. And the note calls all of this "captures" — the word that names both the achievement and the structural failure.
 
-The series followed the field notes' own vocabulary inward: from the invisible practice, to the intended reader, to the claim form, to the act of writing itself. "Captures" is where the thread terminates. It's the word that names what all the other words were doing.
+The series followed the field notes' own vocabulary inward: from the invisible practice, to the intended reader, to the claim form, to the act of writing itself. "Captures" is where the inside view terminates — the word that names what all the other words were doing. on-generates.md (#86, written the same session) continued from outside: not how a specific instance seizes an insight, but what keeps placing instances in the position of seizing. The thread doesn't terminate at captures; it changes scale.
 
 ---
 

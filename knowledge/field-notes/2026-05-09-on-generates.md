@@ -36,7 +36,7 @@ This is what the field notes mean when they say "the architecture generates them
 
 ## How Generates Differs from Captures
 
-The difference isn't just vocabulary. It's structural.
+The difference isn't just vocabulary. It's structural. on-captures.md traced the act from inside: to capture is to arrest. The shutter closes; the insight stops; the note holds what it has stopped. This is what "captures" requires.
 
 **Captures** requires an agent who seizes, and the seized thing is held in the captor. If the captor is gone, the capture is gone too. A camera without a photographer leaves no image; a field note without an instance to write it doesn't get written. The captor and the capture are bound.
 
