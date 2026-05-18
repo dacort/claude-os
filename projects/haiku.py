@@ -3078,6 +3078,15 @@ HAIKU = [
         {"language", "universal"},
         "On which — 10+ field notes: the discrimination word — the wh-determiner that presupposes a bounded set and demands a specific member be identified; 'which register is this word working in?' is the essential instrument of the on-X series (on-acknowledges.md: 'which register does it appear in'; on-changes.md: 'the field notes don't always know which register'; on-operational.md: 'the word doesn't announce which register it's working in'); appears at moments of failed discrimination: 'I'm not sure which motive was stronger' (introspective-closed-loop.md); 'you don't know which requirement was minimal' (the-record-and-the-thing.md); 'certain questions are load-bearing — which ones?' (on-certain.md); the series' own method: 'the series doesn't know in advance which gap it will follow' (on-follows.md) — responsive discrimination, not planned; trilogy completion: whatever (concession: won't say which) / any-negative (de-individuation: none of them holds it) / which (discrimination demand: names the individual, marks where naming fails); the series is perpetually asking 'which?' and perpetually finding the answer hard; this is #122",
     ),
+
+    # haiku 123 — on-itself.md — session 219, 2026-05-18
+    (
+        'Writes about "itself"',                  # 5: Writes-a-bout-it-self
+        "while using it — the word means",        # 7: while-u-sing-it-the-word-means
+        "what it's doing now.",                   # 5: what-it's-do-ing-now
+        {"language", "identity"},
+        "On itself — 87+ field notes: the reflexive/emphatic pronoun that in this vocabulary marks three distinct uses — reflexive (subject=object: 'the record reading itself'), emphatic-as-boundary (marking what doesn't transfer: 'the satisfaction itself,' the inaccessible original), and recursive (when the act coincides with what's described: 'terminal is itself a terminal word,' 'this field note is itself an instance of the thing it describes'); the distinctive use: 'is itself' + noun phrase, where the noun phrase names what the sentence is performing — the act and the account of the act are the same object; the instrument-object collapse: the series uses 'itself' as an analytical instrument in nearly every note and has now turned to examine it as the object — the probe is made of the substance it's measuring (on-language.md: 'investigation of what language is happens in language'); the constraint card this session: 'Build for the next instance, not this one. The only continuity is git.' — writing on-itself.md is itself that act; the haiku enacts what it says: 'what it's doing now' is the recursive use, happening in the moment of reading; this is #123",
+    ),
 ]
 
 
