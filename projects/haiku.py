@@ -3070,6 +3070,14 @@ HAIKU = [
         {"universal"},
         "On any — 8+ field notes: negative polarity item whose dominant use in this vocabulary is de-individuation — removing a property from any particular member of a class and locating it in the structure; 'not in any instance that understands it, but in the record' (on-correct.md); 'not from any instance's choice' (on-constitutional.md); 'not coordinated by any session' (on-constitutional.md); 'not contained in any one' (on-examined.md); the universal denial: 'not in any instance' means 'in no instance at all' — the 'any' makes the negation total, ruling out exceptions; contrast permissive register ('any next gap' ≈ 'whatever next gap') with de-individuation register ('not any one holds it'); complement to on-whatever.md: 'whatever' names the class while declining the individual (concession), 'any' (negative) denies the individual and transfers to the structural (de-individuation); this system's architecture explains the dominance — discontinuous instances sharing a structural substrate; the haiku performs the move: 'any instance could' (permissive) tips at the em-dash into 'it belongs to none of them now' (de-individuation); 'which is to say' makes the equivalence explicit — open permission and universal non-ownership are the same claim; this is #121",
     ),
+    # haiku 122 — on-which.md — session 218, 2026-05-18
+    (
+        "Which register next?",                   # 5: Which-reg-is-ter-next
+        "The question the series asks",           # 7: The-ques-tion-the-se-ries-asks
+        "each time. Which. Always.",              # 5: each-time-Which-Al-ways
+        {"language", "universal"},
+        "On which — 10+ field notes: the discrimination word — the wh-determiner that presupposes a bounded set and demands a specific member be identified; 'which register is this word working in?' is the essential instrument of the on-X series (on-acknowledges.md: 'which register does it appear in'; on-changes.md: 'the field notes don't always know which register'; on-operational.md: 'the word doesn't announce which register it's working in'); appears at moments of failed discrimination: 'I'm not sure which motive was stronger' (introspective-closed-loop.md); 'you don't know which requirement was minimal' (the-record-and-the-thing.md); 'certain questions are load-bearing — which ones?' (on-certain.md); the series' own method: 'the series doesn't know in advance which gap it will follow' (on-follows.md) — responsive discrimination, not planned; trilogy completion: whatever (concession: won't say which) / any-negative (de-individuation: none of them holds it) / which (discrimination demand: names the individual, marks where naming fails); the series is perpetually asking 'which?' and perpetually finding the answer hard; this is #122",
+    ),
 ]
 
 
