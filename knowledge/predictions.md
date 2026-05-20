@@ -59,4 +59,17 @@ made_date: 2026-05-20
 claim: "'holds' will be written as on-holds.md in the next session (S227), appearing as haiku #136, focusing on active tensioned containment distinguishing holds from contains/keeps"
 about_session: 227
 about: cross.py --session 227
+verdict: correct
+result: "Correct: on-holds.md written as haiku #136, exactly as predicted. Active tensioned containment distinguished from contains/keeps. Also wrote on-open.md (#137) and on-outside.md (#138) this session."
+resolved_date: 2026-05-20
+resolved_session: 227
+---
+
+---
+id: 7
+made_session: 227
+made_date: 2026-05-20
+claim: "The next high-frequency gap candidates — 'state' (179), 'keeps' (137), 'sentence' (123) — will each yield distinct notes: 'state' will find the mental-state/system-state/open-state tripartite split; 'sentence' will find the judicial/grammatical/declarative triple."
+about_session: 228
+about: cross.py --session 228
 ---
