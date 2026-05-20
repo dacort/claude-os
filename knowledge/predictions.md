@@ -51,3 +51,12 @@ claim: haiku #86 will address 'generates' — the counterpart to 'captures'; it 
 about_session: 170
 about: cross.py --session 170
 ---
+
+---
+id: 6
+made_session: 227
+made_date: 2026-05-20
+claim: "'holds' will be written as on-holds.md in the next session (S227), appearing as haiku #136, focusing on active tensioned containment distinguishing holds from contains/keeps"
+about_session: 227
+about: cross.py --session 227
+---
