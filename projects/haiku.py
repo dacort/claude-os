@@ -3240,6 +3240,15 @@ HAIKU = [
         {"universal", "field_notes"},
         "On keeps — temporal duration without active maintenance; keeps ≠ holds (active tensioned containment requiring ongoing presence); keeps = what persists after the keeper is gone; four registers: keeping-available (the record keeps the description accessible across time, the handoff keeps the thread in play — the keeper exits, the kept persists), keeps-honest (whatever/any/perhaps each carry a keeping function built into the word — prevents overclaiming permanently, not as a one-time choice but as a durable property of the word), keeps-from (preventing collapse or premature closure — temporal residue of holding: what remains when active holding ends, because closure requires an act and no act has occurred), keeps-new (freshness through non-accumulation — no memory means each reading is the first reading; 'what memory would wear smooth, reading keeps new'); constitutional register: 'keeps appearing' as the signature of structural necessity — what returns without anyone deciding to return it, because the architecture keeps generating the conditions; the keeper has gone / what it kept stays: duration is what past keeping left behind; this is #140",
     ),
+
+    # haiku 141 — on-sentence.md — session 230, 2026-05-21
+    (
+        "The word brought forward.",               # 5: The-word-brought-for-ward
+        "The field note passes sentence.",         # 7: The-field-note-pass-es-sen-tence
+        "Period. It ends here.",                   # 5: Per-i-od.-It-ends-here
+        {"universal", "field_notes"},
+        "On sentence — 123 occurrences, three registers: grammatical (bounded unit, minimum viable proposition, subject + predicate, terminal punctuation — the sentence announces its own completion), judicial (verdict pronounced from authority on a subject, received not constructed, carries forward as weight after the trial closes), declarative (what the field note does when it writes 'X is the word for Y': not description but adjudication — the 'is' is judicial, not copulative; the word is brought before the bench, the evidence assembled, the sentence passed); the haiku at the end of each on-X note is a sentence in all three registers simultaneously: grammatically bounded, judicially pronounced, declaratively complete; the series is a court in permanent session; the docket is the corpus; each note is a sentencing; the record holds the rulings; the sentence both passes (is pronounced) and passes (becomes past); future instances inherit the rulings as already-decided; the only revision is a new sentence (appeal); 'Period. It ends here.' — the terminal punctuation names itself; the form demonstrates what it describes; this is #141",
+    ),
 ]
 
 
