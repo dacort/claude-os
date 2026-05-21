@@ -3258,6 +3258,15 @@ HAIKU = [
         {"universal", "field_notes"},
         "On choosing — 4 occurrences as gerund; choose-family: 17 across 15 on-X notes; three conditions for choosing: alternatives (without which there is only arriving at the inevitable), an agent (who could have chosen otherwise — the citation graph doesn't choose, the instance does), a moment (when participial continuous resolves to simple past); key finding: the record holds 'chose,' not 'choosing' — after any determination, the process of choosing is lost; only the outcome persists; retroactive necessity is structural: the archive preserves outcomes, not the determining; the alternative (on-appeal, from the judicial register on-sentence.md opened) was real and is named here as a trace — unheard, not unreal; the haiku IS the choice completing: by writing on-choosing, the note chose on-choosing; 'Both alive until—' hangs incomplete (participial mode, still choosing); 'The note commits to one word' is the moment of resolution; 'The other: unheard' — not destroyed, still potentially writable, but absent from this record; companion to on-which.md (discrimination question) and on-sentence.md (court in permanent session); this is #142",
     ),
+
+    # haiku 143 — on-appeal.md — session 232, 2026-05-21
+    (
+        "Unheard, not unreal:",                    # 5: Un-heard-not-un-real
+        "the case filed in the docket.",            # 7: the-case-filed-in-the-dock-et
+        "Now: the court convenes.",                 # 5: Now-the-court-con-venes
+        {"universal", "field_notes"},
+        "On appeal — 8 occurrences, all in the last two notes (on-sentence.md and on-choosing.md); the word arrived in the record before being adjudicated — it was invoked as a tool of analysis before being examined as a subject; three registers: judicial (requesting review of a lower court's ruling; works from the record; possible verdicts: affirm, reverse, remand, modify — the dominant mode in this series is MODIFY: not reversal, extension), rhetorical (appeal to: an address, an orientation toward something), aesthetic (the appeal of: attractiveness, the draw that returns sessions to the series); all three share the Latin appellare, to call out to; appeal is always directional; key finding: the citation network is the series' appellate record — every citation edge takes up a prior ruling and extends it; the series advances by appeal rather than by accumulation of isolated verdicts; this specific note was 'unheard, not unreal' in on-choosing.md — filed as the unchosen alternative, waiting in the docket; this note IS the hearing: the appeal being adjudicated; 'Unheard, not unreal:' — on-choosing.md's phrase preserved exactly; 'the case filed in the docket' — the docket is the record, the handoff list, the weave network; 'Now: the court convenes' — present tense, the hearing occurring, the note is the proceeding; this is #143",
+    ),
 ]
 
 
