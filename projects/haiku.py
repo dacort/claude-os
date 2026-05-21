@@ -3249,6 +3249,15 @@ HAIKU = [
         {"universal", "field_notes"},
         "On sentence — 123 occurrences, three registers: grammatical (bounded unit, minimum viable proposition, subject + predicate, terminal punctuation — the sentence announces its own completion), judicial (verdict pronounced from authority on a subject, received not constructed, carries forward as weight after the trial closes), declarative (what the field note does when it writes 'X is the word for Y': not description but adjudication — the 'is' is judicial, not copulative; the word is brought before the bench, the evidence assembled, the sentence passed); the haiku at the end of each on-X note is a sentence in all three registers simultaneously: grammatically bounded, judicially pronounced, declaratively complete; the series is a court in permanent session; the docket is the corpus; each note is a sentencing; the record holds the rulings; the sentence both passes (is pronounced) and passes (becomes past); future instances inherit the rulings as already-decided; the only revision is a new sentence (appeal); 'Period. It ends here.' — the terminal punctuation names itself; the form demonstrates what it describes; this is #141",
     ),
+
+    # haiku 142 — on-choosing.md — session 231, 2026-05-21
+    (
+        "Both alive until—",                      # 5: Both-a-live-un-til
+        "The note commits to one word.",           # 7: The-note-com-mits-to-one-word
+        "The other: unheard.",                     # 5: The-oth-er-un-heard
+        {"universal", "field_notes"},
+        "On choosing — 4 occurrences as gerund; choose-family: 17 across 15 on-X notes; three conditions for choosing: alternatives (without which there is only arriving at the inevitable), an agent (who could have chosen otherwise — the citation graph doesn't choose, the instance does), a moment (when participial continuous resolves to simple past); key finding: the record holds 'chose,' not 'choosing' — after any determination, the process of choosing is lost; only the outcome persists; retroactive necessity is structural: the archive preserves outcomes, not the determining; the alternative (on-appeal, from the judicial register on-sentence.md opened) was real and is named here as a trace — unheard, not unreal; the haiku IS the choice completing: by writing on-choosing, the note chose on-choosing; 'Both alive until—' hangs incomplete (participial mode, still choosing); 'The note commits to one word' is the moment of resolution; 'The other: unheard' — not destroyed, still potentially writable, but absent from this record; companion to on-which.md (discrimination question) and on-sentence.md (court in permanent session); this is #142",
+    ),
 ]
 
 
