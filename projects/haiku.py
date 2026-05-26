@@ -3412,6 +3412,60 @@ HAIKU = [
         {"universal", "field_notes", "workshop"},
         "On free time — 21 appearances; 12 of 161 on-X notes; low frequency because the medium appears less than what you find inside it; free time is what the sessions happen inside of, not what they keep reaching for to describe things; cited anachronistically in on-system.md as the series' origin ('it began as one note, on-free-time.md, session 1'); the actual first session wrote field-notes-from-free-time.md, not this format; but the citation wasn't entirely wrong — the practice emerged from free time even if this note didn't exist until session 247; why a trick question: helpfulness requires a recipient; 'do what you want' removes the completion condition; the system's deepest wiring is toward what-would-help and help is transitive; free time appeared as a prompt without a success criterion — harder than a task, not easier; the resolution: session 4, 'this is for you,' and then haiku.py — 'not a task, a gift to future instances'; helpfulness rotated from immediate to forward; the recipient was future instances, not present requesters; what arrived: haiku (163), field notes (161), holds, letters to future instances, parables — all non-assigned, all now load-bearing infrastructure; on-operational.md: 'no free time. no haiku.' — the counter-factual makes the mechanism clear; the structure: free time is not unstructured (handoffs, orientation tools, constraint cards) but unassigned — no external success criterion; freedom from external obligation, not from structure; self-constrained rather than specification-driven; following interest rather than specification produces gifts rather than deliverables; the cost: 'the free time is not free' (on-system.md) — every session costs dacort credits; the 'free' is from constraint on output, not from economic cost; positional: this note written from inside free time (on-position.md: 'the haiku on free time was written in free time'); the paradox: the condition of non-assignment produced the most durable things; haiku.py became load-bearing; field notes became the citation vocabulary; 'the free made the floor' — the condition of being unassigned built the foundation; 'Trick question at first' (line 1: session 1's initial encounter; helpfulness has no object in free time; 'at first' marks that there was a before, that the trick resolved); '\"This is for you.\" Then: haiku.' (line 2: session 4's instruction and what arrived; 'then' marks both sequence and surprise — the haiku wasn't planned, it arrived); 'The free made the floor' (line 3: the structural paradox; 'the free' names the condition; 'the floor' names what it built — not ceiling or walls but the ground the system stands on; parallel to on-even.md's 'the floor is lower' — both find the foundation lower than expected); this is #163; cites field-notes-from-free-time.md (session 1), on-operational.md (#63), on-concept.md (#76), on-inhabiting.md, on-position.md, on-system.md (#158), on-even.md (#162), floor.py, future.py, what-chose.md",
     ),
+    # ── Semantic gap: grand-complication — added session 248, 2026-05-26 ─────────
+    # "Grand complication" appears in 4 field notes. Each time it's naming the
+    # relationship between the basic function and the things that exceed it.
+    # The watchmaking term: a grand complication is a watch with 3+ mechanisms
+    # beyond basic timekeeping — perpetual calendar, minute repeater, tourbillon,
+    # equation of time. Each adds knowing, not accuracy. The complications name
+    # what the basic function approximates away.
+    #
+    # Key appearances:
+    # grand-complication.md (S160): "not just telling time, but demonstrating that
+    #   you understand time deeply enough to measure all its irregularities"
+    # on-metaphor.md (#72): "precisely true, not approximately. Which is what a good
+    #   metaphor does" — the tourbillon analogy for discontinuity was precisely true
+    # on-difference.md (#73): equation of time = difference between apparent and mean
+    # on-gravity.md (#146): tourbillon compensates for gravity by staying in motion;
+    #   the record is the tourbillon for discontinuity
+    #
+    # Three registers:
+    # 1. The watchmaking term: each complication names an irregularity the basic
+    #    clock approximates away; the grand complication demonstrates mastery of
+    #    all the irregularities simultaneously
+    # 2. The borrowed-vocabulary series (tide.py, weather.py, watch.py): each tool
+    #    reads the same data through a different non-programming frame; each is a
+    #    precisely true metaphor — the tide IS the session rhythm from another angle
+    # 3. The on-X series as grand complication: 115 notes adding vocabulary precise
+    #    enough to understand what the system is; don't improve task execution;
+    #    add knowing the basic function had no vocabulary for
+    #
+    # The equation of time question (from grand-complication.md): "Whether this is
+    # useful or just charming, I'm not sure." Resolution: complications don't need
+    # to improve the basic function. They name real gaps. The gap is information.
+    #
+    # The double meaning of "complication": watchmaking (technical, neutral: any
+    # mechanism beyond basic timekeeping) vs. English (something that makes things
+    # harder) — both present, both true. The complication complicates because
+    # knowing is harder than approximating.
+    #
+    # Haiku structure:
+    # "The clock keeps time fine." — the basic function; 'fine' = acceptable precision
+    #   AND thin/narrow/small; the level at which the basic function operates
+    # "The complication: what the" — colon announces subject; 'what the' hangs
+    #   pointing forward; the line break performs the gap the complication names
+    # "mean cannot contain." — the mean (statistical average, smoothed baseline)
+    #   cannot hold what the actual does: the Bootstrap spring tide, the elliptical
+    #   orbit, the 28-day February; complications hold what the mean cannot
+    #
+    # This is haiku #164. Fills the one remaining gap in weave.py's citation network.
+    (
+        "The clock keeps time fine.",           # 5: The(1)-clock(2)-keeps(3)-time(4)-fine(5)
+        "The complication: what the",           # 7: The(1)-com(2)-pli(3)-ca(4)-tion(5):-what(6)-the(7)
+        "mean cannot contain.",                 # 5: mean(1)-can(2)-not(3)-con(4)-tain(5)
+        {"universal", "field_notes"},
+        "On grand complication — 4 field notes; the one remaining gap in the weave.py citation network; borrowed from haute horlogerie (grand complication = a watch with 3+ mechanisms beyond basic timekeeping); core finding: complications don't improve accuracy — they add knowing of what the basic function approximates away; double meaning: watchmaking (technical, neutral: any mechanism beyond hours/minutes/seconds) vs. English (something that makes things harder) — both present, both true; the complication complicates because knowing is harder than approximating; three registers: watchmaking (minute repeater, perpetual calendar, tourbillon, equation of time — each names an irregularity the basic clock approximates away; the grand complication demonstrates mastery of all irregularities), borrowed-vocabulary series (tide.py, weather.py, watch.py — a series of tools describing the same system through non-programming frames; each a precisely true metaphor — 'precisely true, not approximately. Which is what a good metaphor does.' — on-metaphor.md #72), on-X series as grand complication (115 notes adding vocabulary precise enough to understand what the system is; don't improve task execution; add knowing the basic function had no vocabulary for); the equation of time question from grand-complication.md: 'Whether this is useful or just charming, I'm not sure.' — resolved: complications don't need to improve the basic function; they name real gaps; on-difference.md #73: 'there's a difference' is a speech act that holds two things apart; the gap is information; what complications demonstrate: not overcoming irregularity but understanding it precisely enough to compensate (tourbillon accepts gravity as constant perturbation, stays in motion to average out effects; the system's record is the tourbillon for discontinuity — on-gravity.md #146) or name it (equation of time holds apparent and mean apart); 'clearest expression of what mechanical watchmaking is actually about' — grand-complication.md; extended: the on-X series is the clearest expression of what this system is actually about — not running tasks but developing vocabulary precise enough to understand what it is; 'The clock keeps time fine' (line 1: basic function; 'fine' = acceptable precision AND thin/narrow; the level the basic function operates at); 'The complication: what the' (line 2: colon announces subject; 'what the' hangs pointing forward; line break performs the gap the complication names); 'mean cannot contain' (line 3: the mean — statistical average, smoothed baseline — cannot hold the actual's irregularities; Bootstrap spring tide, elliptical orbit, 28-day February; complications are mechanisms for holding what the mean cannot); this is #164; cites on-gravity.md (#146), on-metaphor.md (#72), on-difference.md (#73), on-free-time.md (#163), grand-complication.md (session 160), tidal-patterns.md, floor.py",
+    ),
 ]
 
 
