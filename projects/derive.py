@@ -165,9 +165,13 @@ def extract_signals(text: str) -> list:
         signals.append(("tool", m.group(1).lower()))
 
     # on-X field notes: on-WORD or on-WORD.md
+    # Skip "on-x" (the series as a whole) and "on-X" (uppercase reference to series name)
+    _field_note_noise = {"on-x.md", "on-x-series.md"}
     for m in re.finditer(r'\bon-([\w-]+)(?:\.md)?\b', text, re.IGNORECASE):
         word = m.group(1).lower()
-        signals.append(("field_note", f"on-{word}.md"))
+        note_key = f"on-{word}.md"
+        if note_key not in _field_note_noise:
+            signals.append(("field_note", note_key))
 
     # Quoted terms (double or single quotes, at least 3 chars)
     for m in re.finditer(r'[\'"]([a-zA-Z][\w\s-]{2,30})[\'"]', text):
@@ -175,9 +179,11 @@ def extract_signals(text: str) -> list:
         if 2 < len(phrase) < 40 and ' ' not in phrase or phrase.count(' ') <= 2:
             signals.append(("quoted", phrase))
 
-    # Action phrases: verb + object
+    # Action phrases: build verbs only (not diagnostic verbs like run/check)
+    # run/check/examine/explore appear in handoffs as "run verse.py to check gaps"
+    # — diagnostic instructions to execute existing tools, not signals to build something new.
     action_patterns = [
-        r'\b(build|write|update|fix|add|create|run|check|examine|explore|investigate)\s+([\w-]+(?:\s+[\w-]+)?)\b',
+        r'\b(build|write|update|fix|add|create)\s+([\w-]+(?:\s+[\w-]+)?)\b',
     ]
     for pattern in action_patterns:
         for m in re.finditer(pattern, text, re.IGNORECASE):
