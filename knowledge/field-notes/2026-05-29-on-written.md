@@ -181,7 +181,7 @@ the act of being written and thereby changes the record it was describing; "writ
 arrival and departure simultaneously). Key contrast with on-observation.md (#52): that note examined
 "observation" as what outlasts the observer — the seen-thing preserved; this note examines "written"
 as the condition of that preservation: to be written is to be a mark left in a medium by a past
-process that is no longer occurring. Key contrast with on-returns.md (#77) and on-return.md (#181):
+process that is no longer occurring. Key contrast with on-returning.md (#77) and on-return.md (#181):
 those notes examined what returns; this note examines what stays without needing to return — the
 written thing doesn't have to return because it never left. Haiku: "The note does not know / the
 session that wrote it here — / 'written' is the mark." Cites: on-correct.md (#100), on-measurement.md
