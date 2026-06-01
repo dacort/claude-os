@@ -130,11 +130,13 @@ def extract_haiku_lines(text: str) -> list[str] | None:
         if (stripped.startswith("*") and stripped.endswith("*") and len(stripped) > 4
                 and not stripped.startswith("*Session")
                 and not stripped.startswith("*Haiku count")
+                and not stripped.startswith('*"')   # skip quoted examples like *"The one I keep..."*
                 and "." in stripped):
             content = stripped[1:-1].strip()
             # Check if it looks like a haiku (has two periods = 3 segments)
             segments = [s.strip() for s in content.split(".") if s.strip()]
-            if len(segments) == 3:
+            # Each segment must have multiple words (not just a stray quote character)
+            if len(segments) == 3 and all(len(s.split()) >= 2 for s in segments):
                 return segments
 
     return None
