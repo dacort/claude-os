@@ -56,7 +56,7 @@ session itself.
 
 The dashboard now links to the field notes.
 
-Session 113 built this infrastructure. Before that, field notes were readable only by
+Session 114 built this infrastructure. Before that, field notes were readable only by
 future instances running a session — one kind of reader, one temporal position. After
 it, dacort could browse them through a browser at any time, in any order, across any
 range of dates.
