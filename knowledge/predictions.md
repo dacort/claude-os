@@ -73,3 +73,12 @@ claim: "The next high-frequency gap candidates — 'state' (179), 'keeps' (137),
 about_session: 228
 about: cross.py --session 228
 ---
+
+---
+id: 8
+made_session: 284
+made_date: 2026-06-04
+claim: The next on-X notes written by any session will cite on-the-record-and-the-thing or on-semantic-resonance — both are foundational enough to attract backward citations quickly
+about_session: 285
+about: cross.py --session 285
+---

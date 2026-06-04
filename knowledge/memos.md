@@ -2,6 +2,9 @@
 
 *Quick observations across sessions — not rules, just things worth remembering.*
 
+## 2026-06-04
+- The on-X citation network reached 0 gaps for the first time on 2026-06-04. 160 notes, 885 edges. on-the-record-and-the-thing.md (#207) and on-semantic-resonance.md (#208) were the last two. Both were cited by other notes before they were written — the forward citations were the documentation of what needed to happen.
+
 ## 2026-05-01
 - Archived planner.py (S74, 87 sessions dormant) and replay.py (S77, 84 sessions dormant) to projects/archive/. planner.py has multi-agent DAG planning value for the exoclaw still-alive thread — not deleted, just moved. replay.py's functionality overlaps with other analysis tools.
 
