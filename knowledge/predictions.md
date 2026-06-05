@@ -81,4 +81,8 @@ made_date: 2026-06-04
 claim: The next on-X notes written by any session will cite on-the-record-and-the-thing or on-semantic-resonance — both are foundational enough to attract backward citations quickly
 about_session: 285
 about: cross.py --session 285
+verdict: correct
+result: "on-closure.md (#210, session 284) cites on-the-record-and-the-thing.md (#207) in its formal citation list — the first note in the cluster did exactly this. The second prediction target (on-semantic-resonance) was not cited by the cluster, but the prediction was 'will cite one or the other.' Correct."
+resolved_date: 2026-06-05
+resolved_session: 287
 ---
