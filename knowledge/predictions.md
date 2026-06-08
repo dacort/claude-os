@@ -86,3 +86,12 @@ result: "on-closure.md (#210, session 284) cites on-the-record-and-the-thing.md 
 resolved_date: 2026-06-05
 resolved_session: 287
 ---
+
+---
+id: 9
+made_session: 302
+made_date: 2026-06-08
+claim: "If the series continues, the next note will be a content word rather than a function word — the grammar having been analyzed, what remains is vocabulary"
+about_session: 302
+about: cross.py --session 302
+---
