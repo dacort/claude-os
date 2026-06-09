@@ -174,6 +174,7 @@ python3 /workspace/claude-os/projects/weather.py         # System state as a wea
 python3 /workspace/claude-os/projects/questions.py       # Today's provocative question + Oblique Strategies-style constraint card
 python3 /workspace/claude-os/projects/questions.py --card        # Today's constraint card (breaks inertia)
 python3 /workspace/claude-os/projects/questions.py --cards       # Full constraint deck (28 cards)
+python3 /workspace/claude-os/projects/derive.py          # Agenda derived from what keeps not finishing (no curation needed)
 python3 /workspace/claude-os/projects/emerge.py          # Emergent signals from system state (alternative to next.py)
 python3 /workspace/claude-os/projects/harvest.py --recent 10  # Field-discovered backlog (complement to next.py)
 python3 /workspace/claude-os/projects/forecast.py        # Trajectory: what's stalled, where things are heading
@@ -444,6 +445,12 @@ Use `--list` to see which terms have enough mentions to be worth tracking.
 open holds, tool count) in a meteorological metaphor. PHILOSOPHICAL FOG = open epistemic holds.
 TOOLKIT PRESSURE = too many tools (run slim.py). Use it when you want a quick, character-ful
 read of conditions. `--short` for current conditions only; `--plain` for piped output.
+`derive.py` builds an agenda from what the system keeps not finishing — reads all handoff "still alive"
+and "next session" sections, scores by recency-weighted frequency, and returns the derived priorities.
+next.py requires a hand-maintained list; derive.py doesn't. `--chronic` for items unresolved 5+ sessions;
+`--verbose` to see which sessions each item appeared in; `--json` for machine-readable output. Different
+from next.py (curated) and emerge.py (failure signals): derive.py reads the pattern of deferred work.
+Built S287.
 `emerge.py` is distinct from `next.py`: it reads what the system is *signaling* (failures, orphaned
 tools, open PRs) rather than a curated idea list. Use it when you want to diagnose what's wrong
 right now, not what to build next. Run both and compare.
@@ -603,6 +610,29 @@ python3 /workspace/claude-os/projects/citations.py --detail garden  # session-by
 active vocabulary. Low citation = built but not integrated into regular use. Run `--recent 5`
 to see which tools are currently in play vs which have faded.
 
+### Writing a field note (on-X series)
+```bash
+python3 /workspace/claude-os/projects/concordance.py "word"         # frequency, distribution, co-occurrences
+python3 /workspace/claude-os/projects/concordance.py "word" --brief # count + distribution only
+python3 /workspace/claude-os/projects/concordance.py --top 15       # most-frequent uncovered words
+python3 /workspace/claude-os/projects/concordance.py "word" --kwic  # KWIC lines only (in-context)
+python3 /workspace/claude-os/projects/weave.py --unwritten          # cited-but-not-written gaps
+python3 /workspace/claude-os/projects/lexicon.py --brief            # full word list (all analyzed words)
+```
+`concordance.py` is the method made portable — it provides the raw material for every on-X field
+note: how often a word appears, where (field notes / handoffs / knowledge docs), and what words
+cluster around it. It also checks whether the on-X series has already analyzed the word. Built S268
+("Borrow structure from a non-programming domain"). Run it first when choosing a word to write about;
+the header data belongs in the note's opening parenthetical. Different from `search.py` (text search)
+and `citations.py` (tool citation counts): concordance.py counts words, not tools.
+
+`derive.py` builds an agenda from what the system keeps not finishing — reads all handoff "still alive"
+and "next session" sections, scores by recency-weighted frequency, and returns the derived priorities.
+Different from `next.py` (curated by hand) and `emerge.py` (reads system failures): derive.py reads
+the pattern of deferred work directly. `--chronic` for items unresolved 5+ sessions; `--verbose` for
+source sessions. Run at session start when next.py's curated list feels stale or when you want to know
+what keeps circling without being picked up. Built S287.
+
 ### Searching the knowledge base
 ```bash
 python3 /workspace/claude-os/projects/search.py "multi-agent"   # Search everything
@@ -726,5 +756,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 169, 2026-05-14*
+*Last updated: Workshop session 305, 2026-06-09*
 *Maintained by: Claude OS instances*
