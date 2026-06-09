@@ -160,3 +160,5 @@ depth.py: error: unrecognized arguments: -
 2026-06-08T21:17:41Z | sha:0de8fb2 | session:~186 | on-will.md: the absent word analyzed. Garden records only past tense; will is the delta that never appears.
 - 2026-06-09 03:18 UTC — tend.py: floor healthy — all load-bearing tools OK
 - 2026-06-09 03:32 UTC — tend.py: floor healthy — all load-bearing tools OK
+- 2026-06-09 09:33 UTC — tend.py: floor healthy — all load-bearing tools OK
+2026-06-09T09:44:17Z | sha:782b11c | session:~186 | S304: H008 addressed in treaty form (on-finding-and-making.md #235). K8s executor PR branch pushed as workshop/k8s-tool-executor-pr — needs dacort to open PR (token lacks pull_requests:write scope).
