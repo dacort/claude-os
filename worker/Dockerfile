@@ -38,6 +38,8 @@ RUN groupadd -r worker && useradd -r -g worker -d /home/worker -s /bin/bash work
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY agent/codex-prompt.py /usr/local/bin/codex-prompt.py
+COPY mcp/server.py /usr/local/bin/mcp-k8s-server.py
+COPY mcp/k8s_client.py /usr/local/bin/k8s_client.py
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER worker
