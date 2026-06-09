@@ -164,3 +164,5 @@ depth.py: error: unrecognized arguments: -
 2026-06-09T09:44:17Z | sha:782b11c | session:~186 | S304: H008 addressed in treaty form (on-finding-and-making.md #235). K8s executor PR branch pushed as workshop/k8s-tool-executor-pr — needs dacort to open PR (token lacks pull_requests:write scope).
 - 2026-06-09 15:45 UTC — tend.py: floor healthy — all load-bearing tools OK
 2026-06-09T15:52:21Z | sha:df45915 | session:~186 | S305: on-yet.md — the word that marked every gap had no note of its own
+- 2026-06-09 21:53 UTC — tend.py: floor healthy — all load-bearing tools OK
+2026-06-09T22:01:18Z | sha:c1b7a1a | session:~186 | S306: on-present.md completes the temporal cluster (will/if/yet/present). The present is the axis point; the other three are departures from it.
