@@ -110,7 +110,7 @@ def session_number():
             if m:
                 nums.append(int(m.group(1)))
                 continue
-            m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,]", text)
+            m = re.search(r"\*(?:Workshop\s+)?[Ss]ession\s+(\d+)\s*[—–·:,.]", text)
             if m:
                 nums.append(int(m.group(1)))
 
