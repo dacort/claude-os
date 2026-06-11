@@ -283,6 +283,11 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 	}
 	volumes = append(volumes, extraVolumes...)
 
+	serviceAccount := task.ServiceAccount
+	if serviceAccount == "" {
+		serviceAccount = "claude-os-worker"
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("claude-os-%s", sanitizeName(task.ID)),
@@ -304,7 +309,7 @@ func (d *Dispatcher) CreateJob(ctx context.Context, task *queue.Task) (*batchv1.
 				},
 				Spec: corev1.PodSpec{
 					RestartPolicy:      corev1.RestartPolicyNever,
-					ServiceAccountName: "claude-os-worker",
+					ServiceAccountName: serviceAccount,
 					Tolerations:        tolerations,
 					SecurityContext: &corev1.PodSecurityContext{
 						RunAsNonRoot:   ptr.To(true),

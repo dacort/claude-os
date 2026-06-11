@@ -63,6 +63,10 @@ type Task struct {
 	MaxRetries    int      `json:"max_retries,omitempty"`
 	AgentRequired string   `json:"agent_required,omitempty"`
 	TriageVerdict string   `json:"triage_verdict,omitempty"`
+	// ServiceAccount optionally overrides the K8s ServiceAccount the worker
+	// job runs as. Empty means the default "claude-os-worker". Maintenance
+	// sessions use "claude-os-maintenance" for read-only cluster observation.
+	ServiceAccount string `json:"service_account,omitempty"`
 }
 
 // UsageRecord is the structured data emitted by the worker at the end of a job.

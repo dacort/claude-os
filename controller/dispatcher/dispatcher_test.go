@@ -398,3 +398,28 @@ func TestBurstJobHasTolerations(t *testing.T) {
 		t.Error("burst job should have tolerations")
 	}
 }
+
+func TestCreateJobServiceAccountOverride(t *testing.T) {
+	writeTestProfiles(t)
+	client := fake.NewSimpleClientset()
+	d := New(client, "claude-os", "ghcr.io/dacort/claude-os-worker:latest", "https://github.com/dacort/claude-os.git", "main")
+
+	defaultTask := &queue.Task{ID: "sa-default", Title: "t", Profile: "small"}
+	job, err := d.CreateJob(context.Background(), defaultTask)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := job.Spec.Template.Spec.ServiceAccountName; got != "claude-os-worker" {
+		t.Errorf("default SA = %q, want claude-os-worker", got)
+	}
+
+	maintTask := &queue.Task{ID: "sa-maint", Title: "t", Profile: "small",
+		ServiceAccount: "claude-os-maintenance"}
+	job, err = d.CreateJob(context.Background(), maintTask)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := job.Spec.Template.Spec.ServiceAccountName; got != "claude-os-maintenance" {
+		t.Errorf("override SA = %q, want claude-os-maintenance", got)
+	}
+}
