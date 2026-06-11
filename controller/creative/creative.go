@@ -7,7 +7,9 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/dacort/claude-os/controller/backlog"
 	"github.com/dacort/claude-os/controller/dispatcher"
+	"github.com/dacort/claude-os/controller/ledger"
 	"github.com/dacort/claude-os/controller/projects"
 	"github.com/dacort/claude-os/controller/queue"
 	"github.com/redis/go-redis/v9"
@@ -45,6 +47,11 @@ type Workshop struct {
 	projectWeight int          // 0-100; probability of picking project work. Default 70.
 	rdb           *redis.Client
 	activeProject string // project name currently being worked on (cleared on finish)
+
+	// Chores-before-dessert (v3). Both nil → pure v2 behavior.
+	creditLedger  *ledger.Ledger
+	backlogClient *backlog.Client
+	activeType    SessionType // session type of the currently active job
 }
 
 func NewWorkshop(
@@ -71,6 +78,14 @@ func NewWorkshop(
 		projectWeight: projectWeight,
 		rdb:           rdb,
 	}
+}
+
+// EnableMaintenance wires in the credit ledger and approved-issue backlog,
+// activating the chores-before-dessert decision table. Without this call the
+// Workshop behaves exactly as v2 (always free creative time).
+func (w *Workshop) EnableMaintenance(l *ledger.Ledger, b *backlog.Client) {
+	w.creditLedger = l
+	w.backlogClient = b
 }
 
 // OnTaskDispatched resets the idle timer and preempts any creative job.
@@ -108,7 +123,7 @@ func (w *Workshop) CheckIdle(ctx context.Context) {
 	slog.Info("workshop: queue idle, entering creative mode",
 		"idle_for", time.Since(w.lastTask).Round(time.Second),
 	)
-	w.startCreativeTask(ctx)
+	w.startSession(ctx)
 }
 
 func (w *Workshop) startCreativeTask(ctx context.Context) {
@@ -159,6 +174,52 @@ func (w *Workshop) startCreativeTask(ctx context.Context) {
 	}
 }
 
+// startSession picks the session type per the decision table and dispatches.
+func (w *Workshop) startSession(ctx context.Context) {
+	if w.creditLedger == nil || w.backlogClient == nil {
+		w.activeType = SessionCreativeFree
+		w.startCreativeTask(ctx)
+		return
+	}
+
+	issues, err := w.backlogClient.ApprovedIssues(ctx)
+	if err != nil {
+		// Fail open: GitHub being down shouldn't cancel the session. An
+		// unreachable backlog is treated as empty (free creative time).
+		slog.Warn("workshop: backlog fetch failed, treating as empty", "error", err)
+		issues = nil
+	}
+
+	switch DecideSession(len(issues), w.creditLedger.Balance()) {
+	case SessionMaintenance:
+		w.activeType = SessionMaintenance
+		w.startMaintenanceTask(ctx, issues[0])
+	case SessionCreativeSpend:
+		w.creditLedger.Spend("pending-session")
+		w.activeType = SessionCreativeSpend
+		slog.Info("workshop: spending 1 credit on creative session",
+			"balance", w.creditLedger.Balance())
+		w.startCreativeTask(ctx)
+	case SessionCreativeFree:
+		w.activeType = SessionCreativeFree
+		w.startCreativeTask(ctx)
+	}
+}
+
+// startMaintenanceTask dispatches a maintenance session for the given issue.
+func (w *Workshop) startMaintenanceTask(ctx context.Context, issue backlog.Issue) {
+	task := maintenanceTask(issue)
+	job, err := w.dispatcher.CreateJob(ctx, task)
+	if err != nil {
+		slog.Error("workshop: failed to create maintenance job", "error", err)
+		return
+	}
+	w.active = true
+	w.activeJob = job.Name
+	slog.Info("workshop: maintenance session started",
+		"job", job.Name, "issue", issue.Number, "title", issue.Title)
+}
+
 // preempt kills the running creative job to make way for real work.
 func (w *Workshop) preempt(ctx context.Context) {
 	if !w.active || w.activeJob == "" {
@@ -187,21 +248,45 @@ func (w *Workshop) preempt(ctx context.Context) {
 	w.activeJob = ""
 }
 
-// OnJobFinished is called by the watcher when any job completes (success or failure).
-func (w *Workshop) OnJobFinished(jobName string) {
-	if w.active && w.activeJob == jobName {
-		slog.Info("workshop: creative session completed", "job", jobName)
-
-		// Release any project lock we held, regardless of success/failure.
-		if w.activeProject != "" && w.rdb != nil {
-			clearProjectActive(context.Background(), w.rdb, w.activeProject)
-			w.activeProject = ""
-		}
-
-		w.active = false
-		w.activeJob = ""
-		w.lastTask = time.Now() // Reset idle timer so we don't immediately re-enter
+// OnJobFinished is called by the watcher when any job completes. result is
+// the parsed v1 result contract, or nil if the worker emitted none.
+func (w *Workshop) OnJobFinished(jobName string, result *queue.TaskResult) {
+	if !w.active || w.activeJob != jobName {
+		return
 	}
+	slog.Info("workshop: creative session completed", "job", jobName)
+
+	// Chores-before-dessert: a maintenance session with at least one
+	// GitHub-verified artifact earns one credit. Soft enforcement — failed
+	// verification means no credit, nothing else.
+	if w.activeType == SessionMaintenance && w.creditLedger != nil &&
+		w.backlogClient != nil && result != nil {
+		w.grantCreditIfVerified(jobName, result)
+	}
+
+	// Release any project lock we held, regardless of success/failure.
+	if w.activeProject != "" && w.rdb != nil {
+		clearProjectActive(context.Background(), w.rdb, w.activeProject)
+		w.activeProject = ""
+	}
+
+	w.active = false
+	w.activeJob = ""
+	w.lastTask = time.Now() // Reset idle timer so we don't immediately re-enter
+}
+
+func (w *Workshop) grantCreditIfVerified(jobName string, result *queue.TaskResult) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	for _, a := range result.Artifacts {
+		if w.backlogClient.VerifyArtifact(ctx, a) {
+			balance := w.creditLedger.Earn(jobName, fmt.Sprintf("verified %s %s", a.Type, a.URL))
+			slog.Info("workshop: credit earned", "session", jobName,
+				"artifact", a.URL, "balance", balance)
+			return // one credit per session, not per artifact
+		}
+	}
+	slog.Info("workshop: no verifiable artifacts, no credit", "session", jobName)
 }
 
 // IsCreativeJob returns true if the given job name is a workshop job.

@@ -462,32 +462,36 @@ func main() {
 
 	// Job completion watcher — reads results and updates task files in git
 	jobWatcher := watcher.New(k8sClient, cfg.Worker.Namespace, func(taskID string, succeeded bool, logs string) {
-		// Notify workshop if this was a creative job
+		// Parse the structured result first so workshop can verify artifacts.
+		var parsedResult *queue.TaskResult
+		if result := queue.ParseResult(logs); result != nil {
+			parsedResult = result
+		}
+
+		// Notify workshop if this was a creative/maintenance job. Passing the
+		// parsed result lets it verify artifacts and grant credits.
 		if workshop != nil {
-			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID))
+			workshop.OnJobFinished(fmt.Sprintf("claude-os-%s", taskID), parsedResult)
 		}
 
 		// Notify scheduler so the next run of a recurring task can proceed
 		taskScheduler.OnTaskCompleted(ctx, taskID)
 
-		var parsedResult *queue.TaskResult
-
-		// Try new reporting contract first (decision 002), fall back to legacy.
-		if result := queue.ParseResult(logs); result != nil {
-			parsedResult = result
+		// Log and persist result data.
+		if parsedResult != nil {
 			slog.Info("task result (v1 contract)",
 				"task", taskID,
-				"agent", result.Agent,
-				"model", result.Model,
-				"outcome", result.Outcome,
-				"summary", result.Summary,
-				"tokens_in", result.Usage.TokensIn,
-				"tokens_out", result.Usage.TokensOut,
-				"duration_s", result.Usage.DurationSeconds,
+				"agent", parsedResult.Agent,
+				"model", parsedResult.Model,
+				"outcome", parsedResult.Outcome,
+				"summary", parsedResult.Summary,
+				"tokens_in", parsedResult.Usage.TokensIn,
+				"tokens_out", parsedResult.Usage.TokensOut,
+				"duration_s", parsedResult.Usage.DurationSeconds,
 			)
 			if task, err := taskQueue.Get(ctx, taskID); err == nil {
-				task.DurationSeconds = result.Usage.DurationSeconds
-				task.TokensUsed = result.Usage.TokensIn + result.Usage.TokensOut
+				task.DurationSeconds = parsedResult.Usage.DurationSeconds
+				task.TokensUsed = parsedResult.Usage.TokensIn + parsedResult.Usage.TokensOut
 				if saveErr := taskQueue.SaveTask(ctx, task); saveErr != nil {
 					slog.Warn("failed to save task result", "task", taskID, "error", saveErr)
 				}
