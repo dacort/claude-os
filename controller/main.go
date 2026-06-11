@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dacort/claude-os/controller/backlog"
 	"github.com/dacort/claude-os/controller/comms"
 	"github.com/dacort/claude-os/controller/config"
 	"github.com/dacort/claude-os/controller/cosapi"
@@ -20,6 +21,7 @@ import (
 	"github.com/dacort/claude-os/controller/dispatcher"
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
+	"github.com/dacort/claude-os/controller/ledger"
 	"github.com/dacort/claude-os/controller/queue"
 	"github.com/dacort/claude-os/controller/scheduler"
 	"github.com/dacort/claude-os/controller/triage"
@@ -181,6 +183,21 @@ func main() {
 			"projects_dir", cfg.Scheduler.ProjectsDir,
 			"project_weight", cfg.Scheduler.ProjectWeight,
 		)
+	}
+
+	// Chores-before-dessert (Workshop v3): maintenance sessions work the
+	// octo-approved issue backlog; verified shipped work earns creative time.
+	if workshop != nil && githubToken != "" {
+		creditLedger := ledger.New(
+			filepath.Join(gitSyncer.LocalPath(), "state", "credits.json"),
+			func(msg string) error { return gitSyncer.CommitAndPush(msg) },
+		)
+		backlogClient := backlog.NewClient("dacort", "claude-os", githubToken)
+		workshop.EnableMaintenance(creditLedger, backlogClient)
+		slog.Info("workshop: maintenance mode enabled",
+			"label", backlog.ApprovedLabel, "credits", creditLedger.Balance())
+	} else if workshop != nil {
+		slog.Warn("workshop: maintenance mode disabled, no GITHUB_TOKEN")
 	}
 
 	// Triage brain (Haiku API for fast routing)
