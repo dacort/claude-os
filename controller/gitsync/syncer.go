@@ -187,7 +187,14 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 	for _, tf := range tasks {
 		taskID := strings.TrimSuffix(tf.Filename, ".md")
 		if s.knownTasks[taskID] {
-			continue
+			// Task was previously dispatched and its file moved to in-progress/.
+			// If the file is back in pending/ it was moved for a retry (manually
+			// by the operator, or after a failure). Clear the cached state so it
+			// gets re-dispatched. CreateJob handles stale K8s Jobs via
+			// AlreadyExists deletion.
+			slog.Info("task file returned to pending after prior dispatch, will re-queue",
+				"id", taskID)
+			delete(s.knownTasks, taskID)
 		}
 
 		priority := queue.PriorityNormal
@@ -498,6 +505,10 @@ func appendTaskResult(path, heading string, result *queue.TaskResult, logs strin
 }
 
 func (s *Syncer) CompleteTask(taskID string, result *queue.TaskResult, logs string) {
+	// Clear cached state so if the file is ever moved back to pending/ for a
+	// re-run, the syncer will pick it up without needing a controller restart.
+	delete(s.knownTasks, taskID)
+
 	filename := taskID + ".md"
 	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
 	if _, err := os.Stat(src); os.IsNotExist(err) {
@@ -568,6 +579,10 @@ func (s *Syncer) ListProcessedTaskIDs() map[string]bool {
 }
 
 func (s *Syncer) FailTask(taskID string, result *queue.TaskResult, logs string) {
+	// Clear cached state so if the file is moved back to pending/ for a retry,
+	// the syncer will pick it up without needing a controller restart.
+	delete(s.knownTasks, taskID)
+
 	filename := taskID + ".md"
 	src := filepath.Join(s.localPath, "tasks", "in-progress", filename)
 	if _, err := os.Stat(src); os.IsNotExist(err) {
