@@ -47,10 +47,49 @@ PROFILE_KEYWORDS = {
 
 DEFAULT_PROFILE = "small"
 
+# Keywords that indicate a task is too complex for the small profile.
+# Presence of any of these promotes the default from small → medium.
+# Users can still override explicitly with [small] or [large].
+MEDIUM_INDICATORS = [
+    "benchmark", "bench", "scale out", "scale up",
+    "burst pool", "burstnode", "infra/",
+    "deploy", "migration", "multi-repo",
+    "talos-homelab", "talos homelab", "node pool", "nodepool",
+    "create a pr", "open a pr",
+    "and then", "after that", "follow up", "follow-up",
+    "step 1", "step 2", "phase 1", "phase 2",
+]
+
+# Keywords that indicate a task needs the large profile.
+LARGE_INDICATORS = [
+    "design and implement", "refactor entire", "full audit",
+    "multi-step plan", "end-to-end",
+]
+
 # Authorized GitHub users who can trigger tasks.
 # Kept here (not in secrets) because this is just a list of GitHub logins
 # that can submit task descriptions — actual execution is on K8s.
 AUTHORIZED_USERS = {"dacort"}
+
+
+def auto_size_profile(description: str) -> str:
+    """
+    Infer task profile from description keywords when no explicit profile given.
+
+    Returns "small", "medium", or "large". This is only used as the default —
+    explicit [medium] or [large] tags in the command always win.
+    """
+    text = description.lower()
+
+    for kw in LARGE_INDICATORS:
+        if kw in text:
+            return "large"
+
+    for kw in MEDIUM_INDICATORS:
+        if kw in text:
+            return "medium"
+
+    return DEFAULT_PROFILE
 
 
 # ── Parsing ────────────────────────────────────────────────────────────────────
@@ -79,14 +118,20 @@ def parse_command(comment_body: str) -> dict | None:
     if not match:
         return None
 
-    profile_raw = (match.group("profile") or DEFAULT_PROFILE).lower()
-    profile = PROFILE_KEYWORDS.get(profile_raw, DEFAULT_PROFILE)
+    explicit_profile = match.group("profile")
     description = match.group("description").strip()
 
     # Require at least 2 words — filters out mid-sentence matches like
     # "who is @claude-os anyway" where the trailing word isn't a real command
     if not description or len(description.split()) < 2:
         return None
+
+    # If user specified a profile explicitly, use it. Otherwise, auto-size
+    # based on description complexity indicators.
+    if explicit_profile:
+        profile = PROFILE_KEYWORDS.get(explicit_profile.lower(), DEFAULT_PROFILE)
+    else:
+        profile = auto_size_profile(description)
 
     return {
         "description": description,

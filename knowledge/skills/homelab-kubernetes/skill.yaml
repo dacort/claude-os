@@ -1,0 +1,3 @@
+name: homelab-kubernetes
+pattern: "homelab|talos|burst.*pool|cloud.*burst|benchmark.*k8s|kubectl|fleet|node.*pool|m[0-9]+g"
+inject: knowledge/skills/homelab-kubernetes/context.md

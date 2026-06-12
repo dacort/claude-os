@@ -163,6 +163,7 @@ func constraintsForMode(mode string) []string {
 	base := []string{
 		"This repo is PUBLIC — never commit secrets",
 		"If tests fail, fix them before merging",
+		"Before finishing, re-read the task and verify every instruction was addressed — do not drop trailing items from multi-part requests",
 	}
 	if mode == "founder" {
 		return []string{

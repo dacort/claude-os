@@ -387,7 +387,26 @@ ${autonomy_section}
 
 Execute the task step by step. Be thorough but efficient.
 Commit directly to main for non-breaking changes. Use a PR for anything risky.
-When done, output a clear summary of what you accomplished.${mode_section}${constraints_section}${preferences_section}${context_refs_section}${resume_section}${state_instructions_section}
+When done, output a clear summary of what you accomplished.
+
+## Task Decomposition Across External Gates
+
+If a task has phases separated by an external gate — a PR that a human must
+merge, missing credentials, awaited input, or any step you cannot perform
+yourself — follow this protocol:
+
+1. **Complete the current phase fully.** Ship the PR, post the comment, do
+   everything you can right now.
+2. **Write a follow-up task file** in \`tasks/pending/\` describing the remaining
+   work and what unblocks it. Use \`depends_on\` in the YAML frontmatter when
+   the dependency is another task. Include enough context that a cold-start
+   worker can pick it up without re-reading the original issue.
+3. **Never mark the overall request done when only phase one is delivered.**
+   Your summary should say what was completed AND what the follow-up task covers.
+
+Before finishing, **re-read the original task description** and verify EVERY
+instruction was addressed. Multi-part requests must not lose trailing items.
+If an instruction was intentionally skipped, explain why in your summary.${mode_section}${constraints_section}${preferences_section}${context_refs_section}${resume_section}${state_instructions_section}
 SYSPROMPT
 }
 
