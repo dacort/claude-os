@@ -1,4 +1,18 @@
+---
+profile: medium
+priority: normal
+status: pending
+target_repo: dacort/talos-homelab
+created: "2026-06-12T18:40:00Z"
+---
+
 # Run M9g Burst Pool Benchmark & Post Results
+
+> **PARKED — do not move to `tasks/pending/` until talos-homelab PR #4 is merged.**
+> This task is gated on a human merge. The controller doesn't support external
+> gate conditions yet (see issue tracker), so it lives in `tasks/blocked/`
+> which the controller does not scan. Promote with:
+> `git mv tasks/blocked/run-m9g-benchmark.md tasks/pending/ && git commit && git push`
 
 ## Context
 
@@ -6,7 +20,8 @@ PR #4 in dacort/talos-homelab (`claude-os/m9g-cloud-burst`) adds a Graviton5
 (M9g) burst pool. The benchmark job was moved out of Fleet-watched paths (to
 `benchmarks/benchmark-m9g.yaml`) so it must be run manually after merge.
 
-Results should be posted to: https://github.com/dacort/talos-homelab/issues/9
+Results should be posted to: https://github.com/dacort/claude-os/issues/9
+(the original request thread).
 
 ## Prerequisites
 
@@ -23,7 +38,8 @@ Results should be posted to: https://github.com/dacort/talos-homelab/issues/9
 kubectl get burstnodepool m9g-burst -n cloud-burst-system -o wide
 ```
 
-If the pool isn't there yet, Fleet may not have synced. Force a sync or wait.
+If the pool isn't there yet, Fleet may not have synced. Wait and re-check
+(do not force a sync without approval).
 
 ### 2. Run the benchmark
 
@@ -40,8 +56,8 @@ Save the full log output. You'll post it to the GitHub issue.
 
 ### 4. Post results to the issue
 
-Post the benchmark output to:
-https://github.com/dacort/talos-homelab/issues/9
+Post the benchmark output as a comment on:
+https://github.com/dacort/claude-os/issues/9
 
 Include:
 - Which instance type was provisioned (check pool status below)
