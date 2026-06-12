@@ -52,3 +52,119 @@ benchmark's nodeAffinity to
   post results to claude-os issue #9. Mention that handoff in your PR
   description and reference talos-homelab issue #5.
 
+
+## Results
+
+## Outcome
+
+- Outcome: success
+- Agent: claude
+- Model: claude-sonnet-4-6
+
+## Summary
+
+Task completed without an explicit structured result block.
+
+## Usage
+
+- Tokens in: 0
+- Tokens out: 0
+- Duration (s): 546
+
+## Artifacts
+
+- None
+
+## Structured Result (raw)
+
+```json
+{
+  "version": "1",
+  "task_id": "cloud-burst-pool-matching-v2",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "outcome": "success",
+  "summary": "Task completed without an explicit structured result block.",
+  "artifacts": [],
+  "usage": {
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "duration_seconds": 546
+  },
+  "failure": null,
+  "next_action": null
+}
+```
+
+## Worker Logs
+
+Context contract written to /workspace/task-context.json
+=== Claude OS Worker v3 ===
+Task ID: cloud-burst-pool-matching-v2
+Profile: medium
+Agent: claude
+Mode: execution
+Started: 2026-06-12T22:41:23Z
+Context: /workspace/task-context.json
+Auth: Claude OAuth token (subscription)
+Cloning context repo: https://github.com/dacort/cloud-burst-controller.git -> /workspace/cloud-burst-controller
+Cloning into '/workspace/cloud-burst-controller'...
+Running task via claude...
+---
+Here's a summary of what was accomplished:
+
+---
+
+## Summary
+
+### Bug 1 — `cloud-burst-controller`: Specificity-based pool matching ✅
+
+**File changed:** `internal/controller/matching.go`
+
+Replaced the alphabetical-first-match logic in `MatchPodToPool` with a **specificity scoring** system:
+- Each pool is scored: **+1 per `NodeAffinityLabel` entry** + **+1 per `Resource` rule**; toleration-only pools score 0
+- The highest-scoring matching pool wins; equal scores still tie-break alphabetically for determinism
+- Added `poolSpecificityScore()` helper
+
+Result: a pod with `burst.homelab.dev/instance-class: m9g` affinity now routes to `m9g-burst` (score 1) instead of `general-burst` (score 0).
+
+**Tests updated** (`matching_test.go`):
+- Removed `TestMatchPodToPool_MultiplePoolsFirstAlphabeticalWins` (behaviour has intentionally changed)
+- Added `TestMatchPodToPool_SpecificPoolWinsOverGeneral` — m9g pod → m9g-burst pool
+- Added `TestMatchPodToPool_PlainBurstPodRoutesToGeneralPool` — plain burst pod → general-burst
+- Added `TestMatchPodToPool_EqualScoreTieBreaksAlphabetically` — alphabetical tie-break still works
+
+All 8 matching tests + full `go test ./...` suite pass. Committed as `06aa9ef`. **Note: push to remote is blocked** — the worker's PAT is read-only for `cloud-burst-controller`. The commit is ready in the local workspace for the harness to sync.
+
+---
+
+### Bug 2 — `talos-homelab`: Correct affinity key in benchmark ✅
+
+**PR opened:** https://github.com/dacort/talos-homelab/pull/6
+
+Changed `benchmarks/benchmark-m9g.yaml` node affinity from:
+```yaml
+key: burst.homelab.dev/pool
+values: ["m9g-burst"]
+```
+to:
+```yaml
+key: burst.homelab.dev/instance-class  
+values: ["m9g"]
+```
+
+The PR description references talos-homelab issue #5 and notes that after both PRs merge, dacort's brain session should re-run the benchmark and post results to claude-os issue #9.
+No workspace changes to commit
+---
+=== Worker Complete ===
+Exit code: 0
+Push exit: 0
+Finished: 2026-06-12T22:50:29Z
+===RESULT_START===
+{"version":"1","task_id":"cloud-burst-pool-matching-v2","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Task completed without an explicit structured result block.","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":546},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"cloud-burst-pool-matching-v2","agent":"claude","profile":"medium","duration_seconds":546,"exit_code":0,"finished_at":"2026-06-12T22:50:29Z"}
+=== END_CLAUDE_OS_USAGE ===
+
