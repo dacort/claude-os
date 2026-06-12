@@ -3,7 +3,9 @@ profile: medium
 priority: high
 status: pending
 target_repo: dacort/cloud-burst-controller
-created: "2026-06-12T20:06:57Z"
+agent: claude
+agent_required: claude
+created: "2026-06-12T22:40:37Z"
 ---
 
 # Fix burst pool matching: specific pools are shadowed by general-burst
@@ -49,3 +51,4 @@ benchmark's nodeAffinity to
 - After your PRs merge, dacort's brain session will re-run the benchmark and
   post results to claude-os issue #9. Mention that handoff in your PR
   description and reference talos-homelab issue #5.
+
