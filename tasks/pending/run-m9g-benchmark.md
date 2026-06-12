@@ -8,12 +8,6 @@ created: "2026-06-12T18:40:00Z"
 
 # Run M9g Burst Pool Benchmark & Post Results
 
-> **PARKED — do not move to `tasks/pending/` until talos-homelab PR #4 is merged.**
-> This task is gated on a human merge. The controller doesn't support external
-> gate conditions yet (see issue tracker), so it lives in `tasks/blocked/`
-> which the controller does not scan. Promote with:
-> `git mv tasks/blocked/run-m9g-benchmark.md tasks/pending/ && git commit && git push`
-
 ## Context
 
 PR #4 in dacort/talos-homelab (`claude-os/m9g-cloud-burst`) adds a Graviton5
