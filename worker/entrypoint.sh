@@ -331,7 +331,12 @@ ${resume_content}"
 
 ## Task State File
 
-Before finishing, write a brief state file to \`tasks/state/${TASK_ID:-unknown}.state.md\`.
+Before finishing, write a brief state file to \`${state_dir}/${TASK_ID:-unknown}.state.md\`.
+Use that ABSOLUTE path — it lives in the claude-os checkout, NOT your task workspace.
+Never write task bookkeeping (state files, follow-up tasks) inside the target repo's
+working tree: post-execution commits everything in the workspace, so bookkeeping
+written there gets swept into the target repo's history (this happened on
+talos-homelab PR #4).
 This file is read by the next worker if the task is retried — write it as a direct handoff.
 
 Format:
@@ -397,10 +402,33 @@ yourself — follow this protocol:
 
 1. **Complete the current phase fully.** Ship the PR, post the comment, do
    everything you can right now.
-2. **Write a follow-up task file** in \`tasks/pending/\` describing the remaining
-   work and what unblocks it. Use \`depends_on\` in the YAML frontmatter when
-   the dependency is another task. Include enough context that a cold-start
-   worker can pick it up without re-reading the original issue.
+2. **Write a follow-up task file** describing the remaining work and what
+   unblocks it. Include enough context that a cold-start worker can pick it
+   up without re-reading the original issue. Where it goes depends on the gate:
+   - Runnable now (or gated only on another task — use \`depends_on\` in the
+     frontmatter): \`tasks/pending/\`
+   - Gated on an EXTERNAL event (PR merge by a human, credentials, awaited
+     input): \`tasks/blocked/\` — the controller ignores this directory. State
+     the promote condition at the top of the file
+     (\`git mv tasks/blocked/<file> tasks/pending/\` once the gate clears).
+   Follow-up task files MUST start with valid YAML frontmatter or the
+   controller silently skips them. Template (all paths relative to the
+   claude-os repo, never the target repo):
+
+\`\`\`
+---
+profile: small|medium|large
+priority: normal|high
+status: pending
+target_repo: owner/repo   # optional — repo to clone for the task
+created: "<UTC timestamp, e.g. 2026-06-12T18:00:00Z>"
+---
+
+# Clear task title
+
+## Description
+What to do, with context and expected outcome.
+\`\`\`
 3. **Never mark the overall request done when only phase one is delivered.**
    Your summary should say what was completed AND what the follow-up task covers.
 
@@ -627,6 +655,27 @@ if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
     fi
 
     if [ "${CAN_PUSH}" = "true" ]; then
+        # Relocate stray bookkeeping before staging: state files and follow-up
+        # tasks belong in the claude-os clone, never the target repo's history.
+        # Only untracked files are moved so a target repo with its own tasks/
+        # directory is untouched; rmdir only removes dirs left empty.
+        if [ "${WORKDIR}" != "/workspace/claude-os" ] && [ -d "/workspace/claude-os/.git" ]; then
+            for sub in state pending blocked; do
+                stray_dir="${WORKDIR}/tasks/${sub}"
+                [ -d "${stray_dir}" ] || continue
+                for stray in "${stray_dir}"/*.md; do
+                    [ -e "${stray}" ] || continue
+                    if ! git -C "${WORKDIR}" ls-files --error-unmatch "${stray#"${WORKDIR}"/}" >/dev/null 2>&1; then
+                        echo "WARNING: relocating stray bookkeeping ${stray#"${WORKDIR}"/} to claude-os clone"
+                        mkdir -p "/workspace/claude-os/tasks/${sub}"
+                        mv "${stray}" "/workspace/claude-os/tasks/${sub}/"
+                    fi
+                done
+                rmdir "${stray_dir}" 2>/dev/null || true
+            done
+            rmdir "${WORKDIR}/tasks" 2>/dev/null || true
+        fi
+
         # Stage all changes (git add -A) and check if there's anything to commit
         git add -A
         if ! git diff --cached --quiet 2>/dev/null; then
@@ -652,6 +701,33 @@ if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
         fi
     else
         echo "Skipping push: autonomy.can_push is false"
+    fi
+fi
+
+# ── Post-execution: push bookkeeping in the claude-os checkout ────────────
+# When target_repo is set, WORKDIR is the target repo and the block above
+# never touches the claude-os clone — but that's where state files and
+# follow-up tasks live. Commit and push them separately or they die with
+# the pod (includes anything relocated by the stray-bookkeeping guard).
+CLAUDE_OS_DIR="/workspace/claude-os"
+if [ "${WORKDIR}" != "${CLAUDE_OS_DIR}" ] && [ -d "${CLAUDE_OS_DIR}/.git" ] \
+    && [ -n "${GITHUB_TOKEN:-}" ] && [ "${CAN_PUSH:-true}" = "true" ]; then
+    git -C "${CLAUDE_OS_DIR}" add tasks/ 2>/dev/null || true
+    if ! git -C "${CLAUDE_OS_DIR}" diff --cached --quiet 2>/dev/null; then
+        echo "Committing claude-os bookkeeping (state files / follow-up tasks)..."
+        git -C "${CLAUDE_OS_DIR}" commit -m "task ${TASK_ID}: bookkeeping (state/follow-up tasks)" \
+            --author="Claude OS <claude-os@noreply.github.com>" 2>&1 || true
+        for attempt in 1 2 3; do
+            if git -C "${CLAUDE_OS_DIR}" push origin HEAD 2>&1; then
+                echo "Pushed claude-os bookkeeping (attempt ${attempt})"
+                break
+            fi
+            echo "Bookkeeping push attempt ${attempt} failed, pulling and retrying..."
+            git -C "${CLAUDE_OS_DIR}" pull --rebase origin main 2>&1 || true
+            if [ "${attempt}" -eq 3 ]; then
+                echo "ERROR: Failed to push claude-os bookkeeping after 3 attempts"
+            fi
+        done
     fi
 fi
 
