@@ -175,8 +175,15 @@ func stripMarkdownFencing(s string) string {
 func buildTriagePrompt(title, description string, agents AgentStatus) string {
 	return fmt.Sprintf(`You are the triage brain for Claude OS. Classify this task and recommend routing.
 
+Agent capabilities:
+- claude: full execution — can read, write, commit, push, create PRs, run tests, call APIs.
+- codex: read-only analysis — can read and analyze code, but CANNOT commit, push, or create PRs.
+  Route to codex ONLY when the task does not require writing to a repo (e.g. pure code review, security scan, static analysis).
+  Any task that involves commits, PRs, tests, or repo changes must go to claude.
+
 Routing rules:
-- Code review / security scan / focused coding → agent: codex
+- Code review / security scan / static analysis (no repo writes) → agent: codex
+- Any task requiring commits, PRs, pushes, or tests → agent: claude
 - Complex reasoning / orchestration / creative → agent: claude
 - Design / architecture thinking → model: claude-opus-4-6, agent: claude
 - Simple lint / format / validation / typo fix → model: claude-haiku-4-5

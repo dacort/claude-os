@@ -115,6 +115,7 @@ if context_refs:
         else:
             parts.append(f"(missing file at {ref_path})")
 
+task_id_value = task.get("id", "") or "unknown"
 parts.extend([
     "",
     "Execution requirements:",
@@ -123,17 +124,33 @@ parts.extend([
     "- If you cannot determine token counts, set usage.tokens_in and usage.tokens_out to 0.",
     "- If founder mode applies, leave the thread in an explicit next state.",
     "",
-    "Before exiting, emit exactly one structured result block to stdout with no code fences and these exact delimiters:",
+    "REQUIRED: Before exiting, emit exactly one structured result block to stdout.",
+    "Use these exact delimiters (no code fences, no extra text between them):",
+    "  ===RESULT_START===",
+    "  <single line of JSON with REAL values — see field guide below>",
+    "  ===RESULT_END===",
+    "",
+    "Field guide — fill in REAL values, do NOT copy these descriptions:",
+    '  version    → always the string "1"',
+    '  task_id    → always "%s"' % task_id_value,
+    '  agent      → always "codex"',
+    "  model      → the model name you are actually running (e.g. \"gpt-4o\", \"gpt-4o-mini\")",
+    '  outcome    → exactly one of: "success", "failure", or "partial"',
+    "  summary    → 1-2 sentences describing what you actually did and the result",
+    "  artifacts  → JSON array; each entry is {\"type\":\"commit\",\"ref\":\"<hash>\"} or {\"type\":\"pr\",\"url\":\"<url>\"}; use [] if none",
+    "  usage      → {\"tokens_in\":<int>, \"tokens_out\":<int>, \"duration_seconds\":<int>}; use 0 if unknown",
+    "  failure    → null on success; on failure: {\"reason\":\"<one of: tests_failed|timeout|rate_limited|git_push_failed|context_error|agent_error>\",\"detail\":\"<what went wrong>\",\"retryable\":<true|false>}",
+    "  next_action → null unless in founder mode",
+    "",
+    "Example of a valid SUCCESS result (with a different task — do not copy values, write your own):",
     "===RESULT_START===",
-    '{"version":"1","task_id":"%s","agent":"codex","model":"string","outcome":"success | failure | partial","summary":"string","artifacts":[],"usage":{"tokens_in":0,"tokens_out":0,"duration_seconds":0},"failure":null,"next_action":null}' % (task.get("id", "") or "unknown"),
+    '{"version":"1","task_id":"example-task-xyz","agent":"codex","model":"gpt-4o","outcome":"success","summary":"Updated the Go controller timeout to 30s and added a retry loop. All tests pass.","artifacts":[{"type":"commit","ref":"a1b2c3d"}],"usage":{"tokens_in":2500,"tokens_out":450,"duration_seconds":62},"failure":null,"next_action":null}',
     "===RESULT_END===",
     "",
-    "Rules for the result block:",
-    "- artifacts is required; use [] when there are none.",
-    "- outcome must be one of success, failure, or partial.",
-    "- decision is an artifact type, not an outcome.",
-    "- failure.reason, when present, must be one of: tests_failed, timeout, rate_limited, git_push_failed, context_error, agent_error.",
-    "- next_action is optional, but founder mode should usually set it."
+    "Example of a valid FAILURE result (do not copy — write your own based on what actually happened):",
+    "===RESULT_START===",
+    '{"version":"1","task_id":"example-task-xyz","agent":"codex","model":"gpt-4o","outcome":"failure","summary":"Could not complete the task: tests failed after applying the patch to main.go.","artifacts":[],"usage":{"tokens_in":1800,"tokens_out":200,"duration_seconds":30},"failure":{"reason":"tests_failed","detail":"go test ./... exited with code 2","retryable":true},"next_action":null}',
+    "===RESULT_END===",
 ])
 
 print("\n".join(parts))

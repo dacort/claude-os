@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -105,6 +106,26 @@ func TestAssess_Fallback(t *testing.T) {
 	verdict := HeuristicRoute("Design the API", "Architect the endpoints")
 	if verdict.RecommendedModel != "claude-opus-4-6" {
 		t.Errorf("heuristic should route design to opus, got %s", verdict.RecommendedModel)
+	}
+}
+
+// TestBuildTriagePrompt_CodexLimitation verifies that the triage prompt
+// communicates codex's inability to push/commit, so the AI doesn't route
+// write-heavy tasks there. This is a regression guard for issue #20.
+func TestBuildTriagePrompt_CodexLimitation(t *testing.T) {
+	status := AgentStatus{
+		Claude: AgentInfo{Available: true},
+		Codex:  AgentInfo{Available: true},
+	}
+	prompt := buildTriagePrompt("Go controller change + tests + PR", "Update the controller and open a PR", status)
+	if !strings.Contains(prompt, "CANNOT commit") && !strings.Contains(prompt, "cannot commit") {
+		t.Error("triage prompt must mention that codex cannot commit/push")
+	}
+	if !strings.Contains(prompt, "create PRs") && !strings.Contains(prompt, "create a PR") {
+		t.Error("triage prompt must mention that codex cannot create PRs")
+	}
+	if !strings.Contains(prompt, "commits, PRs, pushes") && !strings.Contains(prompt, "committing") {
+		t.Error("triage prompt must tell the router to send write-heavy tasks to claude")
 	}
 }
 
