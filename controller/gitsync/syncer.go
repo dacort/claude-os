@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -24,6 +25,7 @@ type Syncer struct {
 	queue      *queue.Queue
 	knownTasks map[string]bool
 	scheduler  *scheduler.Scheduler
+	apiBaseURL string
 }
 
 func NewSyncer(repoURL, branch, localPath, token string, q *queue.Queue) *Syncer {
@@ -34,6 +36,7 @@ func NewSyncer(repoURL, branch, localPath, token string, q *queue.Queue) *Syncer
 		token:      token,
 		queue:      q,
 		knownTasks: make(map[string]bool),
+		apiBaseURL: "https://api.github.com",
 	}
 }
 
@@ -132,6 +135,57 @@ func (s *Syncer) syncScheduledTasks(ctx context.Context) error {
 		slog.Info("scheduled tasks synced", "count", len(scheduledFiles))
 	}
 	return nil
+}
+
+// checkGate evaluates an external gate condition using the GitHub API.
+// Returns (met bool, err error). If the gate type is unknown, an error is returned.
+func (s *Syncer) checkGate(ctx context.Context, gate *Gate) (bool, error) {
+	var apiURL string
+	switch gate.Type {
+	case "pr-merged":
+		apiURL = fmt.Sprintf("%s/repos/%s/pulls/%d", s.apiBaseURL, gate.Repo, gate.Number)
+	case "issue-closed":
+		apiURL = fmt.Sprintf("%s/repos/%s/issues/%d", s.apiBaseURL, gate.Repo, gate.Number)
+	default:
+		return false, fmt.Errorf("unknown gate type: %q", gate.Type)
+	}
+
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, apiURL, nil)
+	if err != nil {
+		return false, fmt.Errorf("build gate request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	if s.token != "" {
+		req.Header.Set("Authorization", "Bearer "+s.token)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("gate HTTP request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return false, fmt.Errorf("gate API returned status %d for %s", resp.StatusCode, apiURL)
+	}
+
+	var payload map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return false, fmt.Errorf("decode gate response: %w", err)
+	}
+
+	switch gate.Type {
+	case "pr-merged":
+		merged, _ := payload["merged"].(bool)
+		return merged, nil
+	case "issue-closed":
+		state, _ := payload["state"].(string)
+		return state == "closed", nil
+	}
+	return false, nil // unreachable
 }
 
 func (s *Syncer) ensureClone() error {
@@ -281,6 +335,23 @@ func (s *Syncer) syncPendingTasks(ctx context.Context) error {
 				s.queue.Unblock(ctx, task)
 				slog.Info("deps now met, unblocking task", "id", taskID)
 			}
+		}
+
+		// Check external gate condition before enqueuing.
+		if tf.Gate != nil {
+			met, err := s.checkGate(ctx, tf.Gate)
+			if err != nil {
+				slog.Warn("gate check failed, will retry next sync cycle",
+					"id", taskID, "gate_type", tf.Gate.Type, "error", err)
+				continue
+			}
+			if !met {
+				slog.Info("external gate not yet satisfied, skipping",
+					"id", taskID, "gate_type", tf.Gate.Type, "repo", tf.Gate.Repo, "number", tf.Gate.Number)
+				continue // do NOT mark as knownTask
+			}
+			slog.Info("external gate satisfied, proceeding to enqueue",
+				"id", taskID, "gate_type", tf.Gate.Type, "repo", tf.Gate.Repo, "number", tf.Gate.Number)
 		}
 
 		if err := s.queue.Enqueue(ctx, task); err != nil {

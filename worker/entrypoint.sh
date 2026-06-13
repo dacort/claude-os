@@ -407,10 +407,18 @@ yourself — follow this protocol:
    up without re-reading the original issue. Where it goes depends on the gate:
    - Runnable now (or gated only on another task — use \`depends_on\` in the
      frontmatter): \`tasks/pending/\`
-   - Gated on an EXTERNAL event (PR merge by a human, credentials, awaited
-     input): \`tasks/blocked/\` — the controller ignores this directory. State
-     the promote condition at the top of the file
-     (\`git mv tasks/blocked/<file> tasks/pending/\` once the gate clears).
+   - Gated on a PR merge or issue close: \`tasks/pending/\` with a \`gate\` block
+     in the frontmatter — the controller polls the condition and enqueues
+     automatically when it clears:
+     \`\`\`
+     gate:
+       type: pr-merged       # or: issue-closed
+       repo: owner/repo
+       number: 123
+     \`\`\`
+   - Gated on any OTHER external event (credentials, awaited input): \`tasks/blocked/\` — the
+     controller ignores this directory. State the promote condition at the top
+     of the file (\`git mv tasks/blocked/<file> tasks/pending/\` once the gate clears).
    Follow-up task files MUST start with valid YAML frontmatter or the
    controller silently skips them. Template (all paths relative to the
    claude-os repo, never the target repo):
@@ -422,6 +430,11 @@ priority: normal|high
 status: pending
 target_repo: owner/repo   # optional — repo to clone for the task
 created: "<UTC timestamp, e.g. 2026-06-12T18:00:00Z>"
+# Optional: gate on an external condition (pr-merged or issue-closed)
+# gate:
+#   type: pr-merged
+#   repo: dacort/talos-homelab
+#   number: 4
 ---
 
 # Clear task title

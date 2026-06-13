@@ -12,6 +12,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Gate describes an external condition that must be satisfied before a task
+// can be enqueued. The gitsync loop evaluates the condition on every sync cycle.
+type Gate struct {
+	Type   string `yaml:"type"`   // "pr-merged" or "issue-closed"
+	Repo   string `yaml:"repo"`   // "owner/repo", e.g. "dacort/talos-homelab"
+	Number int    `yaml:"number"` // PR or issue number
+}
+
 type TaskFrontmatter struct {
 	TargetRepo    string   `yaml:"target_repo"`
 	Profile       string   `yaml:"profile"`
@@ -27,6 +35,7 @@ type TaskFrontmatter struct {
 	DependsOn     []string `yaml:"depends_on"`
 	MaxRetries    int      `yaml:"max_retries"`
 	AgentRequired string   `yaml:"agent_required"`
+	Gate          *Gate    `yaml:"gate"`
 	// Scheduled task fields
 	Schedule      string `yaml:"schedule"`       // 5-field cron expression (UTC)
 	MaxConcurrent int    `yaml:"max_concurrent"` // prevent stacking (default 1)
@@ -51,6 +60,7 @@ type TaskFile struct {
 	DependsOn     []string
 	MaxRetries    int
 	AgentRequired string
+	Gate          *Gate
 	// Scheduled task fields
 	Schedule      string
 	MaxConcurrent int
@@ -120,6 +130,7 @@ func ParseTaskFile(filename string, data []byte) (*TaskFile, error) {
 		DependsOn:     fm.DependsOn,
 		MaxRetries:    fm.MaxRetries,
 		AgentRequired: fm.AgentRequired,
+		Gate:          fm.Gate,
 		Schedule:      fm.Schedule,
 		MaxConcurrent: fm.MaxConcurrent,
 		Project:       fm.Project,

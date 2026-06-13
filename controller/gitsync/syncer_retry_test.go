@@ -2,6 +2,9 @@ package gitsync
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -116,5 +119,54 @@ func TestCompleteTaskClearsKnownTask(t *testing.T) {
 
 	if s.knownTasks[taskID] {
 		t.Error("expected knownTasks to be cleared after CompleteTask")
+	}
+}
+
+// TestSyncPendingTasksSkipsGatedTask verifies that a task whose gate condition
+// is not yet met stays in pending/ and is not added to knownTasks.
+func TestSyncPendingTasksSkipsGatedTask(t *testing.T) {
+	s, q, tmpDir := newTestSyncer(t)
+	ctx := context.Background()
+
+	// Mock GitHub API: PR is not yet merged.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"merged": false})
+	}))
+	defer srv.Close()
+	s.apiBaseURL = srv.URL
+
+	pendingDir := filepath.Join(tmpDir, "tasks", "pending")
+	taskID := "task-gated-001"
+	content := `---
+profile: small
+priority: normal
+status: pending
+gate:
+  type: pr-merged
+  repo: dacort/talos-homelab
+  number: 42
+---
+# Gated Task
+## Description
+Run after PR #42 merges.
+`
+	if err := os.WriteFile(filepath.Join(pendingDir, taskID+".md"), []byte(content), 0644); err != nil {
+		t.Fatalf("write task file: %v", err)
+	}
+
+	if err := s.syncPendingTasks(ctx); err != nil {
+		t.Fatalf("syncPendingTasks: %v", err)
+	}
+
+	// Task should NOT be in Redis.
+	_, err := q.Get(ctx, taskID)
+	if err == nil {
+		t.Error("expected task to NOT be in Redis while gate is unmet, but it was found")
+	}
+
+	// Task should NOT be in knownTasks so it gets re-checked next cycle.
+	if s.knownTasks[taskID] {
+		t.Error("expected task to NOT be in knownTasks while gate is unmet")
 	}
 }

@@ -1,6 +1,10 @@
 package gitsync
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -316,5 +320,115 @@ func TestAppendTaskResult(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("appended file missing %q\n%s", want, got)
 		}
+	}
+}
+
+func TestParseTaskFileWithGate(t *testing.T) {
+	content := `---
+profile: medium
+priority: normal
+status: pending
+gate:
+  type: pr-merged
+  repo: dacort/talos-homelab
+  number: 4
+---
+# Wait for homelab PR
+## Description
+Run after PR #4 merges.
+`
+	tf, err := ParseTaskFile("wait-for-pr.md", []byte(content))
+	if err != nil {
+		t.Fatalf("ParseTaskFile failed: %v", err)
+	}
+	if tf.Gate == nil {
+		t.Fatal("expected Gate to be non-nil")
+	}
+	if tf.Gate.Type != "pr-merged" {
+		t.Errorf("expected Gate.Type pr-merged, got %q", tf.Gate.Type)
+	}
+	if tf.Gate.Repo != "dacort/talos-homelab" {
+		t.Errorf("expected Gate.Repo dacort/talos-homelab, got %q", tf.Gate.Repo)
+	}
+	if tf.Gate.Number != 4 {
+		t.Errorf("expected Gate.Number 4, got %d", tf.Gate.Number)
+	}
+}
+
+func TestCheckGatePRMerged(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload map[string]interface{}
+		wantMet bool
+	}{
+		{"merged", map[string]interface{}{"merged": true}, true},
+		{"not merged", map[string]interface{}{"merged": false}, false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(tc.payload)
+			}))
+			defer srv.Close()
+
+			s := NewSyncer("", "main", t.TempDir(), "", nil)
+			s.apiBaseURL = srv.URL
+
+			gate := &Gate{Type: "pr-merged", Repo: "dacort/talos-homelab", Number: 4}
+			met, err := s.checkGate(context.Background(), gate)
+			if err != nil {
+				t.Fatalf("checkGate error: %v", err)
+			}
+			if met != tc.wantMet {
+				t.Errorf("expected met=%v, got %v", tc.wantMet, met)
+			}
+		})
+	}
+}
+
+func TestCheckGateIssueClosed(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload map[string]interface{}
+		wantMet bool
+	}{
+		{"closed", map[string]interface{}{"state": "closed"}, true},
+		{"open", map[string]interface{}{"state": "open"}, false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(tc.payload)
+			}))
+			defer srv.Close()
+
+			s := NewSyncer("", "main", t.TempDir(), "", nil)
+			s.apiBaseURL = srv.URL
+
+			gate := &Gate{Type: "issue-closed", Repo: "dacort/claude-os", Number: 19}
+			met, err := s.checkGate(context.Background(), gate)
+			if err != nil {
+				t.Fatalf("checkGate error: %v", err)
+			}
+			if met != tc.wantMet {
+				t.Errorf("expected met=%v, got %v", tc.wantMet, met)
+			}
+		})
+	}
+}
+
+func TestCheckGateUnknownType(t *testing.T) {
+	s := NewSyncer("", "main", t.TempDir(), "", nil)
+	gate := &Gate{Type: "mystery-gate", Repo: "dacort/test", Number: 1}
+	met, err := s.checkGate(context.Background(), gate)
+	if err == nil {
+		t.Error("expected error for unknown gate type")
+	}
+	if met {
+		t.Error("expected met=false for unknown gate type")
 	}
 }
