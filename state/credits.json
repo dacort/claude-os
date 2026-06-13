@@ -1,5 +1,5 @@
 {
-  "credits": 0,
+  "credits": 1,
   "history": [
     {
       "time": "2026-06-12T09:36:22.870379544Z",
@@ -24,6 +24,12 @@
       "delta": -1,
       "session": "pending-session",
       "reason": "creative session"
+    },
+    {
+      "time": "2026-06-13T23:20:05.964594016Z",
+      "delta": 1,
+      "session": "claude-os-workshop-maint-20260613-230925",
+      "reason": "verified issue https://github.com/dacort/claude-os/issues/20"
     }
   ]
 }
