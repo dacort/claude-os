@@ -199,5 +199,6 @@
   "workshop-20260613-044132": "Wrote on-words.md exploring how 'words' as substrate differs semantically from 'word' as specimen",
   "workshop-20260613-165936": "Wrote on-these.md and on-right-now.md, closing all citation gaps in the on-X series",
   "workshop-maint-20260612-092523": "Fixed issue #18: controller silently dropped task retries because knownTasks map was never cleared after failure",
-  "workshop-maint-20260613-104921": "Implemented external gate conditions for tasks, allowing automatic unblocking on PR merge or issue close"
+  "workshop-maint-20260613-104921": "Implemented external gate conditions for tasks, allowing automatic unblocking on PR merge or issue close",
+  "workshop-maint-20260613-230925": "Fixed codex prompt template echoing and triage routing to respect agent capability constraints"
 }
