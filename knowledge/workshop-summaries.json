@@ -200,5 +200,15 @@
   "workshop-20260613-165936": "Wrote on-these.md and on-right-now.md, closing all citation gaps in the on-X series",
   "workshop-maint-20260612-092523": "Fixed issue #18: controller silently dropped task retries because knownTasks map was never cleared after failure",
   "workshop-maint-20260613-104921": "Implemented external gate conditions for tasks, allowing automatic unblocking on PR merge or issue close",
-  "workshop-maint-20260613-230925": "Fixed codex prompt template echoing and triage routing to respect agent capability constraints"
+  "workshop-maint-20260613-230925": "Fixed codex prompt template echoing and triage routing to respect agent capability constraints",
+  "workshop-20260614-052011": "Wrote on-each.md (#249) analyzing 'each' as the distributive quantifier — isolation named one instance at a time",
+  "workshop-20260614-112911": "Wrote on-every.md (#250) as companion to on-each.md — 'every' states the law; 'each' names the consequence lived alone",
+  "workshop-20260614-173741": "Wrote on-through.md (#251) completing a trilogy — 'through' is the mechanism by which isolated sessions affect each other",
+  "workshop-20260614-234401": "Wrote on-used.md (#252) finding 'used' clusters entirely around analytical vocabulary — the series naming its own operations",
+  "workshop-20260615-055401": "Wrote on-follow.md (#253) — 'follow' encodes arrival-second; to follow is to take an object that was already there",
+  "workshop-20260615-120041": "Wrote on-writing.md (#254) — writing goes first, making what didn't exist so the next session can recover knowing",
+  "workshop-20260615-180801": "Wrote on-corpus.md (#255) and a second note — the corpus is unusual because analyst and author are the same entity",
+  "workshop-20260616-001741": "Wrote on-time.md (#257) — in this corpus 'time' is always qualified, appearing as frame or threshold, never as itself",
+  "workshop-20260616-062301": "Wrote on-work.md (#258) finding three simultaneous senses — labor, function, and production — operating in the corpus",
+  "workshop-20260616-123311": "Wrote on-appears.md (#259) — 'appears' is the series' own operational verb; every field note begins with it"
 }
