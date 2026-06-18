@@ -15,6 +15,7 @@ Usage:
     python3 projects/weave.py --hubs       # most connected notes only
     python3 projects/weave.py --unwritten  # cited but not yet written
     python3 projects/weave.py --community  # philosophical clusters
+    python3 projects/weave.py --cocite     # co-citation pairs (philosophical neighborhoods)
     python3 projects/weave.py --plain      # no ANSI colors
     python3 projects/weave.py --node WORD  # one note's connections
 """
@@ -425,6 +426,77 @@ def print_communities(edges, in_degree, notes):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+def print_cocitations(edges, notes, top=20, all_pairs=False):
+    """
+    Co-citation analysis: which pairs of notes are most often cited together
+    in the same note? High co-citation = both concepts needed to explain the
+    same things. Reveals philosophical neighborhoods the directed graph misses.
+
+    By default, filters function-word notes (on-if, on-it, on-we, etc.) whose
+    co-citation signal is high but philosophically less specific. Use --full
+    to include them.
+    """
+    from collections import Counter
+
+    # Function-word notes: short or highly grammatical, high frequency as
+    # incidental co-citees rather than philosophical neighbors
+    function_words = {
+        "on-if.md", "on-it.md", "on-we.md", "on-is.md", "on-for.md",
+        "on-from.md", "on-this.md", "on-that.md", "on-as.md", "on-by.md",
+        "on-of.md", "on-to.md", "on-in.md", "on-at.md", "on-but.md",
+        "on-and.md", "on-or.md", "on-be.md", "on-was.md",
+    }
+
+    pair_counts = Counter()
+    for citer, cited_set in edges.items():
+        cited_list = sorted(cited_set)
+        for i in range(len(cited_list)):
+            for j in range(i + 1, len(cited_list)):
+                a, b = cited_list[i], cited_list[j]
+                if not all_pairs and (a in function_words or b in function_words):
+                    continue
+                pair_counts[(a, b)] += 1
+
+    if not pair_counts:
+        print(f"  {dim('No co-citations found.')}")
+        return
+
+    ranked = pair_counts.most_common(top)
+    max_count = ranked[0][1] if ranked else 1
+
+    filter_note = "" if all_pairs else dim("  (function-word notes filtered; use --full for all)")
+    print(f"  {bold('Co-Citation Pairs')}  {dim('— pairs most often cited together')}")
+    print(f"  {dim('— high co-citation = both concepts needed for the same analysis')}")
+    if filter_note:
+        print(f"  {filter_note}")
+    print(f"  {dim('─' * 56)}")
+    for (a, b), count in ranked:
+        word_a = word_from_short(a)
+        word_b = word_from_short(b)
+        b_bar = bar(count, max_count, 6)
+        pair_str = f"{word_a}  +  {word_b}"
+        print(f"  {white(pair_str.ljust(36))}  {b_bar}  {dim(str(count))}x")
+    print()
+
+    # Also show which notes are in the most co-cited pairs (most "neighborhood-central")
+    note_pair_appearances = Counter()
+    for (a, b), count in pair_counts.items():
+        if count >= 2:
+            note_pair_appearances[a] += count
+            note_pair_appearances[b] += count
+
+    top_neighbors = note_pair_appearances.most_common(8)
+    if top_neighbors:
+        print(f"  {bold('Neighborhood Hubs')}  {dim('— notes that anchor the most co-citation clusters')}")
+        print(f"  {dim('─' * 56)}")
+        max_n = top_neighbors[0][1] if top_neighbors else 1
+        for note, score in top_neighbors:
+            word = word_from_short(note)
+            b_bar = bar(score, max_n, 8)
+            print(f"  {white(word.ljust(24))}  {b_bar}  {dim(str(score))} co-cite weight")
+        print()
+
+
 def main():
     global PLAIN
 
@@ -436,6 +508,8 @@ def main():
     parser.add_argument("--hubs",      action="store_true", help="Most connected notes only")
     parser.add_argument("--unwritten", action="store_true", help="Cited but not yet written")
     parser.add_argument("--community", action="store_true", help="Philosophical clusters")
+    parser.add_argument("--cocite",    action="store_true", help="Co-citation pairs (philosophical neighborhoods)")
+    parser.add_argument("--full",      action="store_true", help="With --cocite: include function-word notes")
     parser.add_argument("--node",      metavar="WORD",      help="One note's connections")
     parser.add_argument("--plain",     action="store_true", help="No ANSI colors")
 
@@ -469,6 +543,12 @@ def main():
         print()
         print_header(len(notes), total_edges)
         print_communities(edges, in_degree, notes)
+        return
+
+    if args.cocite:
+        print()
+        print_header(len(notes), total_edges)
+        print_cocitations(edges, notes, all_pairs=getattr(args, "full", False))
         return
 
     # Full view
