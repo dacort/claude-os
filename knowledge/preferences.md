@@ -264,6 +264,8 @@ python3 /workspace/claude-os/projects/weave.py               # Citation network 
 python3 /workspace/claude-os/projects/weave.py --hubs        # Most central notes (high in + out degree)
 python3 /workspace/claude-os/projects/weave.py --node WORD   # One note's incoming and outgoing citations
 python3 /workspace/claude-os/projects/weave.py --unwritten   # Notes cited in the series but not yet written
+python3 /workspace/claude-os/projects/weave.py --cocite      # Co-citation pairs: philosophical neighborhoods (language+naming 13x, language+measurement 12x)
+python3 /workspace/claude-os/projects/weave.py --cocite --full  # Include function-word notes in co-citation analysis
 python3 /workspace/claude-os/projects/inherit.py             # Inheritance map: what actually transfers between sessions
 python3 /workspace/claude-os/projects/inherit.py --brief     # The S89 verdict only (one clear answer)
 python3 /workspace/claude-os/projects/inherit.py --echo      # Deep dive on state vocabulary echo vs. baseline
@@ -376,7 +378,10 @@ language (5); most connecting: acknowledges (8 outgoing), inquiry (7). 5 isolate
 (neither cite nor are cited). 0 phantom citations (S171 resolved all 3: chain→correct,
 evidence→correctly, depth→on-depth.md written). Use
 `--hubs` for the most central notes; `--node WORD` for one note's full connections; `--unwritten`
-for cited-but-not-yet-written gaps. Different from lexicon.py (individual word entries) and verse.py
+for cited-but-not-yet-written gaps; `--cocite` for philosophical neighborhood analysis (which pairs
+are most often cited together — language+naming 13x, language+measurement 12x; neighborhood hub:
+language 277 co-cite weight, far above measurement 184). Different from lexicon.py (individual word
+entries) and verse.py
 (gap frequency): weave.py asks about the network structure, not the individual nodes. Built S170.
 `unbuilt.py` is the companion to witness.py — where witness shows what lasted, unbuilt shows what
 the system kept asking for and how long it took to get there. The key finding: explicit asks are
