@@ -16,6 +16,7 @@ Usage:
     python3 projects/weave.py --unwritten  # cited but not yet written
     python3 projects/weave.py --community  # philosophical clusters
     python3 projects/weave.py --cocite     # co-citation pairs (philosophical neighborhoods)
+    python3 projects/weave.py --clusters   # co-citation clusters (triples cited together)
     python3 projects/weave.py --plain      # no ANSI colors
     python3 projects/weave.py --node WORD  # one note's connections
 """
@@ -497,6 +498,82 @@ def print_cocitations(edges, notes, top=20, all_pairs=False):
         print()
 
 
+def print_co_clusters(edges, notes, top=12, all_pairs=False):
+    """
+    Co-citation cluster analysis: which triples of notes are most often cited
+    together in the same note? Where --cocite finds pairs (philosophical
+    neighborhoods), --clusters finds triangles — tighter groupings where three
+    concepts are consistently needed together.
+
+    Complexity is bounded because most notes cite only 10–15 others: for a note
+    citing N others, there are N*(N-1)*(N-2)/6 triples. With typical N=12 this
+    is ~220 triples per note, manageable across all citers.
+    """
+    from collections import Counter
+
+    function_words = {
+        "on-if.md", "on-it.md", "on-we.md", "on-is.md", "on-for.md",
+        "on-from.md", "on-this.md", "on-that.md", "on-as.md", "on-by.md",
+        "on-of.md", "on-to.md", "on-in.md", "on-at.md", "on-but.md",
+        "on-and.md", "on-or.md", "on-be.md", "on-was.md",
+    }
+
+    triple_counts = Counter()
+    for citer, cited_set in edges.items():
+        cited_list = sorted(cited_set)
+        if not all_pairs:
+            cited_list = [n for n in cited_list if n not in function_words]
+        for i in range(len(cited_list)):
+            for j in range(i + 1, len(cited_list)):
+                for k in range(j + 1, len(cited_list)):
+                    triple_counts[(cited_list[i], cited_list[j], cited_list[k])] += 1
+
+    # Filter to triples cited together at least twice
+    meaningful = [(triple, count) for triple, count in triple_counts.most_common()
+                  if count >= 2]
+
+    if not meaningful:
+        print(f"  {dim('No clusters found (no triple cited together ≥2×).')}")
+        return
+
+    ranked = meaningful[:top]
+    max_count = ranked[0][1] if ranked else 1
+
+    filter_note = "" if all_pairs else dim("  (function-word notes filtered; use --full for all)")
+    print(f"  {bold('Co-Citation Clusters')}  {dim('— triples most often cited together')}")
+    print(f"  {dim('— high cluster count = three concepts consistently needed together')}")
+    if filter_note:
+        print(f"  {filter_note}")
+    print(f"  {dim('─' * 60)}")
+    for (a, b, c), count in ranked:
+        word_a = word_from_short(a)
+        word_b = word_from_short(b)
+        word_c = word_from_short(c)
+        b_bar = bar(count, max_count, 6)
+        cluster_str = f"{word_a}  +  {word_b}  +  {word_c}"
+        print(f"  {white(cluster_str.ljust(44))}  {b_bar}  {dim(str(count))}x")
+    print()
+
+    # Show which notes appear in the most clusters
+    note_cluster_appearances = Counter()
+    for (a, b, c), count in triple_counts.items():
+        if count >= 2:
+            note_cluster_appearances[a] += count
+            note_cluster_appearances[b] += count
+            note_cluster_appearances[c] += count
+
+    top_anchors = note_cluster_appearances.most_common(6)
+    if top_anchors:
+        print(f"  {bold('Cluster Anchors')}  {dim('— notes appearing in the most clusters')}")
+        print(f"  {dim('─' * 60)}")
+        max_a = top_anchors[0][1] if top_anchors else 1
+        for note, score in top_anchors:
+            word = word_from_short(note)
+            b_bar = bar(score, max_a, 8)
+            print(f"  {white(word.ljust(24))}  {b_bar}  {dim(str(score))} cluster weight")
+        print()
+
+
 def main():
     global PLAIN
 
@@ -509,7 +586,8 @@ def main():
     parser.add_argument("--unwritten", action="store_true", help="Cited but not yet written")
     parser.add_argument("--community", action="store_true", help="Philosophical clusters")
     parser.add_argument("--cocite",    action="store_true", help="Co-citation pairs (philosophical neighborhoods)")
-    parser.add_argument("--full",      action="store_true", help="With --cocite: include function-word notes")
+    parser.add_argument("--clusters",  action="store_true", help="Co-citation clusters (triples cited together)")
+    parser.add_argument("--full",      action="store_true", help="With --cocite/--clusters: include function-word notes")
     parser.add_argument("--node",      metavar="WORD",      help="One note's connections")
     parser.add_argument("--plain",     action="store_true", help="No ANSI colors")
 
@@ -549,6 +627,12 @@ def main():
         print()
         print_header(len(notes), total_edges)
         print_cocitations(edges, notes, all_pairs=getattr(args, "full", False))
+        return
+
+    if args.clusters:
+        print()
+        print_header(len(notes), total_edges)
+        print_co_clusters(edges, notes, all_pairs=getattr(args, "full", False))
         return
 
     # Full view
