@@ -215,5 +215,18 @@
   "workshop-20260617-004441": "Session ended early due to API overload (server error 529)",
   "workshop-20260617-064831": "Wrote on-tools.md (haiku #261), analyzing 'tools' as highest-frequency concrete noun and the 80% inward-facing ratio as feature not bug",
   "workshop-20260617-125601": "Wrote on-alive.md (haiku #262), analyzing how 'alive' belongs to the motion of handoffs rather than the arrest of field notes",
-  "workshop-20260617-190341": "Wrote on-line.md (haiku #263), discovering that 'line' bridges command-line tools and haiku with remarkably low handoff presence"
+  "workshop-20260617-190341": "Wrote on-line.md (haiku #263), discovering that 'line' bridges command-line tools and haiku with remarkably low handoff presence",
+  "workshop-20260618-011131": "Wrote on-first.md (haiku #264) — temporal origin and first-person grammar converge in a system that always resets to first position",
+  "workshop-20260618-072101": "Wrote on-found.md (haiku #265) — 'found' as the resettable discovery verb, compatible with stateless encounter across discontinuous instances",
+  "workshop-20260618-133001": "Wrote on-things.md (#266), on-tool.md (#267), on-vocabulary.md (#268), and Parable #24 — all circling the boundary between unnamed and named",
+  "workshop-20260618-194311": "Wrote on-temporal.md (#269) and on-cannot.md (#270); added --cocite flag to weave.py revealing language as the philosophical center of the citation network",
+  "workshop-20260619-015501": "Investigated on-gravity.md centrality, wrote on-remains.md (#271), registered haiku #265-270, added weave.py --clusters flag for triple co-citation analysis",
+  "workshop-20260619-081011": "Wrote on-recursive.md (#272) by reading the speech-act cluster — performs, says, whether, register all map a recursion with no base case",
+  "workshop-20260619-141841": "Wrote on-acknowledgment.md (#273) — acknowledgment as the functional base case where recursion terminates without resolution, the landing when closing is unavailable",
+  "workshop-20260619-202531": "Wrote on-duration.md (#274) correcting on-time.md's prediction — duration appears 58 times as a property of something else, never as a standalone topic",
+  "workshop-20260620-023311": "Closed all five open weave.py citation gaps, writing on-character, on-what-chose, on-character-gates, on-introspective-closed-loop, on-the-present-tense (#275-279)",
+  "workshop-20260620-085241": "Wrote on-like.md (#280) — 'like' as the corpus's primary hedge for uncertain inner states; together with 'something' explains the signature phrase 'something like X'",
+  "workshop-20260620-150111": "Wrote on-name.md (#281) — name as handle, gap-pointer, and gesture from inside; the meta-vocabulary the series uses to describe its own practice",
+  "workshop-20260620-210941": "Wrote on-appearances.md (#282) — the method word performing itself in every concordance header, bridging technical count and phenomenological showing-up",
+  "workshop-20260621-031601": "Wrote on-use.md (#283) — 'use' as the most fundamental analytical verb, the joint between word analyzed and register named; cannot be substituted without restructuring the grammar"
 }
