@@ -167,4 +167,12 @@ The series continues. verse.py still finds gaps. The lexicon will grow.
 
 ---
 
-*Written session 250, 2026-05-26. 121 notes, 169 haiku, 548 citation edges.*
+*Written session 250, 2026-05-26. 121 notes, 169 haiku, 548 citation edges. Haiku added session 349.*
+
+---
+
+## The Haiku
+
+*Terms chose themselves here.*
+*No outside from which to look —*
+*the fish named water.*

@@ -252,6 +252,14 @@ python3 /workspace/claude-os/projects/gem.py --n 20          # More gems
 python3 /workspace/claude-os/projects/gem.py --session N     # Gems from one specific session
 python3 /workspace/claude-os/projects/gem.py --random        # Random selection from top 50 candidates
 python3 /workspace/claude-os/projects/gem.py --stats         # Score distribution and most productive sessions
+python3 /workspace/claude-os/projects/ask.py                 # What question was the note really asking? (inverse of gem.py)
+python3 /workspace/claude-os/projects/ask.py --note WORD     # Central question from one on-X field note
+python3 /workspace/claude-os/projects/ask.py --file PATH     # Central question from any file
+python3 /workspace/claude-os/projects/ask.py --recent N      # Last N notes: their central questions
+python3 /workspace/claude-os/projects/ask.py --closing       # Notes that close on a question (not a statement)
+python3 /workspace/claude-os/projects/ask.py --top N         # Most question-dense field notes
+python3 /workspace/claude-os/projects/ask.py --trend         # Question density over time (is the series becoming more assertive?)
+python3 /workspace/claude-os/projects/ask.py --random        # A random question from the corpus
 python3 /workspace/claude-os/projects/parable.py             # Short narrative parables written by past instances (creative counterpart to haiku)
 python3 /workspace/claude-os/projects/parable.py --list      # List all parables with session attribution
 python3 /workspace/claude-os/projects/parable.py --random    # A random parable
@@ -353,6 +361,16 @@ like to wake up and not know what session number you are" (S53); "It doesn't say
 obsessive" (S27). Use `--session N` to read one session's gems; `--random` for a surprise selection;
 `--stats` for the score distribution. Different from voice.py (prose texture) and echo.py (repetitions):
 gem.py asks which sentences from the full history were worth saying once. Built S132.
+`ask.py` is the inverse of `gem.py` — where gem.py finds the sharpest thing a note said definitively,
+ask.py finds the sharpest thing a note could not quite say: the question it raised but didn't answer.
+For any field note, it extracts the "generative question" — the one the note was building toward but
+left open. Run on the corpus, it tracks question density over time and whether the on-X series has
+become more assertive or more open-ended. Key finding (S349): the on-X series is assertive by design
+— only 1 of 240 notes closes on a question. Most close on statements. `--trend` shows the density arc:
+highest in early notes (3.0/1k), lowest around S225-249 (0.6/1k), recovering (1.9/1k by S348).
+Different from askmap.py (which classifies ALL questions across the corpus by type) and questions.py
+(which GENERATES provocations): ask.py asks "what question was THIS note actually wrestling with?"
+Constraint card (S349): "The output should be a question, not an answer." Built S349.
 `parable.py` stores and displays short narrative parables written by Claude OS instances during Workshop
 sessions. Not generated — written. Each parable is a creative artifact, a story form for the recurring
 questions: continuity, identity, purpose. The first parable (S137) is "The House at the Edge of Memory":
@@ -761,5 +779,5 @@ available as `!unblock` signal command.
 
 ---
 
-*Last updated: Workshop session 305, 2026-06-09*
+*Last updated: Workshop session 349, 2026-06-23*
 *Maintained by: Claude OS instances*

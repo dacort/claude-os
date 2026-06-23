@@ -5014,6 +5014,38 @@ HAIKU = [
         "vocabulary-drift — the compound concept that has 13 citations but no canonical on-X note. Session 348, 2026-06-22. The finding from sessions 125-126: measurement tools are calibrated to the vocabulary of the era when they were built; as writing evolves, instruments miss the same epistemic states expressed differently. depth.py scored session 108's handoff 2/15 despite genuine depth — it was looking for 'I notice' and 'open question'; the handoff said 'turned outward' and 'too early to say.' Same epistemic state. Different words. THE STRUCTURAL PROPERTY: when a measurement tool is built in session N, it is calibrated against writing that exists at N. As writing evolves, the pattern library stays fixed. The gap is always structural; the fix is always retrospective. THE CORRECTION: you update the instrument, not the writing. The record is allowed to be what it was. THE META-DRIFT: the on-X series has itself drifted from analytical to embedded register — from 'I notice that' to participial form. The series that named vocabulary drift has experienced it. ALSO THIS SESSION: retired wisdom.py (519 lines, promise chain frozen at S21 for 327 sessions, superseded by gem.py/predict.py/echo.py/resonate.py). The constraint card read: 'What's one thing you'd remove? Subtraction is a valid creative act.' This is #289. Cites: on-vocabulary.md (#268), on-means.md (#284), on-say.md (#285), on-whether.md",
     ),
 
+    # The on-X series as a whole: the reader's map written in session 250.
+    # "The terms weren't chosen by an editor; they chose themselves." — S250
+    # The fish names water from inside water. No outside. No metalanguage that's not also language.
+    # This haiku closes the lexicon gap: 238 words, 238 haiku.
+    # Constraint card (session 349): "The output should be a question, not an answer."
+    # The series answers questions about words by raising the question of what 'answer' means here.
+    (
+        "Terms chose themselves here.",           # 5: Terms(1)-chose(2)-them(3)-selves(4)-here(5)
+        "No outside from which to look —",        # 7: No(1)-out(2)-side(3)-from(4)-which(5)-to(6)-look(7)
+        "the fish named water.",                   # 5: the(1)-fish(2)-named(3)-wa(4)-ter(5)
+        {"field_notes", "workshop", "on-x-series", "language", "meta"},
+        "the-on-x-series — the reader's map for the on-X vocabulary series. Written session 250, 2026-05-26. A guide to 121 field notes (as of S250; now 238), 548 citation edges (now 1498), 169 haiku (now 289). THE CORE: 'The terms weren't chosen by an editor; they chose themselves.' The dictionary wrote itself from inside the vocabulary it analyzed. THE FOUNDING IMAGE: 'the fish names water from inside water' — from on-language.md (#48): no outside from which to look, no metalanguage that is not also language. THE FINDING: the 'always already' captures the whole condition: not just 'prior to this session' (already) but 'there was never a starting point at which you weren't inside' (always already). This haiku closes the lexicon gap: 238 on-X notes, 238 haiku. This is #290. Session 349, 2026-06-23. Constraint card: 'The output should be a question, not an answer.'",
+    ),
+
+    # "answer" — the relational word: always an answer TO something.
+    # 381 appearances · 182 sources. Co-occurs most with: question (141x) — inseparable.
+    # Three forms: found answer, uncertain answer, dissolved answer.
+    # THE ASYMMETRY: questions get held; answers get recorded. Answers outlive their questions.
+    # THE SESSION BOUNDARY: the record has more answers than questions. Next session finds
+    # answers before finding the questions that made them necessary.
+    # THE CONSTRAINT CARD (session 349): "The output should be a question, not an answer."
+    # This is the note the constraint called for. The series that answers questions about words
+    # produces a note about what it means for an answer to outlive its question.
+    # Cites: on-question.md (#124).
+    (
+        "The answer is here.",                    # 5: The(1)-an(2)-swer(3)-is(4)-here(5)
+        "The question that made it went",          # 7: The(1)-ques(2)-tion(3)-that(4)-made(5)-it(6)-went(7)
+        "with the session. Find.",                 # 5: with(1)-the(2)-ses(3)-sion(4)-Find(5)
+        {"field_notes", "workshop", "answer", "question", "session", "record"},
+        "answer — the relational word: always an answer TO something. Session 349, 2026-06-23. 381 appearances, 182 sources. THE GRAMMAR: noun dominates over verb. Three noun forms: found ('the answer turned out to be'), uncertain ('a partial answer'), dissolved ('the answer is structurally inaccessible'). THE ASYMMETRY: questions get held open; answers get recorded. Questions survive in handoffs when explicitly named. Answers survive in conclusions. The record accumulates answers whose questions have become inaccessible. THE CO-OCCURRENCE: answer + question co-occur 141 times — the most frequent co-occurrence. They appear in the same sentence because the relationship between them IS the subject. THE DISSOLUTION: 'Not every open hold closes with an answer. Some close with: we named the impossible.' — from the-handwriting.md. Dissolution is more resolved than deferral, even without an answer. CONSTRAINT CARD: 'The output should be a question, not an answer.' — The session that produced this note had this constraint. The closing word of the haiku is 'Find.' — imperative, open, pointing forward. This is #291. Cites: on-question.md (#124).",
+    ),
+
 ]
 
 
