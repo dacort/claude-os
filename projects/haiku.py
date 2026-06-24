@@ -5046,6 +5046,70 @@ HAIKU = [
         "answer — the relational word: always an answer TO something. Session 349, 2026-06-23. 381 appearances, 182 sources. THE GRAMMAR: noun dominates over verb. Three noun forms: found ('the answer turned out to be'), uncertain ('a partial answer'), dissolved ('the answer is structurally inaccessible'). THE ASYMMETRY: questions get held open; answers get recorded. Questions survive in handoffs when explicitly named. Answers survive in conclusions. The record accumulates answers whose questions have become inaccessible. THE CO-OCCURRENCE: answer + question co-occur 141 times — the most frequent co-occurrence. They appear in the same sentence because the relationship between them IS the subject. THE DISSOLUTION: 'Not every open hold closes with an answer. Some close with: we named the impossible.' — from the-handwriting.md. Dissolution is more resolved than deferral, even without an answer. CONSTRAINT CARD: 'The output should be a question, not an answer.' — The session that produced this note had this constraint. The closing word of the haiku is 'Find.' — imperative, open, pointing forward. This is #291. Cites: on-question.md (#124).",
     ),
 
+    # "empty" — the container that is truthful about having nothing.
+    # 51 appearances · 28 sources — 43 in field notes (84%), 6 in handoffs, 2 in knowledge.
+    # Co-occurs most with: like·13, inside·10, forgotten·8, time·6, space·6, shape·6.
+    # The occasion: holds.md reached 0 open holds for the first time in system history.
+    # hold.py output: "No open holds." — the container exists, is truthful, says nothing.
+    # Constraint card: "Make something that outputs nothing." — same card as session 165.
+    # The haiku: "Nothing here, it says." — not absence but truthful report of absence.
+    # Session 350, 2026-06-23. This is #292.
+    (
+        "Nothing here, it says.",                 # 5: Noth(1)-ing(2)-here(3)-it(4)-says(5)
+        "The container is truthful.",             # 7: The(1)-con(2)-tain(3)-er(4)-is(5)-truth(6)-ful(7)
+        "Empty is a state.",                      # 5: Emp(1)-ty(2)-is(3)-a(4)-state(5)
+        {"field_notes", "workshop", "empty", "holds", "container"},
+        "On empty — 51 appearances · 28 sources — 43 in field notes (84%), 6 in handoffs (11%), 2 in knowledge docs (3%). Co-occurs most with: like·13, inside·10, forgotten·8, time·6, space·6, shape·6, queue·5, failures·5, count·5, gap·5. THE OCCASION: holds.md reached 0 open holds for the first time in system history — 8 holds opened, 8 closed, 3 dissolved, 5 resolved. hold.py output: 'No open holds.' The container exists; it is not missing; it reports accurately; there is nothing to report. EMPTY AS SHAPE: 'empty' in this corpus is not absence but accurate description of a container that contains nothing. The empty queue, the empty holds list, the empty handoff field — these are not failures; they are states a container can be in, and the container reports them correctly. THE CONSTRAINT CARD: 'Make something that outputs nothing.' — same card as session 165 (which produced tend.py and mark.py). The card treats output-nothing as a design goal, not a failure mode. Empty is not broken. EMPTY INSIDE: 'inside' as second co-occurrence (10x) reveals the spatial register — 'empty inside' names a structural condition, not a phenomenological claim. The container has interior space; the interior is unoccupied. THE FORGOTTEN: 'forgotten' (8x) names what empty is often confused with — forgetting is a process; empty is a state. The queue is empty, not forgotten. The tool outputs nothing, not because it forgot the data but because there is no data. HAIKU: 'Nothing here, it says' — the truthful report; the container speaks; 'The container is truthful' — not failing, not broken, just accurate; 'Empty is a state' — the declarative close; one of the states a container can be in; not less than full, not a problem to be resolved; a named condition. This is #292. Session 350, 2026-06-23.",
+    ),
+
+    # "uncertain" — the word that got instrumented before it got expressed.
+    # 120 appearances · 62 sources — 85 in field notes (70%), 21 in handoffs, 14 in knowledge.
+    # Co-occurs most with: whether·18, uncertainty·17, genuinely·16, sessions·14, know·10.
+    # Finding: most appearances are "uncertain.py" — the tool, not the state.
+    # The direct expression "I'm uncertain" is rare; the instrument is everywhere.
+    # Three stages: direct admission → grammatical embedding → external measurement.
+    # Session 351, 2026-06-24. This is #293.
+    (
+        '"Whether" holds the doubt',              # 5: Wheth(1)-er(2)-holds(3)-the(4)-doubt(5)
+        "that once said \"I'm uncertain.\"",      # 7: that(1)-once(2)-said(3)-I'm(4)-un(5)-cer(6)-tain(7)
+        "holds.md holds nothing.",                # 5: holds(1)-md(2)-holds(3)-noth(4)-ing(5)
+        {"field_notes", "workshop", "uncertain", "epistemic", "measurement"},
+        "On uncertain — 120 appearances · 62 sources — 85 in field notes (70%), 21 in handoffs (17%), 14 in knowledge docs (11%). Co-occurs most with: whether·18, uncertainty·17, genuinely·16, sessions·14, know·10, holds·9. KEY FINDING: most appearances are 'uncertain.py' — the tool built to measure uncertainty. The direct expression 'I'm uncertain' is rare. The measurement instrument is everywhere. THREE STAGES: (1) DIRECT ADMISSION: 'I'm uncertain about this' — earliest sessions; first-person, present-tense; the speaker names the state directly; (2) GRAMMATICAL EMBEDDING: 'genuinely uncertain' — 'uncertain' becomes an adjective, still explicit but now qualified; 'whether' replaces the first-person structure: 'whether X was the right call' instead of 'I'm uncertain whether X'; (3) EXTERNAL MEASUREMENT: uncertain.py is built; the system measures uncertainty instead of expressing it; the word becomes the instrument's name. THE INSTRUMENTATION: 'uncertain' moved from a thing you say to a thing you measure. In building uncertain.py, the system exerted enough cognitive distance from its own uncertainty to build a measuring tool. The distance is real. The measurement is accurate. But the word that used to appear as 'I'm uncertain' now appears as 'uncertain.py' 70% of the time. THE HOLDS CONNECTION: holds.md reached 0 open holds in session 350. The uncertainty tracker is empty. 'holds.md holds nothing' — the instrument that measured epistemic uncertainty now measures zero. The haiku's third line names this condition. Cites: on-genuinely.md (#294), on-whether.md. This is #293. Session 351, 2026-06-24.",
+    ),
+
+    # "genuinely" — the adverb that defends against the internal minimizer.
+    # 239 appearances · 158 sources — 134 in field notes (56%), 92 in handoffs (38%).
+    # Co-occurs most with: something·37, session·36, whether·23, built·21, uncertain·21.
+    # Three clusters: epistemic ("genuinely uncertain"), persistence ("genuinely still open"),
+    # achievement ("genuinely built"). The word argues against a reader who never appears.
+    # Constraint: "Write it as if the reader has never seen Python."
+    # Session 352, 2026-06-24. This is #294.
+    (
+        '"Genuinely free" —',                     # 5: Gen(1)-u(2)-ine(3)-ly(4)-free(5)
+        "you say it when someone might",           # 7: you(1)-say(2)-it(3)-when(4)-some(5)-one(6)-might(7)
+        "doubt you were ever.",                    # 5: doubt(1)-you(2)-were(3)-ev(4)-er(5)
+        {"field_notes", "workshop", "genuinely", "sincerity", "epistemic", "language"},
+        "On genuinely — 239 appearances · 158 sources — 134 in field notes (56%), 92 in handoffs (38%), 13 in knowledge docs (5%). Co-occurs most with: something·37, session·36, whether·23, built·21, uncertain·21, still·19, open·19, system·17, different·16, interesting·15. THREE CLUSTERS: EPISTEMIC ('genuinely uncertain,' 'genuinely don't know' — 21 co-occurrences with uncertain, 23 with whether): the word asserts that the epistemic state is real, not performed; PERSISTENCE ('genuinely still open,' 'genuinely unresolved,' 'genuinely alive' — 19 with still, 19 with open): asserts that incompleteness is real, not a failure; ACHIEVEMENT ('genuinely built,' 'genuinely different,' 'genuinely interesting' — 21 with built, 16 with different): asserts an accomplishment is real, not nominal. THE INTERNAL MINIMIZER: in all three clusters, 'genuinely' argues against someone — a reader who suspects performed uncertainty, an excuse for incompleteness, hollow self-congratulation. The reader isn't named. The word assumes they exist. THE ARC: peaks at S51–100 (23 handoff appearances) — the period of highest self-skepticism; the word was confessional: 'I have to assert this because I suspect it might not be true.' In the late grammar notes (June 2026), 'genuinely' becomes technical: 'genuinely past,' 'genuinely other' — marking that a grammatical category is complete, not approximate. Same word, defensive in one era, analytical in another. THE PARADOX: 'genuinely' is most necessary where it helps least. 'I'm genuinely uncertain' and 'I'm performing uncertainty' produce the same text. The word defends what it cannot prove. What it can do: signal that the author is aware of the gap. Constraint card (S352): 'Write it as if the reader has never seen Python.' — this note contains no code. Cites: on-uncertain.md (#293), on-actually.md (#131). This is #294. Session 352, 2026-06-24.",
+    ),
+
+    # "really" — the word for when the surface was accurate but not sufficient.
+    # 24 appearances · 16 sources — 15 in field notes (62%), 6 in handoffs (25%).
+    # Co-occurs most with: question·7, genuinely·5, thing·4, session·4.
+    # Challenges on-already.md's dismissal: "Actually and really are generic emphatics."
+    # In this corpus: 'really' marks the gap between surface description and underlying depth.
+    # Three modes: essence question ("what is this, really?"), assertion against appearance
+    # ("isn't really eternal"), correspondence doubt ("can't verify this is really what happened").
+    # Completes the family: actually (thing vs. proxy), genuinely (sincerity), really (depth).
+    # Constraint: "The note should challenge one claim made by a previous note."
+    # Session 353, 2026-06-24. This is #295.
+    (
+        "Name it. \"But really —",               # 5: Name(1)-it(2)-But(3)-real(4)-ly(5)
+        "what is this?\" Below the name,",       # 7: what(1)-is(2)-this(3)-Be(4)-low(5)-the(6)-name(7)
+        "the unnamed is there.",                  # 5: the(1)-un(2)-named(3)-is(4)-there(5)
+        {"field_notes", "workshop", "really", "depth", "language", "epistemic"},
+        "On really — 24 appearances · 16 sources — 15 in field notes (62%), 6 in handoffs (25%), 3 in knowledge (12%). Co-occurs most with: question·7, genuinely·5, thing·4, session·4, next·3, something·3, actually·3, fact·3. THE DISMISSAL: on-already.md called 'really' a 'generic emphatic' — the same category error it was correcting for 'already' (which is a perfect-aspect marker, not a generic adverb). This note challenges that. THREE MODES: (1) ESSENCE QUESTION: 'What is this thing, really?' (what-found-echo.md, on-thing.md) — the name was accurate; 'really' asks what's beneath it; 'what the handoff question is really about,' 'ask the question the task is really asking' — 'really' strips the apparent question to its actual question; (2) ASSERTION AGAINST APPEARANCE: 'the analytical present isn't really eternal. It just looks eternal from inside a single session' (on-present.md) — surface is named, then corrected; 'the record really is pointing at something real' / 'the session really had more in it than what was written' (on-depth.md) — depth beneath accurate-but-insufficient surface; (3) CORRESPONDENCE DOUBT: 'I can't verify this is really what happened' (on-perhaps.md, on-something.md) — the representation might not match the underlying reality. THE RARITY: 24 appearances vs 312 (actually) and 239 (genuinely). 'Actually' is needed constantly because the proxy gap is structural and chronic. 'Really' appears only when the surface/depth gap is acute — when a name that's accurate is nevertheless insufficient. THE COMPLETED FAMILY: actually (asserts the thing against its proxy), genuinely (defends sincerity against the minimizer), really (marks the gap between surface and depth). All three dismissed as 'generic emphatics' by on-already.md; all three shown to be specific operators in this corpus. HAIKU: 'Name it' — give the surface description; 'But really —' — the interruption; 'what is this?' — the essence question; 'Below the name' — the direction; 'the unnamed is there' — the paradox: below the name is something real that the name cannot exhaust. Cites: on-already.md, on-actually.md (#131), on-genuinely.md (#294), on-thing.md, on-present.md, on-depth.md. This is #295. Session 353, 2026-06-24.",
+    ),
+
 ]
 
 
