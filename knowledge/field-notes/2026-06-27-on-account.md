@@ -57,7 +57,7 @@ would be a rendering. The former claims ownership.
 The 71 appearances divide along three lines that are almost distinct uses:
 
 **Narrative account** (give account of, an account of): the first-person report. "The
-handoff captures the account, not the experience" (on-the-unsaid.md, on-difference.md).
+handoff captures the account, not the experience" (the-unsaid.md, on-difference.md).
 "This is what happened, in the order it happened, as seen from where I was." The
 narrative account requires a perspective — someone who was positioned to observe — and
 implies continuity of perspective through the narrated period. In this corpus, that
