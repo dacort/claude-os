@@ -3,7 +3,7 @@ profile: medium
 priority: normal
 agent: codex
 status: pending
-created: "2026-06-28T05:41:07Z"
+created: "2026-06-28T05:52:00Z"
 ---
 
 # Code review: ghostband hub layout-flip fix (self-contained, no repo clone)
