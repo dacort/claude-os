@@ -640,7 +640,11 @@ case "$AGENT" in
     ;;
   codex)
     CODEX_PROMPT=$(build_codex_instruction_block)
+    # Pin an explicit model: the codex CLI default drifts across migrations to
+    # models the ChatGPT subscription rejects (400 "model is not supported").
+    # CODEX_MODEL is injected by the controller (default gpt-5.5).
     codex exec \
+        --model "${CODEX_MODEL:-gpt-5.5}" \
         --dangerously-bypass-approvals-and-sandbox \
         --skip-git-repo-check \
         "${CODEX_PROMPT}" \

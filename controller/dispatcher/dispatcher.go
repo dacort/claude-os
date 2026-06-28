@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"regexp"
 	"strings"
 
@@ -51,6 +52,20 @@ func sanitizeName(id string) string {
 
 // agentSecrets returns the EnvFrom sources, extra env vars, extra volume mounts,
 // and extra volumes needed for a given agent type.
+// defaultCodexModel is the model passed to `codex exec` when the controller
+// has no CODEX_MODEL override. The codex CLI's built-in default drifts with
+// migrations (gpt-5-codex → gpt-5.3-codex → gpt-5.4 → …) and lands on models
+// the ChatGPT subscription doesn't expose, so we pin an explicit, supported one.
+// Override without an image rebuild by setting CODEX_MODEL on the controller.
+const defaultCodexModel = "gpt-5.5"
+
+func codexModel() string {
+	if m := os.Getenv("CODEX_MODEL"); m != "" {
+		return m
+	}
+	return defaultCodexModel
+}
+
 func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []corev1.VolumeMount, []corev1.Volume) {
 	switch agent {
 	case "codex":
@@ -61,6 +76,7 @@ func agentSecrets(agent string) ([]corev1.EnvFromSource, []corev1.EnvVar, []core
 			},
 			[]corev1.EnvVar{
 				{Name: "CODEX_HOME", Value: "/home/worker/.codex"},
+				{Name: "CODEX_MODEL", Value: codexModel()},
 			},
 			[]corev1.VolumeMount{
 				{Name: "codex-auth", MountPath: "/tmp/codex-auth", ReadOnly: true},
