@@ -57,6 +57,14 @@ type SchedulerConfig struct {
 	CreativeModeEnabled   bool   `yaml:"creative_mode_enabled"`
 	CreativeIdleThreshold string `yaml:"creative_idle_threshold"`
 
+	// FreeCreativeEnabled controls goal-less "free time" sessions. When false
+	// (the default), the Workshop idles instead of dispatching a free-form
+	// creative session when there is no approved/scoped work waiting. Earned
+	// creative time (a spent credit) and maintenance sessions are unaffected.
+	// This is the Phase 0 "stop the bleed" gate: open-ended free time is what
+	// produced the self-referential essay corpus.
+	FreeCreativeEnabled bool `yaml:"free_creative_enabled"`
+
 	// Project-aware Workshop (v2): scan this directory for project.md files.
 	// Leave empty to disable project work selection.
 	ProjectsDir string `yaml:"projects_dir"`

@@ -16,6 +16,10 @@ scheduler:
   job_ttl_after_finished: 1h
   creative_mode_enabled: true
   creative_idle_threshold: 4h
+  # Goal-less "free time" sessions are off by default — when there is no
+  # approved/scoped work, the Workshop idles instead of free-associating.
+  # Earned creative time (spent credits) and maintenance are unaffected.
+  free_creative_enabled: false
 
 worker:
   image: ghcr.io/dacort/claude-os-worker:latest
