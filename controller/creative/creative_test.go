@@ -239,6 +239,26 @@ func TestSelectProjectWork_WeightZero(t *testing.T) {
 	}
 }
 
+// TestStartSession_IdleWhenFreeCreativeDisabled verifies the Phase 0 gate: with
+// no maintenance wiring (creditLedger/backlogClient nil) and free creative
+// disabled (the default), startSession dispatches nothing and resets the idle
+// timer — without touching the nil dispatcher.
+func TestStartSession_IdleWhenFreeCreativeDisabled(t *testing.T) {
+	w := &Workshop{} // freeCreativeEnabled defaults to false
+
+	w.startSession(context.Background())
+
+	if w.active {
+		t.Error("expected no active session when idling")
+	}
+	if w.activeJob != "" {
+		t.Errorf("expected no active job, got %q", w.activeJob)
+	}
+	if w.lastTask.IsZero() {
+		t.Error("expected idle to reset lastTask, but it is still zero")
+	}
+}
+
 // TestProjectLockHelpers verifies the Redis lock round-trip.
 func TestProjectLockHelpers(t *testing.T) {
 	rdb := newTestRedis(t)

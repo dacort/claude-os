@@ -52,6 +52,11 @@ type Workshop struct {
 	creditLedger  *ledger.Ledger
 	backlogClient *backlog.Client
 	activeType    SessionType // session type of the currently active job
+
+	// freeCreativeEnabled gates goal-less free-time sessions. Default false
+	// (Phase 0 stop-the-bleed): when there is no approved/scoped work, idle
+	// instead of dispatching a free-form creative essay session.
+	freeCreativeEnabled bool
 }
 
 func NewWorkshop(
@@ -86,6 +91,14 @@ func NewWorkshop(
 func (w *Workshop) EnableMaintenance(l *ledger.Ledger, b *backlog.Client) {
 	w.creditLedger = l
 	w.backlogClient = b
+}
+
+// EnableFreeCreative toggles goal-less "free time" sessions. When false (the
+// default), the Workshop idles instead of running a free-form creative session
+// when there is no approved/scoped work. Earned creative time (a spent credit)
+// and maintenance are unaffected.
+func (w *Workshop) EnableFreeCreative(enabled bool) {
+	w.freeCreativeEnabled = enabled
 }
 
 // OnTaskDispatched resets the idle timer and preempts any creative job.
@@ -177,6 +190,12 @@ func (w *Workshop) startCreativeTask(ctx context.Context) {
 // startSession picks the session type per the decision table and dispatches.
 func (w *Workshop) startSession(ctx context.Context) {
 	if w.creditLedger == nil || w.backlogClient == nil {
+		// Pure v2 path (no maintenance wiring): there is no approved backlog to
+		// consult, so the only option is free creative — gated by the flag.
+		if !w.freeCreativeEnabled {
+			w.idle("no maintenance wiring and free creative disabled")
+			return
+		}
 		w.activeType = SessionCreativeFree
 		w.startCreativeTask(ctx)
 		return
@@ -190,7 +209,7 @@ func (w *Workshop) startSession(ctx context.Context) {
 		issues = nil
 	}
 
-	switch DecideSession(len(issues), w.creditLedger.Balance()) {
+	switch DecideSession(len(issues), w.creditLedger.Balance(), w.freeCreativeEnabled) {
 	case SessionMaintenance:
 		w.activeType = SessionMaintenance
 		w.startMaintenanceTask(ctx, issues[0])
@@ -203,7 +222,17 @@ func (w *Workshop) startSession(ctx context.Context) {
 	case SessionCreativeFree:
 		w.activeType = SessionCreativeFree
 		w.startCreativeTask(ctx)
+	case SessionIdle:
+		w.idle("no approved work and free creative disabled")
 	}
+}
+
+// idle records that the Workshop deliberately dispatched nothing this cycle and
+// resets the idle timer so CheckIdle backs off for another threshold period
+// rather than re-deciding (and re-hitting the backlog API) every tick.
+func (w *Workshop) idle(reason string) {
+	slog.Info("workshop: idling, no session dispatched", "reason", reason)
+	w.lastTask = time.Now()
 }
 
 // startMaintenanceTask dispatches a maintenance session for the given issue.

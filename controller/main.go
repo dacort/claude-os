@@ -177,11 +177,13 @@ func main() {
 			cfg.Scheduler.ProjectWeight(),
 			rdb,
 		)
+		workshop.EnableFreeCreative(cfg.Scheduler.FreeCreativeEnabled)
 		slog.Info("workshop enabled",
 			"idle_threshold", cfg.Scheduler.IdleThreshold(),
 			"usage_check", oauthToken != "",
 			"projects_dir", cfg.Scheduler.ProjectsDir,
 			"project_weight", cfg.Scheduler.ProjectWeight,
+			"free_creative_enabled", cfg.Scheduler.FreeCreativeEnabled,
 		)
 	}
 

@@ -11,14 +11,25 @@ const (
 	// SessionCreativeFree is a creative session granted because there is no
 	// approved work waiting — the gate only exists when real work is pending.
 	SessionCreativeFree
+	// SessionIdle dispatches nothing: there is no approved/scoped work and
+	// goal-less free time is disabled. The Workshop simply waits.
+	SessionIdle
 )
 
 // DecideSession implements the chores-before-dessert decision table
 // (spec 2026-06-10, section 1). approvedBacklog is the count of open
 // octo-approved issues; credits is the current ledger balance.
-func DecideSession(approvedBacklog, credits int) SessionType {
+//
+// freeCreativeEnabled gates goal-less "free time" (Phase 0 stop-the-bleed):
+// when false and there is no approved work, the result is SessionIdle rather
+// than SessionCreativeFree. Earned creative time (SessionCreativeSpend) and
+// maintenance (SessionMaintenance) are unaffected by the flag.
+func DecideSession(approvedBacklog, credits int, freeCreativeEnabled bool) SessionType {
 	if approvedBacklog == 0 {
-		return SessionCreativeFree
+		if freeCreativeEnabled {
+			return SessionCreativeFree
+		}
+		return SessionIdle
 	}
 	if credits >= 1 {
 		return SessionCreativeSpend

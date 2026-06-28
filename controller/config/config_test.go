@@ -40,6 +40,7 @@ scheduler:
   job_ttl_after_finished: 30m
   creative_mode_enabled: false
   creative_idle_threshold: 5m
+  free_creative_enabled: true
 worker:
   image: test:latest
   namespace: test-ns
@@ -71,5 +72,17 @@ worker:
 	}
 	if cfg.Scheduler.TTLDuration() != 30*time.Minute {
 		t.Errorf("expected 30m TTL, got %v", cfg.Scheduler.TTLDuration())
+	}
+	if !cfg.Scheduler.FreeCreativeEnabled {
+		t.Error("expected free_creative_enabled to parse as true")
+	}
+}
+
+// TestFreeCreativeEnabled_DefaultsFalse verifies that the Phase 0 stop-the-bleed
+// gate is off unless explicitly enabled — a config that omits the field (or a
+// zero-value struct) must not grant goal-less free time.
+func TestFreeCreativeEnabled_DefaultsFalse(t *testing.T) {
+	if (SchedulerConfig{}).FreeCreativeEnabled {
+		t.Error("FreeCreativeEnabled should default to false")
 	}
 }
