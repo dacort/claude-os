@@ -21,6 +21,7 @@ import (
 	"github.com/dacort/claude-os/controller/dispatcher"
 	"github.com/dacort/claude-os/controller/gitsync"
 	"github.com/dacort/claude-os/controller/governance"
+	"github.com/dacort/claude-os/controller/health"
 	"github.com/dacort/claude-os/controller/ledger"
 	"github.com/dacort/claude-os/controller/queue"
 	"github.com/dacort/claude-os/controller/scheduler"
@@ -495,6 +496,12 @@ func main() {
 
 		// Notify scheduler so the next run of a recurring task can proceed
 		taskScheduler.OnTaskCompleted(ctx, taskID)
+
+		// Agent-health canaries: open a deduplicated issue on failure, close it
+		// on recovery. No-op for every other task.
+		if err := health.HandleTerminal(ctx, commsManager, taskID, succeeded, logs); err != nil {
+			slog.Warn("agent-health: failed to update issue", "task", taskID, "error", err)
+		}
 
 		// Log and persist result data.
 		if parsedResult != nil {
