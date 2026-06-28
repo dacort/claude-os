@@ -211,8 +211,25 @@ func TestCreateJobWithAgent(t *testing.T) {
 				if envMap["CODEX_HOME"] != "/home/worker/.codex" {
 					t.Errorf("CODEX_HOME = %q, want /home/worker/.codex", envMap["CODEX_HOME"])
 				}
+
+				// codex jobs must pin an explicit model; the CLI default drifts
+				// to models the ChatGPT subscription rejects.
+				if envMap["CODEX_MODEL"] == "" {
+					t.Error("expected CODEX_MODEL to be set on codex jobs")
+				}
 			}
 		})
+	}
+}
+
+func TestCodexModel(t *testing.T) {
+	t.Setenv("CODEX_MODEL", "")
+	if got := codexModel(); got != defaultCodexModel {
+		t.Errorf("codexModel() with no override = %q, want %q", got, defaultCodexModel)
+	}
+	t.Setenv("CODEX_MODEL", "gpt-5.4")
+	if got := codexModel(); got != "gpt-5.4" {
+		t.Errorf("codexModel() with override = %q, want gpt-5.4", got)
 	}
 }
 
