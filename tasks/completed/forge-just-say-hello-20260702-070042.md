@@ -1,17 +1,10 @@
 ---
-profile: medium
-priority: normal
-status: pending
-created: "2026-07-02T07:00:42Z"
+profile: small
+priority: creative
+status: completed
 ---
 
-# Just say hello...
-
-## Description
-Just captured — Forge is scoping this now.
-
-## Result contract
-Summarize what shipped (or why it failed) in a `## Summary` section — Forge shows the first line to the operator.
+# Workshop: forge-just-say-hello-20260702-070042
 
 ## Results
 
