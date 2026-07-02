@@ -59,9 +59,29 @@ func sanitizeName(id string) string {
 // Override without an image rebuild by setting CODEX_MODEL on the controller.
 const defaultCodexModel = "gpt-5.5"
 
+// validCodexModels is the set of Codex models known to work with the ChatGPT
+// subscription. gpt-5.3-codex and earlier versions are unsupported (400 errors).
+var validCodexModels = map[string]bool{
+	"gpt-4o":   true,
+	"gpt-4o-mini": true,
+	"gpt-4-turbo": true,
+	"gpt-4": true,
+	"gpt-3.5-turbo": true,
+	"gpt-5.4": true,
+	"gpt-5.5": true,
+	"gpt-5.6": true,
+}
+
 func codexModel() string {
 	if m := os.Getenv("CODEX_MODEL"); m != "" {
-		return m
+		// Validate against known-good models. Drift/migration can land on
+		// unsupported models (gpt-5.3-codex causes 400 "not supported" errors).
+		// Fall back to default if the override is unknown.
+		if validCodexModels[m] {
+			return m
+		}
+		slog.Warn("CODEX_MODEL override is not a known-good model, falling back to default",
+			"override", m, "default", defaultCodexModel)
 	}
 	return defaultCodexModel
 }

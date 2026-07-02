@@ -229,7 +229,13 @@ func TestCodexModel(t *testing.T) {
 	}
 	t.Setenv("CODEX_MODEL", "gpt-5.4")
 	if got := codexModel(); got != "gpt-5.4" {
-		t.Errorf("codexModel() with override = %q, want gpt-5.4", got)
+		t.Errorf("codexModel() with valid override = %q, want gpt-5.4", got)
+	}
+	// gpt-5.3-codex is unsupported by ChatGPT subscriptions (400 error);
+	// should fall back to default
+	t.Setenv("CODEX_MODEL", "gpt-5.3-codex")
+	if got := codexModel(); got != defaultCodexModel {
+		t.Errorf("codexModel() with invalid override = %q, want %q (default)", got, defaultCodexModel)
 	}
 }
 
