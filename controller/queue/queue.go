@@ -531,6 +531,22 @@ func ParseBlocker(logs string) *TaskBlocker {
 	return &blocker
 }
 
+// ExtractResultBlock returns the raw ===RESULT_START=== ... ===RESULT_END===
+// block from worker logs, suitable for storing in task.Result.
+// Returns "" if the block is not present in the logs.
+// The stored block retains its delimiters so ParseResult can re-parse it
+// without any changes.
+func ExtractResultBlock(logs string) string {
+	const startMarker = "===RESULT_START==="
+	const endMarker = "===RESULT_END==="
+	start := strings.Index(logs, startMarker)
+	end := strings.LastIndex(logs, endMarker)
+	if start == -1 || end == -1 || end <= start {
+		return ""
+	}
+	return logs[start : end+len(endMarker)]
+}
+
 // ParseResult extracts the structured TaskResult emitted by workers using
 // the new reporting contract. Returns nil if the sentinel block is not found.
 func ParseResult(logs string) *TaskResult {

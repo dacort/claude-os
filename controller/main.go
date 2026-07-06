@@ -557,7 +557,7 @@ func main() {
 		if succeeded {
 			slog.Info("completing task", "task", taskID)
 			gitSyncer.CompleteTask(taskID, parsedResult, logs)
-			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, "")
+			taskQueue.UpdateStatus(ctx, taskID, queue.StatusCompleted, queue.ExtractResultBlock(logs))
 			if err := taskQueue.PushRecent(ctx, taskID); err != nil {
 				slog.Warn("failed to push recent task", "task", taskID, "error", err)
 			}

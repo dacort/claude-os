@@ -191,6 +191,44 @@ Finished: 2026-03-14T20:00:00Z
 	}
 }
 
+func TestExtractResultBlock(t *testing.T) {
+	sampleLogs := `=== Worker Complete ===
+
+===RESULT_START===
+{"version":"1","task_id":"fix-logging","agent":"claude","model":"claude-sonnet-4-6","outcome":"success","summary":"Fixed it.","artifacts":[],"usage":{"tokens_in":1000,"tokens_out":200,"duration_seconds":30},"failure":null,"next_action":null}
+===RESULT_END===
+
+=== CLAUDE_OS_USAGE ===
+{"task_id":"fix-logging","agent":"claude"}
+=== END_CLAUDE_OS_USAGE ===
+`
+	got := ExtractResultBlock(sampleLogs)
+	if got == "" {
+		t.Fatal("expected ExtractResultBlock to return the block, got empty string")
+	}
+	// The extracted block must be re-parseable by ParseResult
+	result := ParseResult(got)
+	if result == nil {
+		t.Fatal("extracted block must be parseable by ParseResult, got nil")
+	}
+	if result.TaskID != "fix-logging" {
+		t.Errorf("task_id = %q, want fix-logging", result.TaskID)
+	}
+	if result.Outcome != "success" {
+		t.Errorf("outcome = %q, want success", result.Outcome)
+	}
+
+	// No block → empty string
+	if got := ExtractResultBlock("no result block here"); got != "" {
+		t.Errorf("expected empty string for logs without result block, got %q", got)
+	}
+
+	// Only start marker → empty string
+	if got := ExtractResultBlock("===RESULT_START===\n{\"version\":\"1\"}"); got != "" {
+		t.Errorf("expected empty when end marker missing, got %q", got)
+	}
+}
+
 func TestParseResult(t *testing.T) {
 	sampleLogs := `
 === Worker Complete ===
