@@ -693,14 +693,32 @@ if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
             rmdir "${WORKDIR}/tasks" 2>/dev/null || true
         fi
 
-        # Stage all changes (git add -A) and check if there's anything to commit
+        # Stage whatever the agent left uncommitted.
         git add -A
         if ! git diff --cached --quiet 2>/dev/null; then
             echo "Committing workspace changes..."
             git commit -m "task ${TASK_ID}: ${TASK_TITLE}" \
                 --author="Claude OS <claude-os@noreply.github.com>" 2>&1 || true
+        else
+            echo "Nothing left to stage — the agent may have committed its own work"
+        fi
 
-            # Push with retry (matches controller's retry strategy)
+        # Push on the basis of HEAD vs the remote, NOT on whether staging found
+        # anything. Agents frequently run `git commit` themselves; when they do,
+        # the index is clean here and this block used to skip the push entirely,
+        # so the commit died with the pod while the run still reported success.
+        # When the upstream ref can't be resolved, push anyway — losing an
+        # agent's work is far worse than a redundant push attempt.
+        UPSTREAM_REF="origin/${REPO_REF:-main}"
+        if git rev-parse --verify --quiet "${UPSTREAM_REF}" >/dev/null 2>&1; then
+            AHEAD=$(git rev-list --count "${UPSTREAM_REF}..HEAD" 2>/dev/null || echo 1)
+        else
+            echo "WARNING: cannot resolve ${UPSTREAM_REF}; attempting push regardless"
+            AHEAD=1
+        fi
+
+        if [ "${AHEAD}" -gt 0 ]; then
+            echo "Pushing ${AHEAD} commit(s) ahead of ${UPSTREAM_REF}..."
             for attempt in 1 2 3; do
                 if git push origin HEAD 2>&1; then
                     echo "Pushed workspace changes (attempt ${attempt})"
@@ -714,7 +732,7 @@ if [ -d "${WORKDIR}/.git" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
                 fi
             done
         else
-            echo "No workspace changes to commit"
+            echo "No workspace changes to push — HEAD matches ${UPSTREAM_REF}"
         fi
     else
         echo "Skipping push: autonomy.can_push is false"
@@ -734,6 +752,17 @@ if [ "${WORKDIR}" != "${CLAUDE_OS_DIR}" ] && [ -d "${CLAUDE_OS_DIR}/.git" ] \
         echo "Committing claude-os bookkeeping (state files / follow-up tasks)..."
         git -C "${CLAUDE_OS_DIR}" commit -m "task ${TASK_ID}: bookkeeping (state/follow-up tasks)" \
             --author="Claude OS <claude-os@noreply.github.com>" 2>&1 || true
+    fi
+
+    # Same rule as the workspace push above: an agent that committed in the
+    # claude-os clone would otherwise leave those commits stranded in the pod.
+    if git -C "${CLAUDE_OS_DIR}" rev-parse --verify --quiet origin/main >/dev/null 2>&1; then
+        BK_AHEAD=$(git -C "${CLAUDE_OS_DIR}" rev-list --count origin/main..HEAD 2>/dev/null || echo 1)
+    else
+        BK_AHEAD=1
+    fi
+
+    if [ "${BK_AHEAD}" -gt 0 ]; then
         for attempt in 1 2 3; do
             if git -C "${CLAUDE_OS_DIR}" push origin HEAD 2>&1; then
                 echo "Pushed claude-os bookkeeping (attempt ${attempt})"
